@@ -1,6 +1,9 @@
 name: dvanille
+
 description: Protótipo web/mobile da D'Vanille — versão Flutter fiel ao protótipo HTML
+
 publish_to: "none"
+
 version: 1.0.0+1
 
 environment:
@@ -10,10 +13,21 @@ dependencies:
   flutter:
     sdk: flutter
 
+  flutter_svg: ^2.2.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
   flutter_lints: ^5.0.0
 
 flutter:
   uses-material-design: true
+
+  fonts:
+    - family: CreamCake
+      fonts:
+        - asset: assets/fonts/CreamCake.otf
+
+  assets:
+    - assets/images/logoreal.svg
