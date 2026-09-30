@@ -31,3 +31,5 @@ flutter:
 
   assets:
     - assets/images/logoreal.svg
+    - assets/images/rodape.svg
+    - assets/images/fachada_DVanille.png

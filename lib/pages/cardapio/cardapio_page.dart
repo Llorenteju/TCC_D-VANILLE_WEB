@@ -78,7 +78,7 @@ class _CardapioPageState extends State<CardapioPage> {
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontFamily: 'CreamCake',
-                        fontSize: 52,
+                        fontSize: 48,
                         fontWeight: FontWeight.w300,
                         color: DVanilleColors.rose,
                       ),
