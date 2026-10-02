@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../app/app.dart';
 import '../../theme/app_theme.dart';
@@ -17,7 +18,9 @@ class _ContatoPageState extends State<ContatoPage> {
   final email = TextEditingController();
   final assunto = TextEditingController();
   final mensagem = TextEditingController();
+
   String? enviado;
+  bool erroFormulario = false;
 
   @override
   void dispose() {
@@ -28,20 +31,53 @@ class _ContatoPageState extends State<ContatoPage> {
     super.dispose();
   }
 
+  bool _emailValido(String valor) {
+    final email = valor.trim();
+
+    return RegExp(
+      r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+    ).hasMatch(email);
+  }
+
   void _enviar() {
-    if (nome.text.trim().isEmpty ||
-        email.text.trim().isEmpty ||
-        assunto.text.trim().isEmpty ||
-        mensagem.text.trim().isEmpty) {
-      setState(() => enviado = null);
+    final nomeVazio = nome.text.trim().isEmpty;
+    final emailVazio = email.text.trim().isEmpty;
+    final assuntoVazio = assunto.text.trim().isEmpty;
+    final mensagemVazia = mensagem.text.trim().isEmpty;
+
+    final emailValido = emailVazio ? false : _emailValido(email.text);
+
+    if (nomeVazio ||
+        emailVazio ||
+        !emailValido ||
+        assuntoVazio ||
+        mensagemVazia) {
+      setState(() {
+        erroFormulario = true;
+
+        if (emailVazio || !emailValido) {
+          enviado = 'Verifique os campos obrigatórios e o e-mail informado.';
+        } else {
+          enviado = 'Preencha todos os campos para enviar sua mensagem.';
+        }
+      });
+
       return;
     }
+
+    // FRONT-END:
+    // Futuramente, aqui será feita a integração
+    // com o backend e o banco de dados.
+
     nome.clear();
     email.clear();
     assunto.clear();
     mensagem.clear();
-    setState(() => enviado =
-        'Mensagem enviada com sucesso! Em breve entraremos em contato.');
+
+    setState(() {
+      erroFormulario = false;
+      enviado = 'Mensagem enviada com sucesso! Em breve entraremos em contato.';
+    });
   }
 
   @override
@@ -52,19 +88,37 @@ class _ContatoPageState extends State<ContatoPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Informações',
-              style:
-                  AppTheme.display(size: 22, color: DVanilleColors.darkTaupe)),
+          Text(
+            'Informações',
+            style: AppTheme.display(
+              size: 22,
+              color: DVanilleColors.darkTaupe,
+            ),
+          ),
           const SizedBox(height: 12),
-          _linha(Icons.place_outlined,
-              'Rua das Baunilhas, 245 — São Paulo/SP'),
-          _linha(Icons.schedule, 'Terça a Domingo'),
-          _linha(Icons.phone_outlined, '(11) 4002-8922 · WhatsApp'),
-          _linha(Icons.mail_outline, 'contato@dvanille.com.br'),
-          _linha(Icons.camera_alt_outlined, '@dvanille.cafe'),
+          _linha(
+            Icons.place_outlined,
+            'Rua das Baunilhas, 245 — São Paulo/SP',
+          ),
+          _linha(
+            Icons.schedule,
+            'Terça a Domingo',
+          ),
+          _linha(
+            Icons.phone_outlined,
+            '(11) 4002-8922 · WhatsApp',
+          ),
+          _linha(
+            Icons.mail_outline,
+            'contato@dvanille.com.br',
+          ),
+          _linhaInstagram(
+            '@dvanille.cafe',
+          ),
           const SizedBox(height: 14),
           const DicaCampo(
-              "Equipe D'Vanille: Ana Clara, Julia, Karina e Viviane."),
+            "Equipe D'Vanille: Ana Clara, Julia, Karina e Viviane.",
+          ),
         ],
       ),
     );
@@ -73,38 +127,95 @@ class _ContatoPageState extends State<ContatoPage> {
       padding: const EdgeInsets.all(28),
       child: Column(
         children: [
-          if (enviado != null) CaixaAlerta(enviado!, erro: false),
+          if (enviado != null)
+            CaixaAlerta(
+              enviado!,
+              erro: erroFormulario,
+            ),
           Row(
             children: [
               Expanded(
                 child: TextField(
-                    controller: nome,
-                    decoration: const InputDecoration(labelText: 'Nome')),
+                  controller: nome,
+                  decoration: InputDecoration(
+                    labelText: 'Nome',
+                    errorText: erroFormulario && nome.text.trim().isEmpty
+                        ? 'Preencha seu nome'
+                        : null,
+                  ),
+                  onChanged: (_) {
+                    if (erroFormulario) {
+                      setState(() {});
+                    }
+                  },
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: TextField(
-                    controller: email,
-                    decoration: const InputDecoration(labelText: 'E-mail')),
+                  controller: email,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: 'E-mail',
+                    hintText: 'exemplo@email.com',
+                    errorText: erroFormulario
+                        ? email.text.trim().isEmpty
+                            ? 'Preencha seu e-mail'
+                            : !_emailValido(email.text)
+                                ? 'Digite um e-mail válido'
+                                : null
+                        : null,
+                  ),
+                  onChanged: (_) {
+                    if (erroFormulario) {
+                      setState(() {});
+                    }
+                  },
+                ),
               ),
             ],
           ),
           const SizedBox(height: 14),
           TextField(
-              controller: assunto,
-              decoration: const InputDecoration(labelText: 'Assunto')),
+            controller: assunto,
+            decoration: InputDecoration(
+              labelText: 'Assunto',
+              errorText: erroFormulario && assunto.text.trim().isEmpty
+                  ? 'Preencha o assunto'
+                  : null,
+            ),
+            onChanged: (_) {
+              if (erroFormulario) {
+                setState(() {});
+              }
+            },
+          ),
           const SizedBox(height: 14),
           TextField(
             controller: mensagem,
             maxLines: 4,
-            decoration: const InputDecoration(labelText: 'Mensagem'),
+            decoration: InputDecoration(
+              labelText: 'Mensagem',
+              alignLabelWithHint: true,
+              errorText: erroFormulario && mensagem.text.trim().isEmpty
+                  ? 'Digite sua mensagem'
+                  : null,
+            ),
+            onChanged: (_) {
+              if (erroFormulario) {
+                setState(() {});
+              }
+            },
           ),
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-                onPressed: _enviar,
-                child: const Text('Enviar mensagem')),
+              onPressed: _enviar,
+              child: const Text(
+                'Enviar mensagem',
+              ),
+            ),
           ),
         ],
       ),
@@ -115,23 +226,56 @@ class _ContatoPageState extends State<ContatoPage> {
       child: Column(
         children: [
           const SizedBox(height: 56),
-          const ContentWidth(
-            child: SectionHead(eyebrow: 'Fale conosco', titulo: 'Contato'),
+          ContentWidth(
+            child: Column(
+              children: [
+                Text(
+                  'Fale conosco',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'CreamCake',
+                    fontSize: 48,
+                    fontWeight: FontWeight.w400,
+                    color: DVanilleColors.rose,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "Entre em contato com a D'Vanille",
+                  textAlign: TextAlign.center,
+                  style: AppTheme.display(
+                    size: 24,
+                    weight: FontWeight.w600,
+                    color: DVanilleColors.darkTaupe,
+                  ).copyWith(
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 32),
           ContentWidth(
             child: estreito
-                ? Column(children: [
-                    informacoes,
-                    const SizedBox(height: 22),
-                    formulario,
-                  ])
+                ? Column(
+                    children: [
+                      informacoes,
+                      const SizedBox(height: 22),
+                      formulario,
+                    ],
+                  )
                 : Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(flex: 10, child: informacoes),
+                      Expanded(
+                        flex: 10,
+                        child: informacoes,
+                      ),
                       const SizedBox(width: 28),
-                      Expanded(flex: 12, child: formulario),
+                      Expanded(
+                        flex: 12,
+                        child: formulario,
+                      ),
                     ],
                   ),
           ),
@@ -140,15 +284,58 @@ class _ContatoPageState extends State<ContatoPage> {
     );
   }
 
-  Widget _linha(IconData icone, String texto) {
+  Widget _linha(
+    IconData icone,
+    String texto,
+  ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        vertical: 6,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icone, size: 18, color: DVanilleColors.rose),
+          Icon(
+            icone,
+            size: 18,
+            color: DVanilleColors.rose,
+          ),
           const SizedBox(width: 10),
-          Expanded(child: Text(texto, style: const TextStyle(fontSize: 14.5))),
+          Expanded(
+            child: Text(
+              texto,
+              style: const TextStyle(
+                fontSize: 14.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _linhaInstagram(String texto) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        vertical: 6,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SvgPicture.asset(
+            'assets/images/instalogo.svg',
+            width: 18,
+            height: 18,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              texto,
+              style: const TextStyle(
+                fontSize: 14.5,
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -248,7 +248,7 @@ class _TextoProposito extends StatelessWidget {
         ),
         SizedBox(height: 16),
         Text(
-          "A D'Vanille nasceu do desejo de unir gastronomia, tecnologia e bem-estar. Buscamos tornar a experiência de se alimentar fora de casa mais segura e acolhedora para pessoas com restrições alimentares — sem abrir mão do sabor e da beleza de cada receita.",
+          "A D'Vanille nasceu do desejo de unir gastronomia, tecnologia e bem-estar. Buscamos tornar a experiência de se alimentar fora de casa mais segura e acolhedora para pessoas com restrições alimentares, sem abrir mão do sabor e da beleza de cada receita.",
           textAlign: TextAlign.justify,
           style: TextStyle(
             fontSize: 15,
