@@ -42,9 +42,15 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
       padding: const EdgeInsets.all(32),
       child: Column(
         children: [
-          Text('Recuperar senha',
-              style:
-                  AppTheme.display(size: 30, color: DVanilleColors.darkTaupe)),
+          Text(
+            'Recuperar senha',
+            style: const TextStyle(
+              fontFamily: 'CreamCake',
+              fontSize: 42,
+              fontWeight: FontWeight.w400,
+              color: DVanilleColors.rose,
+            ),
+          ),
           const SizedBox(height: 8),
           const Text(
             'Informe seu e-mail cadastrado para receber o link de recuperação.',
@@ -79,9 +85,14 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
       children: [
         const IconeSucesso(),
         const SizedBox(height: 20),
-        Text('Email enviado com sucesso!',
-            textAlign: TextAlign.center,
-            style: AppTheme.display(size: 30, color: DVanilleColors.darkTaupe)),
+        Text(
+          'Email enviado com sucesso!',
+          textAlign: TextAlign.center,
+          style: AppTheme.display(
+            size: 30,
+            color: DVanilleColors.darkTaupe,
+          ),
+        ),
         const SizedBox(height: 10),
         const Text(
           'Enviamos um link de recuperação para o e-mail informado.',
@@ -112,7 +123,11 @@ class IconeSucesso extends StatelessWidget {
         shape: BoxShape.circle,
       ),
       alignment: Alignment.center,
-      child: const Icon(Icons.check, size: 40, color: Color(0xFF3D6B3A)),
+      child: const Icon(
+        Icons.check,
+        size: 40,
+        color: Color(0xFF3D6B3A),
+      ),
     );
   }
 }

@@ -12,12 +12,22 @@ class CheckoutPage extends StatelessWidget {
 
   void _confirmar(BuildContext context, String modo) {
     final state = AppState.instance;
+
     if (state.carrinho.isEmpty) {
-      showToast('Seu carrinho está vazio.', '⚠️');
+      showToast(
+        'Seu carrinho está vazio.',
+        '⚠️',
+      );
       return;
     }
+
     final pedido = state.criarPedido(modo);
-    showToast('Pedido realizado com sucesso!', '🎉');
+
+    showToast(
+      'Pedido realizado com sucesso!',
+      'confete.svg',
+    );
+
     Navigator.of(context).pushNamedAndRemoveUntil(
       Routes.pedidoConfirmado,
       (r) => false,
@@ -35,37 +45,68 @@ class CheckoutPage extends StatelessWidget {
         listenable: state,
         builder: (context, _) {
           final u = state.usuarioLogado;
+
           final dados = InfoBox(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Dados do cliente',
-                    style: AppTheme.display(
-                        size: 22, color: DVanilleColors.darkTaupe)),
+                Text(
+                  'Dados do cliente',
+                  style: AppTheme.display(
+                    size: 22,
+                    color: DVanilleColors.darkTaupe,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Text(u?.nome ?? ''),
                 Text(u?.email ?? ''),
                 Text(u?.telefone ?? ''),
                 const SizedBox(height: 22),
-                Text('Itens do pedido',
-                    style: AppTheme.display(
-                        size: 22, color: DVanilleColors.darkTaupe)),
+                Text(
+                  'Itens do pedido',
+                  style: AppTheme.display(
+                    size: 22,
+                    color: DVanilleColors.darkTaupe,
+                  ),
+                ),
                 const SizedBox(height: 8),
-                ...state.carrinho.map((i) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(child: Text('${i.qtd}x ${i.nome}')),
-                          Text(money(i.subtotal)),
-                        ],
-                      ),
-                    )),
-                const Divider(color: DVanilleColors.line),
-                _linha('Subtotal', money(state.subtotal)),
+                ...state.carrinho.map(
+                  (i) => Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 4,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${i.qtd}x ${i.nome}',
+                          ),
+                        ),
+                        Text(
+                          money(i.subtotal),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Divider(
+                  color: DVanilleColors.line,
+                ),
+                _linha(
+                  'Subtotal',
+                  money(state.subtotal),
+                ),
                 if (state.cupomAplicado != null)
-                  _linha('Desconto', '- ${money(state.desconto)}'),
-                _linha('Total', money(state.total), destaque: true),
+                  _linha(
+                    'Desconto',
+                    '- ${money(state.desconto)}',
+                  ),
+                _linha(
+                  'Total',
+                  money(state.total),
+                  destaque: true,
+                ),
               ],
             ),
           );
@@ -74,26 +115,41 @@ class CheckoutPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Como deseja prosseguir?',
-                    style: AppTheme.display(
-                        size: 22, color: DVanilleColors.darkTaupe)),
+                Text(
+                  'Como deseja prosseguir?',
+                  style: AppTheme.display(
+                    size: 22,
+                    color: DVanilleColors.darkTaupe,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 const DicaCampo(
-                    'Este protótipo representa o atendimento presencial da cafeteria.'),
+                  'Válido para atendimento presencial.',
+                ),
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: () => _confirmar(context, 'caixa'),
-                    child: const Text('Enviar pedido ao caixa'),
+                    onPressed: () => _confirmar(
+                      context,
+                      'caixa',
+                    ),
+                    child: const Text(
+                      'Enviar pedido ao caixa',
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
-                    onPressed: () => _confirmar(context, 'retirar'),
-                    child: const Text('Retirar na cafeteria'),
+                    onPressed: () => _confirmar(
+                      context,
+                      'retirar',
+                    ),
+                    child: const Text(
+                      'Retirar na cafeteria',
+                    ),
                   ),
                 ),
               ],
@@ -104,25 +160,54 @@ class CheckoutPage extends StatelessWidget {
             children: [
               const SizedBox(height: 56),
               const ContentWidth(
-                child: SectionHead(
-                  eyebrow: 'Confirme os dados',
-                  titulo: 'Finalização do pedido',
+                child: Column(
+                  children: [
+                    Text(
+                      'Finalizar pedido',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'CreamCake',
+                        fontSize: 48,
+                        fontWeight: FontWeight.w400,
+                        color: DVanilleColors.rose,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Confirme os dados do seu pedido',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w600,
+                        fontStyle: FontStyle.italic,
+                        color: DVanilleColors.darkTaupe,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 50),
               ContentWidth(
                 child: estreito
-                    ? Column(children: [
-                        dados,
-                        const SizedBox(height: 22),
-                        acoes,
-                      ])
+                    ? Column(
+                        children: [
+                          dados,
+                          const SizedBox(height: 22),
+                          acoes,
+                        ],
+                      )
                     : Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(flex: 13, child: dados),
+                          Expanded(
+                            flex: 13,
+                            child: dados,
+                          ),
                           const SizedBox(width: 28),
-                          Expanded(flex: 10, child: acoes),
+                          Expanded(
+                            flex: 10,
+                            child: acoes,
+                          ),
                         ],
                       ),
               ),
@@ -133,17 +218,33 @@ class CheckoutPage extends StatelessWidget {
     );
   }
 
-  Widget _linha(String titulo, String valor, {bool destaque = false}) {
+  Widget _linha(
+    String titulo,
+    String valor, {
+    bool destaque = false,
+  }) {
     final estilo = TextStyle(
       fontSize: destaque ? 18 : 14.5,
       fontWeight: destaque ? FontWeight.w800 : FontWeight.w500,
       color: destaque ? DVanilleColors.darkTaupe : null,
     );
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
+      padding: const EdgeInsets.symmetric(
+        vertical: 5,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [Text(titulo, style: estilo), Text(valor, style: estilo)],
+        children: [
+          Text(
+            titulo,
+            style: estilo,
+          ),
+          Text(
+            valor,
+            style: estilo,
+          ),
+        ],
       ),
     );
   }

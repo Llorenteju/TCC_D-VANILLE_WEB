@@ -20,6 +20,7 @@ class DVanilleHeader extends StatelessWidget {
     ['CONTATO', Routes.contato],
     ['OFERTAS', Routes.ofertas],
     ['SHOPPING', Routes.shopping],
+    ['RESERVAS', Routes.reservas],
   ];
 
   void _ir(BuildContext context, String rota) {
@@ -328,21 +329,6 @@ class DVanilleHeader extends StatelessWidget {
                   );
                 },
               ),
-            ListTile(
-              title: const Text(
-                'RESERVAS',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                _ir(
-                  context,
-                  Routes.reservas,
-                );
-              },
-            ),
             if (state.logado)
               ListTile(
                 title: const Text(

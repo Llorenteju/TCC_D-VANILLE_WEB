@@ -48,7 +48,6 @@ class HomePage extends StatelessWidget {
               ContentWidth(
                 child: Column(
                   children: [
-                    // TÍTULO ROSA
                     Text(
                       'Nossa proposta',
                       textAlign: TextAlign.center,
@@ -59,9 +58,7 @@ class HomePage extends StatelessWidget {
                         color: DVanilleColors.rose,
                       ),
                     ),
-
                     const SizedBox(height: 6),
-
                     const Text(
                       'Sabor, acolhimento e inclusão em cada detalhe.',
                       textAlign: TextAlign.center,
@@ -71,9 +68,7 @@ class HomePage extends StatelessWidget {
                         color: DVanilleColors.darkTaupe,
                       ),
                     ),
-
                     const SizedBox(height: 10),
-
                     const Text(
                       "Cada produto da D'Vanille traz ingredientes, informações nutricionais e indicação de restrições alimentares de forma clara, para que você escolha com segurança e prazer.",
                       textAlign: TextAlign.center,
@@ -83,9 +78,7 @@ class HomePage extends StatelessWidget {
                         color: DVanilleColors.ink,
                       ),
                     ),
-
                     const SizedBox(height: 30),
-
                     _categorias(context),
                   ],
                 ),
@@ -93,7 +86,6 @@ class HomePage extends StatelessWidget {
 
               const SizedBox(height: 64),
 
-              // PRODUTOS EM DESTAQUE
               Container(
                 width: double.infinity,
                 color: Theme.of(context).cardColor,
@@ -145,7 +137,6 @@ class HomePage extends StatelessWidget {
 
               const SizedBox(height: 64),
 
-              // OFERTAS
               ContentWidth(
                 child: Column(
                   children: [
@@ -194,7 +185,18 @@ class HomePage extends StatelessWidget {
 
               const SizedBox(height: 64),
 
+              // ============================================================
+              // APP D'VANILLE
+              // ============================================================
+
+              _secaoAplicativo(context),
+
+              const SizedBox(height: 64),
+
+              // ============================================================
               // LOCALIZAÇÃO E HORÁRIO
+              // ============================================================
+
               Container(
                 width: double.infinity,
                 color: Theme.of(context).cardColor,
@@ -263,16 +265,14 @@ class HomePage extends StatelessWidget {
                   ),
                 ),
               ),
+
+              const SizedBox(height: 64),
             ],
           );
         },
       ),
     );
   }
-
-  // ============================================================
-  // HERO
-  // ============================================================
 
   Widget _hero(BuildContext context) {
     return ContentWidth(
@@ -295,7 +295,6 @@ class HomePage extends StatelessWidget {
               height: 0.95,
             ),
           ),
-
           Transform.translate(
             offset: const Offset(0, -5),
             child: Text(
@@ -310,9 +309,7 @@ class HomePage extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 4),
-
           ConstrainedBox(
             constraints: const BoxConstraints(
               maxWidth: 600,
@@ -327,9 +324,7 @@ class HomePage extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 26),
-
           Wrap(
             spacing: 14,
             runSpacing: 12,
@@ -355,10 +350,7 @@ class HomePage extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 44),
-
-          // IMAGEM DA CAFETERIA
           ClipRRect(
             borderRadius: BorderRadius.circular(28),
             child: Image.asset(
@@ -373,25 +365,521 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // ============================================================
-  // CATEGORIAS
-  // ============================================================
+  Widget _secaoAplicativo(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 24,
+        vertical: 56,
+      ),
+      decoration: BoxDecoration(
+        color: DVanilleColors.blush2,
+        borderRadius: BorderRadius.circular(32),
+      ),
+      child: ContentWidth(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final estreito = constraints.maxWidth < 800;
+
+            final texto = Column(
+              crossAxisAlignment: estreito
+                  ? CrossAxisAlignment.center
+                  : CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Sua comida favorita na palma da sua mão',
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                    fontFamily: 'CreamCake',
+                    fontSize: 42,
+                    fontWeight: FontWeight.w400,
+                    color: DVanilleColors.rose,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Deu vontade? A D’Vanille vai até você.',
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                    fontSize: 23,
+                    fontWeight: FontWeight.w700,
+                    color: DVanilleColors.darkTaupe,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Peça suas delícias favoritas pelo nosso app e receba no conforto de casa.',
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                    fontSize: 16,
+                    height: 1.6,
+                    color: DVanilleColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  alignment:
+                      estreito ? WrapAlignment.center : WrapAlignment.start,
+                  children: [
+                    FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: DVanilleColors.darkTaupe,
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: const Text(
+                                'App D’Vanille',
+                              ),
+                              content: const Text(
+                                'Em breve você poderá baixar o aplicativo D’Vanille e fazer seus pedidos por delivery.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text(
+                                    'Fechar',
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                      child: const Text(
+                        'Pedir pelo app',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 28),
+                Wrap(
+                  spacing: 18,
+                  runSpacing: 12,
+                  alignment:
+                      estreito ? WrapAlignment.center : WrapAlignment.start,
+                  children: const [
+                    _BeneficioApp(
+                      icone: Icons.delivery_dining_outlined,
+                      texto: 'Delivery sem complicação',
+                    ),
+                    _BeneficioApp(
+                      icone: Icons.favorite_border,
+                      texto: 'Escolha seus favoritos',
+                    ),
+                    _BeneficioApp(
+                      icone: Icons.home_outlined,
+                      texto: 'Receba onde estiver',
+                    ),
+                  ],
+                ),
+              ],
+            );
+
+            // ============================================================
+            // MOCKUP DO CELULAR
+            // Tela inicial de um smartphone.
+            // ============================================================
+
+            final celular = Container(
+              width: estreito ? 220 : 250,
+              height: estreito ? 420 : 470,
+              decoration: BoxDecoration(
+                color: DVanilleColors.ink,
+                borderRadius: BorderRadius.circular(38),
+                boxShadow: const [
+                  BoxShadow(
+                    blurRadius: 25,
+                    offset: Offset(0, 12),
+                    color: Color(0x30000000),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(9),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(30),
+
+                  // FUNDO MAIS ESCURO PARA DAR CONTRASTE AO ÍCONE
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF9C8A73),
+                      Color(0xFF7C6C58),
+                      Color(0xFF9C8A73),
+                    ],
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    // Fundo decorativo da tela inicial.
+                    Positioned.fill(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(30),
+                        child: CustomPaint(
+                          painter: _CelularWallpaperPainter(),
+                        ),
+                      ),
+                    ),
+
+                    Column(
+                      children: [
+                        const SizedBox(height: 10),
+
+                        // NOTCH / CÂMERA
+                        Container(
+                          width: 78,
+                          height: 22,
+                          decoration: BoxDecoration(
+                            color: DVanilleColors.ink,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Center(
+                            child: Container(
+                              width: 7,
+                              height: 7,
+                              decoration: BoxDecoration(
+                                color: DVanilleColors.darkTaupe,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // BARRA DE STATUS
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                '09:41',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: DVanilleColors.cream,
+                                ),
+                              ),
+                              Row(
+                                children: const [
+                                  Icon(
+                                    Icons.signal_cellular_alt,
+                                    size: 12,
+                                    color: DVanilleColors.cream,
+                                  ),
+                                  SizedBox(width: 3),
+                                  Icon(
+                                    Icons.wifi,
+                                    size: 12,
+                                    color: DVanilleColors.cream,
+                                  ),
+                                  SizedBox(width: 3),
+                                  Icon(
+                                    Icons.battery_full,
+                                    size: 14,
+                                    color: DVanilleColors.cream,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // DATA
+                        const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 18,
+                          ),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Quarta-feira',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                color: DVanilleColors.cream,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        // ÍCONES DA TELA INICIAL
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _iconeAplicativo(
+                                Icons.photo_library_outlined,
+                                'Fotos',
+                              ),
+                              _iconeAplicativo(
+                                Icons.calendar_month_outlined,
+                                'Agenda',
+                              ),
+                              _iconeAplicativo(
+                                Icons.music_note_outlined,
+                                'Música',
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _iconeAplicativo(
+                                Icons.camera_alt_outlined,
+                                'Câmera',
+                              ),
+
+                              _iconeAplicativo(
+                                Icons.chat_bubble_outline,
+                                'Mensagens',
+                              ),
+
+                              // APP D'VANILLE
+                              // O SVG aparece inteiro e sem fundo branco.
+                              GestureDetector(
+                                onTap: () {},
+                                child: Column(
+                                  children: [
+                                    SizedBox(
+                                      width: 50,
+                                      height: 50,
+                                      child: SvgPicture.asset(
+                                        'assets/images/app.svg',
+                                        width: 50,
+                                        height: 50,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    const Text(
+                                      'D’Vanille',
+                                      style: TextStyle(
+                                        fontSize: 8.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: DVanilleColors.cream,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 15),
+
+                        // TEXTO DE CHAMADA
+                        Container(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 25,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 9,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(
+                              alpha: 0.22,
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: Colors.white.withValues(
+                                alpha: 0.18,
+                              ),
+                            ),
+                          ),
+                          child: const Text(
+                            'Toque no app D’Vanille para pedir',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              color: DVanilleColors.cream,
+                            ),
+                          ),
+                        ),
+
+                        const Spacer(),
+
+                        // DOCK INFERIOR
+                        Container(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                          ),
+                          height: 58,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(
+                              alpha: 0.25,
+                            ),
+                            borderRadius: BorderRadius.circular(19),
+                            border: Border.all(
+                              color: Colors.white.withValues(
+                                alpha: 0.18,
+                              ),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _iconeDock(
+                                Icons.phone_outlined,
+                              ),
+                              _iconeDock(
+                                Icons.camera_alt_outlined,
+                              ),
+                              _iconeDock(
+                                Icons.chat_bubble_outline,
+                              ),
+                              _iconeDock(
+                                Icons.music_note_outlined,
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // BARRA INFERIOR DO CELULAR
+                        Container(
+                          width: 76,
+                          height: 4,
+                          margin: const EdgeInsets.only(
+                            bottom: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: DVanilleColors.cream,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+
+            if (estreito) {
+              return Column(
+                children: [
+                  texto,
+                  const SizedBox(height: 42),
+                  celular,
+                ],
+              );
+            }
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  flex: 6,
+                  child: texto,
+                ),
+                const SizedBox(width: 70),
+                Expanded(
+                  flex: 4,
+                  child: Center(
+                    child: celular,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _iconeAplicativo(
+    IconData icone,
+    String nome,
+  ) {
+    return Column(
+      children: [
+        Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(
+              alpha: 0.72,
+            ),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(
+            icone,
+            size: 24,
+            color: DVanilleColors.darkTaupe,
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          nome,
+          style: const TextStyle(
+            fontSize: 8.5,
+            fontWeight: FontWeight.w600,
+            color: DVanilleColors.cream,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _iconeDock(IconData icone) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: DVanilleColors.cream,
+        borderRadius: BorderRadius.circular(11),
+      ),
+      child: Icon(
+        icone,
+        size: 20,
+        color: DVanilleColors.darkTaupe,
+      ),
+    );
+  }
 
   Widget _categorias(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         const double espacamento = 12;
 
-        // No desktop, calcula automaticamente uma largura
-        // para que as 6 categorias caibam na mesma linha.
         final double larguraCard =
             (constraints.maxWidth - (espacamento * 5)) / 6;
 
-        // Evita que os cards fiquem grandes demais.
         final double larguraFinal = larguraCard.clamp(145.0, 190.0);
 
-        // Em telas pequenas, usa Wrap para permitir
-        // que os cards quebrem naturalmente.
         if (constraints.maxWidth < 950) {
           return Wrap(
             spacing: espacamento,
@@ -409,8 +897,6 @@ class HomePage extends StatelessWidget {
           );
         }
 
-        // Desktop:
-        // seis categorias ficam alinhadas na mesma linha.
         return Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -433,10 +919,6 @@ class HomePage extends StatelessWidget {
       },
     );
   }
-
-  // ============================================================
-  // CARD DE CATEGORIA
-  // ============================================================
 
   Widget _pilulaCategoria(
     BuildContext context,
@@ -472,8 +954,8 @@ class HomePage extends StatelessWidget {
             if (caminhoImagem != null)
               SvgPicture.asset(
                 caminhoImagem,
-                width: 50,
-                height: 50,
+                width: 62,
+                height: 62,
                 fit: BoxFit.contain,
               ),
             const SizedBox(height: 10),
@@ -493,10 +975,6 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
-
-  // ============================================================
-  // LINHAS DE INFORMAÇÃO
-  // ============================================================
 
   Widget _linhaIcone(
     IconData icone,
@@ -526,5 +1004,147 @@ class HomePage extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _BeneficioApp extends StatelessWidget {
+  final IconData icone;
+  final String texto;
+
+  const _BeneficioApp({
+    required this.icone,
+    required this.texto,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icone,
+          size: 20,
+          color: DVanilleColors.rose,
+        ),
+        const SizedBox(width: 7),
+        Text(
+          texto,
+          style: const TextStyle(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w700,
+            color: DVanilleColors.darkTaupe,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ============================================================
+// PAPEL DE PAREDE DO CELULAR
+// ============================================================
+
+class _CelularWallpaperPainter extends CustomPainter {
+  @override
+  void paint(
+    Canvas canvas,
+    Size size,
+  ) {
+    final paint = Paint()..style = PaintingStyle.fill;
+
+    // Rosa suave para criar contraste sobre o taupe.
+    paint.color = const Color(0xFFEFCDCC).withValues(
+      alpha: 0.28,
+    );
+
+    canvas.drawCircle(
+      Offset(
+        size.width * 0.15,
+        size.height * 0.20,
+      ),
+      70,
+      paint,
+    );
+
+    // Creme suave.
+    paint.color = const Color(0xFFFFEEDD).withValues(
+      alpha: 0.22,
+    );
+
+    canvas.drawCircle(
+      Offset(
+        size.width * 0.90,
+        size.height * 0.42,
+      ),
+      90,
+      paint,
+    );
+
+    // Rosa novamente na parte inferior.
+    paint.color = const Color(0xFFEFCDCC).withValues(
+      alpha: 0.18,
+    );
+
+    canvas.drawCircle(
+      Offset(
+        size.width * 0.30,
+        size.height * 0.82,
+      ),
+      100,
+      paint,
+    );
+
+    // Linhas decorativas claras.
+    final linePaint = Paint()
+      ..color = const Color(0xFFFFF4E8).withValues(
+        alpha: 0.14,
+      )
+      ..strokeWidth = 1.1
+      ..style = PaintingStyle.stroke;
+
+    final path = Path();
+
+    path.moveTo(
+      0,
+      size.height * 0.32,
+    );
+
+    path.quadraticBezierTo(
+      size.width * 0.35,
+      size.height * 0.23,
+      size.width,
+      size.height * 0.34,
+    );
+
+    canvas.drawPath(
+      path,
+      linePaint,
+    );
+
+    final path2 = Path();
+
+    path2.moveTo(
+      0,
+      size.height * 0.67,
+    );
+
+    path2.quadraticBezierTo(
+      size.width * 0.50,
+      size.height * 0.76,
+      size.width,
+      size.height * 0.60,
+    );
+
+    canvas.drawPath(
+      path2,
+      linePaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(
+    covariant CustomPainter oldDelegate,
+  ) {
+    return false;
   }
 }

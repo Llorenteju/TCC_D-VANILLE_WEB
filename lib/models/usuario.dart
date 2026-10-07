@@ -5,6 +5,7 @@ class Usuario {
   String senha;
   String telefone;
   String endereco;
+  int anoAniversario;
 
   /// 'cliente' ou 'admin'
   String tipo;
@@ -18,6 +19,7 @@ class Usuario {
     required this.senha,
     this.telefone = '',
     this.endereco = '',
+    this.anoAniversario = 0,
     this.tipo = 'cliente',
     List<String>? restricoes,
     this.notificacoes = true,

@@ -28,11 +28,25 @@ class _PerfilPageState extends State<PerfilPage> {
   @override
   void initState() {
     super.initState();
+
     final u = state.usuarioLogado;
-    nome = TextEditingController(text: u?.nome ?? '');
-    email = TextEditingController(text: u?.email ?? '');
-    telefone = TextEditingController(text: u?.telefone ?? '');
-    endereco = TextEditingController(text: u?.endereco ?? '');
+
+    nome = TextEditingController(
+      text: u?.nome ?? '',
+    );
+
+    email = TextEditingController(
+      text: u?.email ?? '',
+    );
+
+    telefone = TextEditingController(
+      text: u?.telefone ?? '',
+    );
+
+    endereco = TextEditingController(
+      text: u?.endereco ?? '',
+    );
+
     restricoes = {...?u?.restricoes};
   }
 
@@ -55,9 +69,17 @@ class _PerfilPageState extends State<PerfilPage> {
       novaSenha: senha.text.isEmpty ? null : senha.text,
       restricoes: restricoes.toList(),
     );
+
     senha.clear();
-    setState(() => mensagem = 'Dados atualizados com sucesso!');
-    showToast('Perfil atualizado!', '✓');
+
+    setState(
+      () => mensagem = 'Dados atualizados com sucesso!',
+    );
+
+    showToast(
+      'Perfil atualizado!',
+      '✓',
+    );
   }
 
   @override
@@ -68,10 +90,40 @@ class _PerfilPageState extends State<PerfilPage> {
       child: Column(
         children: [
           const SizedBox(height: 56),
+
+          // ==========================================================
+          // CABEÇALHO
+          // ==========================================================
           const ContentWidth(
-            child: SectionHead(eyebrow: 'Minha conta', titulo: 'Meu perfil'),
+            child: Column(
+              children: [
+                Text(
+                  'Meu perfil',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'CreamCake',
+                    fontSize: 48,
+                    fontWeight: FontWeight.w400,
+                    color: DVanilleColors.rose,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Minha conta',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                    fontStyle: FontStyle.italic,
+                    color: DVanilleColors.darkTaupe,
+                  ),
+                ),
+              ],
+            ),
           ),
+
           const SizedBox(height: 30),
+
           ContentWidth(
             maxWidth: 760,
             child: InfoBox(
@@ -80,17 +132,43 @@ class _PerfilPageState extends State<PerfilPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (mensagem != null)
-                    CaixaAlerta(mensagem!, erro: false),
-                  _linha(estreito, [
-                    _campo(nome, 'Nome'),
-                    _campo(email, 'E-mail'),
-                  ]),
+                    CaixaAlerta(
+                      mensagem!,
+                      erro: false,
+                    ),
+
+                  _linha(
+                    estreito,
+                    [
+                      _campo(
+                        nome,
+                        'Nome',
+                      ),
+                      _campo(
+                        email,
+                        'E-mail',
+                      ),
+                    ],
+                  ),
+
                   const SizedBox(height: 14),
-                  _linha(estreito, [
-                    _campo(telefone, 'Telefone'),
-                    _campo(endereco, 'Endereço'),
-                  ]),
+
+                  _linha(
+                    estreito,
+                    [
+                      _campo(
+                        telefone,
+                        'Telefone',
+                      ),
+                      _campo(
+                        endereco,
+                        'Endereço',
+                      ),
+                    ],
+                  ),
+
                   const SizedBox(height: 14),
+
                   TextField(
                     controller: senha,
                     obscureText: true,
@@ -99,17 +177,25 @@ class _PerfilPageState extends State<PerfilPage> {
                       hintText: 'Deixe em branco para manter a atual',
                     ),
                   ),
+
                   const SizedBox(height: 20),
-                  const Text('Restrições alimentares',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: DVanilleColors.darkTaupe)),
+
+                  const Text(
+                    'Restrições alimentares',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: DVanilleColors.darkTaupe,
+                    ),
+                  ),
+
                   const SizedBox(height: 8),
+
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: restricoesLabels.entries.map((e) {
                       final ativo = restricoes.contains(e.key);
+
                       return FilterChip(
                         label: Text(e.value),
                         selected: ativo,
@@ -125,27 +211,57 @@ class _PerfilPageState extends State<PerfilPage> {
                       );
                     }).toList(),
                   ),
+
                   const SizedBox(height: 24),
+
+                  // ==================================================
+                  // BOTÕES
+                  // ==================================================
                   Wrap(
                     spacing: 12,
                     runSpacing: 12,
                     children: [
                       FilledButton(
-                          onPressed: _salvar,
-                          child: const Text('Salvar alterações')),
+                        onPressed: _salvar,
+                        child: const Text(
+                          'Salvar alterações',
+                        ),
+                      ),
                       OutlinedButton(
                         onPressed: () => Navigator.pushNamed(
-                            context, Routes.meusPedidos),
-                        child: const Text('Meus pedidos'),
+                          context,
+                          Routes.meusPedidos,
+                        ),
+                        child: const Text(
+                          'Meus pedidos',
+                        ),
+                      ),
+                      OutlinedButton(
+                        onPressed: () => Navigator.pushNamed(
+                          context,
+                          Routes.minhasReservas,
+                        ),
+                        child: const Text(
+                          'Minhas reservas',
+                        ),
                       ),
                       TextButton(
                         onPressed: () {
                           state.logout();
-                          showToast('Você saiu da sua conta.', '👋');
+
+                          showToast(
+                            'Você saiu da sua conta.',
+                            '👋',
+                          );
+
                           Navigator.of(context).pushNamedAndRemoveUntil(
-                              Routes.home, (r) => false);
+                            Routes.home,
+                            (r) => false,
+                          );
                         },
-                        child: const Text('Sair da conta'),
+                        child: const Text(
+                          'Sair da conta',
+                        ),
                       ),
                     ],
                   ),
@@ -158,10 +274,22 @@ class _PerfilPageState extends State<PerfilPage> {
     );
   }
 
-  Widget _campo(TextEditingController c, String label) =>
-      TextField(controller: c, decoration: InputDecoration(labelText: label));
+  Widget _campo(
+    TextEditingController c,
+    String label,
+  ) {
+    return TextField(
+      controller: c,
+      decoration: InputDecoration(
+        labelText: label,
+      ),
+    );
+  }
 
-  Widget _linha(bool estreito, List<Widget> filhos) {
+  Widget _linha(
+    bool estreito,
+    List<Widget> filhos,
+  ) {
     if (estreito) {
       return Column(
         children: [
@@ -171,11 +299,16 @@ class _PerfilPageState extends State<PerfilPage> {
         ],
       );
     }
+
     return Row(
       children: [
-        Expanded(child: filhos[0]),
+        Expanded(
+          child: filhos[0],
+        ),
         const SizedBox(width: 14),
-        Expanded(child: filhos[1]),
+        Expanded(
+          child: filhos[1],
+        ),
       ],
     );
   }

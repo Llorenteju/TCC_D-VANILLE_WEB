@@ -106,7 +106,7 @@ class _CardapioPageState extends State<CardapioPage> {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 15,
-                        color: DVanilleColors.ink,
+                        color: DVanilleColors.darkTaupe,
                       ),
                     ),
                   ],
@@ -128,8 +128,10 @@ class _CardapioPageState extends State<CardapioPage> {
                     if (recomendados.isNotEmpty) ...[
                       Text(
                         'Recomendado para você',
-                        style: AppTheme.display(
-                          size: 24,
+                        style: const TextStyle(
+                          fontFamily: 'CreamCake',
+                          fontSize: 36,
+                          fontWeight: FontWeight.w400,
                           color: DVanilleColors.darkTaupe,
                         ),
                       ),

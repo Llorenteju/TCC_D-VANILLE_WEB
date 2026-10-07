@@ -13,6 +13,9 @@ dependencies:
   flutter:
     sdk: flutter
 
+  flutter_localizations:
+    sdk: flutter
+
   flutter_svg: ^2.2.0
 
 dev_dependencies:
@@ -41,3 +44,14 @@ flutter:
     - assets/images/sobremesagelada.svg
     - assets/images/bebidaquente.svg
     - assets/images/bebidagelada.svg
+    - assets/images/cadeado.svg
+    - assets/images/presente.svg
+    - assets/images/lupa.svg
+    - assets/images/palmas.svg
+    - assets/images/sacola_lacinho.png
+    - assets/images/carrinho.svg
+    - assets/images/lixeira.svg
+    - assets/images/cupom.svg
+    - assets/images/agenda.svg
+    - assets/images/confete.svg
+    - assets/images/app.svg

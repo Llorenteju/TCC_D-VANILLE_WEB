@@ -173,7 +173,7 @@ class ProductCard extends StatelessWidget {
       ),
       onPressed: () {
         AppState.instance.adicionarProduto(produto);
-        showToast('Produto adicionado ao carrinho!', '🛒');
+        showToast('Produto adicionado ao carrinho!', 'carrinho.svg');
       },
       child: Text(largo ? 'Adicionar ao carrinho' : '+ Carrinho'),
     );
