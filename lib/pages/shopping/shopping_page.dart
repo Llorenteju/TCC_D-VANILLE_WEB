@@ -38,10 +38,14 @@ class _ShoppingPageState extends State<ShoppingPage> {
   }
 
   void _adicionar() {
-    if (nome.text.trim().isEmpty) {
-      setState(() {
-        erro = 'Informe o nome do presenteado.';
-      });
+    final destinatario = nome.text.trim();
+    final textoMensagem = mensagem.text.trim();
+
+    if (destinatario.isEmpty) {
+      showToast(
+        'Informe o nome de quem receberá o vale-presente.',
+        'presente.svg',
+      );
       return;
     }
 
@@ -50,27 +54,23 @@ class _ShoppingPageState extends State<ShoppingPage> {
     state.adicionarItem(
       ItemCarrinho(
         id: 'gift-${DateTime.now().millisecondsSinceEpoch}',
-        nome:
-            "Vale-presente D'Vanille (${money(valor)}) — para ${nome.text.trim()}",
+        nome: "Vale-presente D'Vanille (${money(valor)})",
         preco: valor,
         icon: '🎁',
+        tipo: TipoItemCarrinho.valePresente,
+        destinatario: destinatario,
+        mensagem: textoMensagem,
       ),
     );
 
-    state.emitirValePresente(
-      valor: valor,
-      destinatario: nome.text.trim(),
-      mensagem: mensagem.text.trim(),
-    );
-
     showToast(
-      'Produto adicionado ao carrinho!',
+      'Vale-presente adicionado ao carrinho!',
       'presente.svg',
     );
 
     Navigator.of(context).pushNamedAndRemoveUntil(
       Routes.carrinho,
-      (r) => false,
+      (route) => false,
     );
   }
 

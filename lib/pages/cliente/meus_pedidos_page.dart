@@ -22,9 +22,32 @@ class MeusPedidosPage extends StatelessWidget {
           return Column(
             children: [
               const SizedBox(height: 56),
-              const ContentWidth(
-                child: SectionHead(
-                    eyebrow: 'Histórico', titulo: 'Meus pedidos'),
+              ContentWidth(
+                child: Column(
+                  children: [
+                    Text(
+                      'Meus pedidos',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'CreamCake',
+                        fontSize: 48,
+                        fontWeight: FontWeight.w400,
+                        color: DVanilleColors.rose,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Acompanhe seus pedidos',
+                      textAlign: TextAlign.center,
+                      style: AppTheme.display(
+                        size: 24,
+                        color: DVanilleColors.darkTaupe,
+                      ).copyWith(
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 30),
               if (meus.isEmpty)
@@ -32,9 +55,11 @@ class MeusPedidosPage extends StatelessWidget {
                   emoji: '📦',
                   titulo: 'Você ainda não fez nenhum pedido.',
                   acao: FilledButton(
-                    onPressed: () => Navigator.of(context)
-                        .pushNamedAndRemoveUntil(
-                            Routes.cardapio, (r) => false),
+                    onPressed: () =>
+                        Navigator.of(context).pushNamedAndRemoveUntil(
+                      Routes.cardapio,
+                      (r) => false,
+                    ),
                     child: const Text('Ver cardápio'),
                   ),
                 )
@@ -42,48 +67,55 @@ class MeusPedidosPage extends StatelessWidget {
                 ContentWidth(
                   child: Column(
                     children: meus
-                        .map((p) => Container(
-                              margin: const EdgeInsets.only(bottom: 14),
-                              child: InfoBox(
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Text(p.id,
-                                            style: const TextStyle(
-                                                fontWeight:
-                                                    FontWeight.w800,
-                                                fontSize: 16)),
-                                        const SizedBox(width: 12),
-                                        StatusPill(p.status),
-                                        const Spacer(),
-                                        Text(money(p.total),
-                                            style: const TextStyle(
-                                                fontWeight:
-                                                    FontWeight.w800,
-                                                color: DVanilleColors
-                                                    .darkTaupe)),
-                                      ],
+                        .map(
+                          (p) => Container(
+                            margin: const EdgeInsets.only(bottom: 14),
+                            child: InfoBox(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        p.id,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      StatusPill(p.status),
+                                      const Spacer(),
+                                      Text(
+                                        money(p.total),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          color: DVanilleColors.darkTaupe,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  DicaCampo(p.data),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    p.resumoItens,
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  OutlinedButton(
+                                    onPressed: () => Navigator.pushNamed(
+                                      context,
+                                      Routes.acompanharPedido,
+                                      arguments: p.id,
                                     ),
-                                    const SizedBox(height: 6),
-                                    DicaCampo(p.data),
-                                    const SizedBox(height: 6),
-                                    Text(p.resumoItens,
-                                        style:
-                                            const TextStyle(fontSize: 14)),
-                                    const SizedBox(height: 12),
-                                    OutlinedButton(
-                                      onPressed: () => Navigator.pushNamed(
-                                          context, Routes.acompanharPedido,
-                                          arguments: p.id),
-                                      child: const Text('Ver pedido'),
-                                    ),
-                                  ],
-                                ),
+                                    child: const Text('Ver pedido'),
+                                  ),
+                                ],
                               ),
-                            ))
+                            ),
+                          ),
+                        )
                         .toList(),
                   ),
                 ),

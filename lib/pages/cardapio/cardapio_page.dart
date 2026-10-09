@@ -22,21 +22,39 @@ class _CardapioPageState extends State<CardapioPage> {
 
   String categoria = 'todas';
   String busca = '';
+  String? mesa;
+
   final Set<String> filtros = {};
+
   bool _argumentoLido = false;
+
+  bool get modoMesa => mesa != null && mesa!.trim().isNotEmpty;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
     if (_argumentoLido) return;
-
     _argumentoLido = true;
 
-    final arg = ModalRoute.of(context)?.settings.arguments;
+    final argumentos = ModalRoute.of(context)?.settings.arguments;
 
-    if (arg is String && arg.isNotEmpty) {
-      categoria = arg;
+    if (argumentos is String && argumentos.isNotEmpty) {
+      categoria = argumentos;
+    } else if (argumentos is Map) {
+      final modo = argumentos['modo']?.toString();
+      final numeroMesa = argumentos['mesa']?.toString().trim();
+
+      // Somente a navegação identificada como "mesa" libera pedidos.
+      if (modo == 'mesa' && numeroMesa != null && numeroMesa.isNotEmpty) {
+        mesa = numeroMesa;
+      }
+
+      final categoriaRecebida = argumentos['categoria']?.toString();
+
+      if (categoriaRecebida != null && categoriaRecebida.isNotEmpty) {
+        categoria = categoriaRecebida;
+      }
     }
   }
 
@@ -51,7 +69,10 @@ class _CardapioPageState extends State<CardapioPage> {
     final estreito = MediaQuery.sizeOf(context).width < 760;
 
     return PageShell(
-      activeRoute: Routes.cardapio,
+      activeRoute: modoMesa ? null : Routes.cardapio,
+      mostrarCabecalho: !modoMesa,
+      mostrarRodape: !modoMesa,
+      mostrarCarrinho: modoMesa,
       child: ListenableBuilder(
         listenable: state,
         builder: (context, _) {
@@ -65,11 +86,7 @@ class _CardapioPageState extends State<CardapioPage> {
 
           return Column(
             children: [
-              const SizedBox(height: 56),
-
-              // ==========================================================
-              // CABEÇALHO DO CARDÁPIO
-              // ==========================================================
+              SizedBox(height: modoMesa ? 28 : 56),
               ContentWidth(
                 child: Column(
                   children: [
@@ -84,47 +101,49 @@ class _CardapioPageState extends State<CardapioPage> {
                       ),
                     ),
                     const SizedBox(height: 4),
-
-                    // SUBTÍTULO
                     Text(
-                      'Escolha com clareza e sabor',
+                      modoMesa
+                          ? 'Faça seu pedido à mesa'
+                          : 'Escolha com clareza e sabor',
                       textAlign: TextAlign.center,
                       style: AppTheme.display(
                         size: 24,
                         weight: FontWeight.w600,
                         color: DVanilleColors.darkTaupe,
-                      ).copyWith(
-                        fontStyle: FontStyle.italic,
-                      ),
+                      ).copyWith(fontStyle: FontStyle.italic),
                     ),
-
                     const SizedBox(height: 10),
-
-                    // DESCRIÇÃO
-                    const Text(
-                      'Pesquise, filtre por restrições alimentares e veja tudo sobre ingredientes e valores nutricionais.',
+                    Text(
+                      modoMesa
+                          ? 'Mesa $mesa · Escolha os produtos que deseja pedir.'
+                          : 'Pesquise, filtre por restrições alimentares e veja tudo sobre ingredientes e valores nutricionais.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 15,
                         color: DVanilleColors.darkTaupe,
                       ),
                     ),
+                    if (modoMesa) ...[
+                      const SizedBox(height: 18),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).pushNamed(
+                            Routes.comandaMesa,
+                            arguments: {'mesa': mesa},
+                          );
+                        },
+                        icon: const Icon(Icons.receipt_long_outlined),
+                        label: const Text('Ver comanda da mesa'),
+                      ),
+                    ],
                   ],
                 ),
               ),
-
               const SizedBox(height: 36),
-
-              // ==========================================================
-              // CONTEÚDO
-              // ==========================================================
               ContentWidth(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ======================================================
-                    // RECOMENDADOS
-                    // ======================================================
                     if (recomendados.isNotEmpty) ...[
                       Text(
                         'Recomendado para você',
@@ -142,13 +161,11 @@ class _CardapioPageState extends State<CardapioPage> {
                       const SizedBox(height: 16),
                       GradeProdutos(
                         produtos: recomendados,
+                        permitirAdicionar: modoMesa,
+                        mesa: modoMesa ? mesa : null,
                       ),
                       const SizedBox(height: 44),
                     ],
-
-                    // ======================================================
-                    // CATEGORIAS
-                    // ======================================================
                     Center(
                       child: Wrap(
                         alignment: WrapAlignment.center,
@@ -159,9 +176,7 @@ class _CardapioPageState extends State<CardapioPage> {
                             label: 'Todas',
                             ativo: categoria == 'todas',
                             onTap: () {
-                              setState(() {
-                                categoria = 'todas';
-                              });
+                              setState(() => categoria = 'todas');
                             },
                           ),
                           for (final c in categorias)
@@ -169,22 +184,15 @@ class _CardapioPageState extends State<CardapioPage> {
                               label: c.label,
                               ativo: categoria == c.id,
                               onTap: () {
-                                setState(() {
-                                  categoria = c.id;
-                                });
+                                setState(() => categoria = c.id);
                               },
                             ),
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 26),
-
-                    // ======================================================
-                    // LAYOUT RESPONSIVO
-                    // ======================================================
                     if (estreito) ...[
-                      _painelFiltros(context),
+                      _painelFiltros(),
                       const SizedBox(height: 20),
                       _campoBusca(),
                       const SizedBox(height: 24),
@@ -195,7 +203,7 @@ class _CardapioPageState extends State<CardapioPage> {
                         children: [
                           SizedBox(
                             width: 250,
-                            child: _painelFiltros(context),
+                            child: _painelFiltros(),
                           ),
                           const SizedBox(width: 28),
                           Expanded(
@@ -212,6 +220,20 @@ class _CardapioPageState extends State<CardapioPage> {
                   ],
                 ),
               ),
+              if (modoMesa) ...[
+                const SizedBox(height: 36),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).pushNamed(
+                      Routes.comandaMesa,
+                      arguments: {'mesa': mesa},
+                    );
+                  },
+                  icon: const Icon(Icons.receipt_long_outlined),
+                  label: const Text('Voltar para a comanda'),
+                ),
+                const SizedBox(height: 24),
+              ],
             ],
           );
         },
@@ -219,17 +241,11 @@ class _CardapioPageState extends State<CardapioPage> {
     );
   }
 
-  // =========================================================================
-  // CAMPO DE BUSCA
-  // =========================================================================
-
   Widget _campoBusca() {
     return TextField(
       controller: buscaController,
-      onChanged: (v) {
-        setState(() {
-          busca = v;
-        });
+      onChanged: (valor) {
+        setState(() => busca = valor);
       },
       decoration: const InputDecoration(
         prefixIcon: Icon(
@@ -238,27 +254,21 @@ class _CardapioPageState extends State<CardapioPage> {
         ),
         hintText: 'Pesquisar produtos, ex: café, cupcake, sem glúten...',
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.all(
-            Radius.circular(999),
-          ),
+          borderRadius: BorderRadius.all(Radius.circular(999)),
           borderSide: BorderSide(
             color: DVanilleColors.line,
             width: 1.5,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.all(
-            Radius.circular(999),
-          ),
+          borderRadius: BorderRadius.all(Radius.circular(999)),
           borderSide: BorderSide(
             color: DVanilleColors.line,
             width: 1.5,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.all(
-            Radius.circular(999),
-          ),
+          borderRadius: BorderRadius.all(Radius.circular(999)),
           borderSide: BorderSide(
             color: DVanilleColors.rose,
             width: 2,
@@ -268,11 +278,7 @@ class _CardapioPageState extends State<CardapioPage> {
     );
   }
 
-  // =========================================================================
-  // PAINEL DE FILTROS
-  // =========================================================================
-
-  Widget _painelFiltros(BuildContext context) {
+  Widget _painelFiltros() {
     return InfoBox(
       padding: const EdgeInsets.all(18),
       child: Column(
@@ -298,17 +304,15 @@ class _CardapioPageState extends State<CardapioPage> {
                 });
               },
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 2,
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 2),
                 child: Row(
                   children: [
                     Checkbox(
                       value: filtros.contains(entrada.key),
                       activeColor: DVanilleColors.taupe,
-                      onChanged: (v) {
+                      onChanged: (valor) {
                         setState(() {
-                          if (v == true) {
+                          if (valor == true) {
                             filtros.add(entrada.key);
                           } else {
                             filtros.remove(entrada.key);
@@ -334,10 +338,6 @@ class _CardapioPageState extends State<CardapioPage> {
     );
   }
 
-  // =========================================================================
-  // RESULTADOS
-  // =========================================================================
-
   Widget _resultado(List<Produto> lista) {
     if (lista.isEmpty) {
       return const EstadoVazio(
@@ -350,6 +350,8 @@ class _CardapioPageState extends State<CardapioPage> {
 
     return GradeProdutos(
       produtos: lista,
+      permitirAdicionar: modoMesa,
+      mesa: modoMesa ? mesa : null,
     );
   }
 }

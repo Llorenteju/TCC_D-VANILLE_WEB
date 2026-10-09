@@ -52,39 +52,19 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
             return EstadoVazio(
               emoji: 'carrinho.svg',
               titulo: 'Seu carrinho está vazio',
-              acao: Column(
-                children: [
-                  FilledButton(
-                    onPressed: () =>
-                        Navigator.of(context).pushNamedAndRemoveUntil(
-                      Routes.cardapio,
-                      (r) => false,
-                    ),
-                    child: const Text(
-                      'Voltar ao cardápio',
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  OutlinedButton(
-                    onPressed: () => Navigator.pushNamed(
-                      context,
-                      Routes.meusPedidos,
-                    ),
-                    child: const Text(
-                      'Meus pedidos',
-                    ),
-                  ),
-                ],
+              acao: OutlinedButton(
+                onPressed: () => Navigator.pushNamed(
+                  context,
+                  Routes.meusPedidos,
+                ),
+                child: const Text('Meus pedidos'),
               ),
             );
           }
 
           final itens = Column(
-            children: state.carrinho
-                .map(
-                  (i) => _itemCarrinho(i),
-                )
-                .toList(),
+            children:
+                state.carrinho.map((item) => _itemCarrinho(item)).toList(),
           );
 
           final resumo = _resumo(context);
@@ -92,10 +72,6 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
           return Column(
             children: [
               const SizedBox(height: 56),
-
-              // ==========================================================
-              // CABEÇALHO
-              // ==========================================================
               const ContentWidth(
                 child: Column(
                   children: [
@@ -123,9 +99,7 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 65),
-
               ContentWidth(
                 child: estreito
                     ? Column(
@@ -157,12 +131,10 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
   }
 
   Widget _itemCarrinho(ItemCarrinho item) {
-    final ehValePresente = item.icon == '🎁';
+    final ehValePresente = item.ehValePresente;
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        vertical: 16,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: const BoxDecoration(
         border: Border(
           bottom: BorderSide(
@@ -216,6 +188,13 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
                     color: DVanilleColors.darkTaupe,
                   ),
                 ),
+                if (ehValePresente && item.destinatario.trim().isNotEmpty) ...[
+                  const SizedBox(height: 5),
+                  Text(
+                    'Para: ${item.destinatario}',
+                    style: const TextStyle(fontSize: 12.5),
+                  ),
+                ],
               ],
             ),
           ),
@@ -224,22 +203,16 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
             onMenos: () {
               final ultimo = item.qtd <= 1;
 
-              state.alterarQuantidade(
-                item.id,
-                -1,
-              );
+              state.alterarQuantidade(item.id, -1);
 
               if (ultimo) {
                 showToast(
-                  'Produto removido do carrinho.',
+                  'Item removido do carrinho.',
                   'lixeira.svg',
                 );
               }
             },
-            onMais: () => state.alterarQuantidade(
-              item.id,
-              1,
-            ),
+            onMais: () => state.alterarQuantidade(item.id, 1),
           ),
           IconButton(
             tooltip: 'Remover',
@@ -247,7 +220,7 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
               state.removerItem(item.id);
 
               showToast(
-                'Produto removido do carrinho.',
+                'Item removido do carrinho.',
                 'lixeira.svg',
               );
             },
@@ -264,6 +237,9 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
   }
 
   Widget _resumo(BuildContext context) {
+    final temProdutos = state.itensProdutos.isNotEmpty;
+    final temValePresentes = state.itensValePresentes.isNotEmpty;
+
     return InfoBox(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -277,23 +253,24 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
             ),
           ),
           const SizedBox(height: 10),
-          _linhaResumo(
-            'Subtotal',
-            money(state.subtotal),
-          ),
+          _linhaResumo('Subtotal', money(state.subtotal)),
           if (state.cupomAplicado != null)
             _linhaResumo(
               'Desconto (${state.cupomAplicado})',
               '- ${money(state.desconto)}',
             ),
-          const Divider(
-            color: DVanilleColors.line,
-          ),
+          const Divider(color: DVanilleColors.line),
           _linhaResumo(
             'Total',
             money(state.total),
             destaque: true,
           ),
+          if (temProdutos && temValePresentes) ...[
+            const SizedBox(height: 12),
+            const CaixaAlerta(
+              'Os alimentos e os vale-presentes precisam ser finalizados separadamente. Remova um dos tipos de item para continuar.',
+            ),
+          ],
           const SizedBox(height: 16),
           const Text(
             'Cupom de desconto',
@@ -318,9 +295,7 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
               const SizedBox(width: 8),
               OutlinedButton(
                 onPressed: _aplicarCupom,
-                child: const Text(
-                  'Aplicar',
-                ),
+                child: const Text('Aplicar'),
               ),
             ],
           ),
@@ -364,26 +339,13 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: () => Navigator.pushNamed(
-                context,
-                Routes.checkout,
-              ),
-              child: const Text(
-                'Finalizar pedido',
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: TextButton(
-              onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
-                Routes.cardapio,
-                (r) => false,
-              ),
-              child: const Text(
-                'Voltar ao cardápio',
-              ),
+              onPressed: temProdutos && temValePresentes
+                  ? null
+                  : () => Navigator.pushNamed(
+                        context,
+                        Routes.checkout,
+                      ),
+              child: const Text('Finalizar pedido'),
             ),
           ),
         ],
@@ -403,20 +365,12 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
     );
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: 6,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            titulo,
-            style: estilo,
-          ),
-          Text(
-            valor,
-            style: estilo,
-          ),
+          Text(titulo, style: estilo),
+          Text(valor, style: estilo),
         ],
       ),
     );

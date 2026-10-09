@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../../app/app.dart';
@@ -13,8 +14,45 @@ class RecuperarSenhaPage extends StatefulWidget {
 }
 
 class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
-  final email = TextEditingController();
+  final TextEditingController email = TextEditingController();
+
   bool enviado = false;
+  String? erroEmail;
+
+  bool _emailValido(String valor) {
+    final emailNormalizado = valor.trim();
+
+    final regex = RegExp(
+      r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+    );
+
+    return regex.hasMatch(emailNormalizado);
+  }
+
+  void _enviar() {
+    final emailInformado = email.text.trim();
+
+    if (emailInformado.isEmpty) {
+      setState(() {
+        erroEmail = 'Informe seu e-mail.';
+        enviado = false;
+      });
+      return;
+    }
+
+    if (!_emailValido(emailInformado)) {
+      setState(() {
+        erroEmail = 'Digite um e-mail válido. Ex.: nome@email.com';
+        enviado = false;
+      });
+      return;
+    }
+
+    setState(() {
+      erroEmail = null;
+      enviado = true;
+    });
+  }
 
   @override
   void dispose() {
@@ -42,9 +80,9 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
       padding: const EdgeInsets.all(32),
       child: Column(
         children: [
-          Text(
+          const Text(
             'Recuperar senha',
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'CreamCake',
               fontSize: 42,
               fontWeight: FontWeight.w400,
@@ -53,20 +91,36 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Informe seu e-mail cadastrado para receber o link de recuperação.',
+            'Informe seu e-mail cadastrado para receber '
+            'as instruções de recuperação.',
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 22),
           TextField(
             controller: email,
             keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(labelText: 'E-mail'),
+            textInputAction: TextInputAction.done,
+            autocorrect: false,
+            onChanged: (_) {
+              if (erroEmail != null) {
+                setState(() {
+                  erroEmail = null;
+                });
+              }
+            },
+            onSubmitted: (_) => _enviar(),
+            decoration: InputDecoration(
+              labelText: 'E-mail',
+              hintText: 'nome@email.com',
+              errorText: erroEmail,
+              prefixIcon: const Icon(Icons.email_outlined),
+            ),
           ),
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: () => setState(() => enviado = true),
+              onPressed: _enviar,
               child: const Text('Enviar'),
             ),
           ),
@@ -86,7 +140,7 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
         const IconeSucesso(),
         const SizedBox(height: 20),
         Text(
-          'Email enviado com sucesso!',
+          'Solicitação realizada!',
           textAlign: TextAlign.center,
           style: AppTheme.display(
             size: 30,
@@ -95,7 +149,8 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
         ),
         const SizedBox(height: 10),
         const Text(
-          'Enviamos um link de recuperação para o e-mail informado.',
+          'Se o e-mail informado estiver cadastrado, você receberá '
+          'as instruções para recuperar sua senha.',
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
@@ -104,12 +159,21 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
               .pushNamedAndRemoveUntil(Routes.login, (r) => false),
           child: const Text('Voltar ao login'),
         ),
+        TextButton(
+          onPressed: () {
+            setState(() {
+              enviado = false;
+              erroEmail = null;
+            });
+          },
+          child: const Text('Tentar outro e-mail'),
+        ),
       ],
     );
   }
 }
 
-/// Círculo verde com o "check" usado nas telas de sucesso.
+/// Ícone compartilhado pelas telas de confirmação.
 class IconeSucesso extends StatelessWidget {
   const IconeSucesso({super.key});
 

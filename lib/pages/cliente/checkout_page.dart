@@ -10,12 +10,114 @@ import '../../widgets/ui_kit.dart';
 class CheckoutPage extends StatelessWidget {
   const CheckoutPage({super.key});
 
-  void _confirmar(BuildContext context, String modo) {
+  Future<void> _confirmar(
+    BuildContext context,
+    String modo,
+  ) async {
     final state = AppState.instance;
 
     if (state.carrinho.isEmpty) {
       showToast(
         'Seu carrinho está vazio.',
+        '⚠️',
+      );
+      return;
+    }
+
+    final temProdutos = state.itensProdutos.isNotEmpty;
+    final temVales = state.itensValePresentes.isNotEmpty;
+
+    // Não permite finalizar compras de tipos diferentes juntas.
+    if (temProdutos && temVales) {
+      showToast(
+        'Finalize os alimentos e os vale-presentes separadamente.',
+        '⚠️',
+      );
+      return;
+    }
+
+    final ehCompraVale = temVales;
+
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(
+            ehCompraVale
+                ? 'Confirmar compra dos vale-presentes'
+                : 'Confirmar pedido',
+          ),
+          content: Text(
+            ehCompraVale
+                ? 'Deseja confirmar a compra de '
+                    '${state.itensValePresentes.length} '
+                    'item(ns) de vale-presente, no total de '
+                    '${money(state.subtotalValePresentes)}? '
+                    'Após confirmar, os vales serão emitidos.'
+                : 'Deseja confirmar seu pedido no valor de '
+                    '${money(state.subtotalProdutos)}?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text('Voltar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              child: const Text('Confirmar compra'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmado != true || !context.mounted) {
+      return;
+    }
+
+    // Verifica novamente o carrinho após o diálogo.
+    if (state.carrinho.isEmpty) {
+      showToast(
+        'Seu carrinho está vazio.',
+        '⚠️',
+      );
+      return;
+    }
+
+    if (ehCompraVale) {
+      final vales = state.confirmarCompraValePresentes();
+
+      if (vales.isEmpty) {
+        showToast(
+          'Não foi possível confirmar a compra dos vales.',
+          '⚠️',
+        );
+        return;
+      }
+
+      showToast(
+        'Compra confirmada! Seus vale-presentes foram emitidos.',
+        'confete.svg',
+      );
+
+      // Nesta etapa, usamos a tela de confirmação existente
+      // apenas para evitar criar uma rota ainda não cadastrada.
+      // A próxima etapa poderá apresentar os códigos emitidos.
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        Routes.shopping,
+        (route) => false,
+      );
+
+      return;
+    }
+
+    if (state.itensProdutos.isEmpty) {
+      showToast(
+        'Não existem produtos para criar o pedido.',
         '⚠️',
       );
       return;
@@ -30,7 +132,7 @@ class CheckoutPage extends StatelessWidget {
 
     Navigator.of(context).pushNamedAndRemoveUntil(
       Routes.pedidoConfirmado,
-      (r) => false,
+      (route) => false,
       arguments: pedido.id,
     );
   }
@@ -44,7 +146,18 @@ class CheckoutPage extends StatelessWidget {
       child: ListenableBuilder(
         listenable: state,
         builder: (context, _) {
-          final u = state.usuarioLogado;
+          final usuario = state.usuarioLogado;
+          final temProdutos = state.itensProdutos.isNotEmpty;
+          final temVales = state.itensValePresentes.isNotEmpty;
+          final compraMista = temProdutos && temVales;
+
+          final titulo = temVales && !temProdutos
+              ? 'Finalizar compra'
+              : 'Finalizar pedido';
+
+          final subtitulo = temVales && !temProdutos
+              ? 'Confira os dados dos seus vale-presentes'
+              : 'Confirme os dados do seu pedido';
 
           final dados = InfoBox(
             child: Column(
@@ -58,12 +171,14 @@ class CheckoutPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(u?.nome ?? ''),
-                Text(u?.email ?? ''),
-                Text(u?.telefone ?? ''),
+                Text(usuario?.nome ?? ''),
+                Text(usuario?.email ?? ''),
+                Text(usuario?.telefone ?? ''),
                 const SizedBox(height: 22),
                 Text(
-                  'Itens do pedido',
+                  temVales && !temProdutos
+                      ? 'Vale-presentes'
+                      : 'Itens do pedido',
                   style: AppTheme.display(
                     size: 22,
                     color: DVanilleColors.darkTaupe,
@@ -71,21 +186,37 @@ class CheckoutPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 ...state.carrinho.map(
-                  (i) => Padding(
+                  (item) => Padding(
                     padding: const EdgeInsets.symmetric(
-                      vertical: 4,
+                      vertical: 6,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Text(
-                            '${i.qtd}x ${i.nome}',
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${item.qtd}x ${item.nome}',
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(money(item.subtotal)),
+                          ],
+                        ),
+                        if (item.ehValePresente) ...[
+                          const SizedBox(height: 3),
+                          Text(
+                            'Destinatário: ${item.destinatario}',
+                            style: const TextStyle(fontSize: 12),
                           ),
-                        ),
-                        Text(
-                          money(i.subtotal),
-                        ),
+                          if (item.mensagem.trim().isNotEmpty)
+                            Text(
+                              'Mensagem: ${item.mensagem}',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                        ],
                       ],
                     ),
                   ),
@@ -107,6 +238,17 @@ class CheckoutPage extends StatelessWidget {
                   money(state.total),
                   destaque: true,
                 ),
+                if (compraMista) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Seu carrinho contém alimentos e vale-presentes. '
+                    'Remova um dos tipos para concluir cada compra '
+                    'separadamente.',
+                    style: TextStyle(
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                ],
               ],
             ),
           );
@@ -116,42 +258,55 @@ class CheckoutPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Como deseja prosseguir?',
+                  temVales && !temProdutos
+                      ? 'Confirmar compra'
+                      : 'Como deseja prosseguir?',
                   style: AppTheme.display(
                     size: 22,
                     color: DVanilleColors.darkTaupe,
                   ),
                 ),
                 const SizedBox(height: 6),
-                const DicaCampo(
-                  'Válido para atendimento presencial.',
+                DicaCampo(
+                  temVales && !temProdutos
+                      ? 'Esta é uma confirmação simulada. '
+                          'Nenhum pagamento real será processado.'
+                      : 'Válido para atendimento presencial.',
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: () => _confirmar(
-                      context,
-                      'caixa',
-                    ),
-                    child: const Text(
-                      'Enviar pedido ao caixa',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () => _confirmar(
-                      context,
-                      'retirar',
-                    ),
-                    child: const Text(
-                      'Retirar na cafeteria',
+                    onPressed: compraMista
+                        ? null
+                        : () => _confirmar(
+                              context,
+                              'caixa',
+                            ),
+                    child: Text(
+                      temVales && !temProdutos
+                          ? 'Confirmar compra dos vales'
+                          : 'Enviar pedido ao caixa',
                     ),
                   ),
                 ),
+                if (!temVales || temProdutos) ...[
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: compraMista
+                          ? null
+                          : () => _confirmar(
+                                context,
+                                'retirar',
+                              ),
+                      child: const Text(
+                        'Retirar na cafeteria',
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           );
@@ -159,24 +314,24 @@ class CheckoutPage extends StatelessWidget {
           return Column(
             children: [
               const SizedBox(height: 56),
-              const ContentWidth(
+              ContentWidth(
                 child: Column(
                   children: [
                     Text(
-                      'Finalizar pedido',
+                      titulo,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontFamily: 'CreamCake',
                         fontSize: 48,
                         fontWeight: FontWeight.w400,
                         color: DVanilleColors.rose,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
-                      'Confirme os dados do seu pedido',
+                      subtitulo,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w600,
                         fontStyle: FontStyle.italic,

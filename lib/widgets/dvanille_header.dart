@@ -7,10 +7,12 @@ import '../theme/app_theme.dart';
 
 class DVanilleHeader extends StatelessWidget {
   final String? activeRoute;
+  final bool mostrarCarrinho;
 
   const DVanilleHeader({
     super.key,
     this.activeRoute,
+    this.mostrarCarrinho = true,
   });
 
   static const List<List<String>> _links = [
@@ -74,28 +76,18 @@ class DVanilleHeader extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // LOGO
           Align(
             alignment: Alignment.centerLeft,
             child: _logo(context),
           ),
-
-          // MENU CENTRALIZADO
           Center(
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                for (final link in _links)
-                  _navLink(
-                    context,
-                    link[0],
-                    link[1],
-                  ),
+                for (final link in _links) _navLink(context, link[0], link[1]),
               ],
             ),
           ),
-
-          // PERFIL + CARRINHO
           Align(
             alignment: Alignment.centerRight,
             child: Row(
@@ -113,11 +105,10 @@ class DVanilleHeader extends StatelessWidget {
                     size: 28,
                   ),
                 ),
-                const SizedBox(width: 8),
-                _carrinho(
-                  context,
-                  state,
-                ),
+                if (mostrarCarrinho) ...[
+                  const SizedBox(width: 8),
+                  _carrinho(context, state),
+                ],
               ],
             ),
           ),
@@ -148,16 +139,10 @@ class DVanilleHeader extends StatelessWidget {
               size: 26,
             ),
           ),
-          _carrinho(
-            context,
-            state,
-          ),
+          if (mostrarCarrinho) _carrinho(context, state),
           IconButton(
             tooltip: 'Menu',
-            onPressed: () => _abrirMenu(
-              context,
-              state,
-            ),
+            onPressed: () => _abrirMenu(context, state),
             icon: const Icon(
               Icons.menu,
               color: DVanilleColors.darkTaupe,
@@ -169,16 +154,9 @@ class DVanilleHeader extends StatelessWidget {
     );
   }
 
-  // ============================================================
-  // LOGO
-  // ============================================================
-
   Widget _logo(BuildContext context) {
     return InkWell(
-      onTap: () => _ir(
-        context,
-        Routes.home,
-      ),
+      onTap: () => _ir(context, Routes.home),
       borderRadius: BorderRadius.circular(30),
       child: SizedBox(
         width: 130,
@@ -195,10 +173,6 @@ class DVanilleHeader extends StatelessWidget {
     );
   }
 
-  // ============================================================
-  // LINKS
-  // ============================================================
-
   Widget _navLink(
     BuildContext context,
     String texto,
@@ -207,14 +181,9 @@ class DVanilleHeader extends StatelessWidget {
     final ativo = activeRoute == rota;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 5,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 5),
       child: TextButton(
-        onPressed: () => _ir(
-          context,
-          rota,
-        ),
+        onPressed: () => _ir(context, rota),
         style: TextButton.styleFrom(
           foregroundColor: DVanilleColors.darkTaupe,
           backgroundColor: ativo ? DVanilleColors.blush2 : Colors.transparent,
@@ -236,10 +205,6 @@ class DVanilleHeader extends StatelessWidget {
     );
   }
 
-  // ============================================================
-  // CARRINHO
-  // ============================================================
-
   Widget _carrinho(
     BuildContext context,
     AppState state,
@@ -256,10 +221,7 @@ class DVanilleHeader extends StatelessWidget {
           ),
           child: IconButton(
             tooltip: 'Carrinho',
-            onPressed: () => _ir(
-              context,
-              Routes.carrinho,
-            ),
+            onPressed: () => _ir(context, Routes.carrinho),
             icon: const Icon(
               Icons.shopping_cart_outlined,
               color: Colors.white,
@@ -298,10 +260,6 @@ class DVanilleHeader extends StatelessWidget {
     );
   }
 
-  // ============================================================
-  // MENU MOBILE
-  // ============================================================
-
   void _abrirMenu(
     BuildContext context,
     AppState state,
@@ -323,42 +281,29 @@ class DVanilleHeader extends StatelessWidget {
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  _ir(
-                    context,
-                    link[1],
-                  );
+                  _ir(context, link[1]);
                 },
               ),
             if (state.logado)
               ListTile(
                 title: const Text(
                   'MEUS PEDIDOS',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w700),
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  _ir(
-                    context,
-                    Routes.meusPedidos,
-                  );
+                  _ir(context, Routes.meusPedidos);
                 },
               ),
             if (state.isAdmin)
               ListTile(
                 title: const Text(
                   'ÁREA ADMIN',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w700),
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  _ir(
-                    context,
-                    Routes.admin,
-                  );
+                  _ir(context, Routes.admin);
                 },
               ),
           ],

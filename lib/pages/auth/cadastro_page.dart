@@ -22,9 +22,11 @@ class _CadastroPageState extends State<CadastroPage> {
   final nome = TextEditingController();
   final email = TextEditingController();
   final telefone = TextEditingController();
-  final anoAniversario = TextEditingController();
+  final dataNascimento = TextEditingController();
   final senha = TextEditingController();
   final senha2 = TextEditingController();
+
+  DateTime? dataNascimentoSelecionada;
 
   final Set<String> restricoes = {};
   bool notificacoes = true;
@@ -34,20 +36,56 @@ class _CadastroPageState extends State<CadastroPage> {
     nome.dispose();
     email.dispose();
     telefone.dispose();
-    anoAniversario.dispose();
+    dataNascimento.dispose();
     senha.dispose();
     senha2.dispose();
     super.dispose();
   }
 
+  String _doisDigitos(int valor) {
+    return valor.toString().padLeft(2, '0');
+  }
+
+  String _formatarData(DateTime data) {
+    return '${_doisDigitos(data.day)}/'
+        '${_doisDigitos(data.month)}/'
+        '${data.year}';
+  }
+
+  Future<void> _selecionarDataNascimento() async {
+    final hoje = DateTime.now();
+
+    final dataSelecionada = await showDatePicker(
+      context: context,
+      initialDate: dataNascimentoSelecionada ?? hoje,
+      firstDate: DateTime(1900),
+      lastDate: hoje,
+      helpText: 'Selecione sua data de nascimento',
+      cancelText: 'Cancelar',
+      confirmText: 'Confirmar',
+      fieldLabelText: 'Data de nascimento',
+      errorFormatText: 'Informe uma data válida.',
+      errorInvalidText: 'Selecione uma data válida.',
+    );
+
+    if (dataSelecionada == null || !mounted) {
+      return;
+    }
+
+    setState(() {
+      dataNascimentoSelecionada = dataSelecionada;
+      dataNascimento.text = _formatarData(dataSelecionada);
+      erro = null;
+    });
+  }
+
   void _continuar() {
     final state = AppState.instance;
 
-    // Todos os campos da primeira etapa são obrigatórios.
     if (nome.text.trim().isEmpty ||
         email.text.trim().isEmpty ||
         telefone.text.trim().isEmpty ||
-        anoAniversario.text.trim().isEmpty ||
+        dataNascimentoSelecionada == null ||
         senha.text.isEmpty ||
         senha2.text.isEmpty) {
       setState(() {
@@ -56,20 +94,7 @@ class _CadastroPageState extends State<CadastroPage> {
       return;
     }
 
-    // Validação do ano de aniversário.
-    final ano = int.tryParse(anoAniversario.text.trim());
-
-    if (ano == null ||
-        anoAniversario.text.trim().length != 4 ||
-        ano < 1900 ||
-        ano > DateTime.now().year) {
-      setState(() {
-        erro = 'Informe um ano de aniversário válido.';
-      });
-      return;
-    }
-
-    if (state.emailJaCadastrado(email.text)) {
+    if (state.emailJaCadastrado(email.text.trim())) {
       setState(() {
         erro = 'Este e-mail já está cadastrado.';
       });
@@ -118,6 +143,8 @@ class _CadastroPageState extends State<CadastroPage> {
           ..remove('nenhuma')
           ..add(id);
       }
+
+      erro = null;
     });
   }
 
@@ -129,11 +156,12 @@ class _CadastroPageState extends State<CadastroPage> {
       return;
     }
 
-    final ano = int.tryParse(anoAniversario.text.trim());
+    final nascimento = dataNascimentoSelecionada;
 
-    if (ano == null) {
+    if (nascimento == null) {
       setState(() {
-        erro = 'Informe um ano de aniversário válido.';
+        etapa = 1;
+        erro = 'Informe sua data de nascimento completa.';
       });
       return;
     }
@@ -143,7 +171,7 @@ class _CadastroPageState extends State<CadastroPage> {
       email: email.text.trim(),
       telefone: telefone.text.trim(),
       senha: senha.text,
-      anoAniversario: ano,
+      dataNascimento: nascimento,
       restricoes: restricoes.where((r) => r != 'nenhuma').toList(),
       notificacoes: notificacoes,
     );
@@ -205,6 +233,7 @@ class _CadastroPageState extends State<CadastroPage> {
         if (erro != null) CaixaAlerta(erro!),
         TextField(
           controller: nome,
+          textCapitalization: TextCapitalization.words,
           decoration: const InputDecoration(
             labelText: 'Nome completo *',
           ),
@@ -228,13 +257,13 @@ class _CadastroPageState extends State<CadastroPage> {
         ),
         const SizedBox(height: 14),
         TextField(
-          controller: anoAniversario,
-          keyboardType: TextInputType.number,
-          maxLength: 4,
+          controller: dataNascimento,
+          readOnly: true,
+          onTap: _selecionarDataNascimento,
           decoration: const InputDecoration(
-            labelText: 'Ano de aniversário *',
-            hintText: 'Ex.: 2008',
-            counterText: '',
+            labelText: 'Data de nascimento *',
+            hintText: 'dd/mm/aaaa',
+            suffixIcon: Icon(Icons.calendar_month),
           ),
         ),
         const SizedBox(height: 14),
@@ -265,25 +294,19 @@ class _CadastroPageState extends State<CadastroPage> {
           width: double.infinity,
           child: FilledButton(
             onPressed: _continuar,
-            child: const Text(
-              'Continuar',
-            ),
+            child: const Text('Continuar'),
           ),
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              'Já tem conta?',
-            ),
+            const Text('Já tem conta?'),
             TextButton(
               onPressed: () => Navigator.pushNamed(
                 context,
                 Routes.login,
               ),
-              child: const Text(
-                'Entrar',
-              ),
+              child: const Text('Entrar'),
             ),
           ],
         ),
@@ -380,9 +403,7 @@ class _CadastroPageState extends State<CadastroPage> {
           width: double.infinity,
           child: FilledButton(
             onPressed: _concluir,
-            child: const Text(
-              'Concluir cadastro',
-            ),
+            child: const Text('Concluir cadastro'),
           ),
         ),
       ],
