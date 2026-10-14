@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../app/app.dart';
 import '../../models/comanda_mesa.dart';
 import '../../services/comanda_mesa_state.dart';
 import '../../services/app_state.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/ui_kit.dart';
 
 class ComandaMesaPage extends StatefulWidget {
   const ComandaMesaPage({super.key});
@@ -38,7 +38,6 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
       _mesa = argumentos;
     }
 
-    // Permite ler a mesa em URLs com hash routing.
     final fragmento = Uri.base.fragment;
     final rotaFragmento = Uri.tryParse(fragmento);
 
@@ -101,6 +100,18 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
 
     if (comanda.itens.isEmpty) {
       _mostrarMensagem('Adicione pelo menos um produto ao pedido.');
+      return;
+    }
+
+    if (!AppState.instance.logado) {
+      Navigator.pushNamed(
+        context,
+        Routes.login,
+        arguments: RedirecionamentoLogin(
+          Routes.comandaMesa,
+          {'mesa': mesa},
+        ),
+      );
       return;
     }
 
@@ -172,7 +183,7 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    'Após confirmar, os itens deste pedido não poderão '
+                    'Após confirmar, os itens enviados não poderão '
                     'ser alterados nesta demonstração.',
                     style: TextStyle(fontSize: 12),
                   ),
@@ -197,21 +208,32 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
 
     if (!mounted || confirmar != true) return;
 
+    if (!AppState.instance.logado) {
+      Navigator.pushNamed(
+        context,
+        Routes.login,
+        arguments: RedirecionamentoLogin(
+          Routes.comandaMesa,
+          {'mesa': mesa},
+        ),
+      );
+      return;
+    }
+
     setState(() => _finalizando = true);
 
     try {
-      // O estado valida novamente se a comanda ainda pode ser enviada.
       final sucesso = _comandas.enviarPedidoAoCaixa(mesa);
 
       if (!mounted) return;
 
       if (sucesso) {
         _mostrarMensagem(
-          'Pedido da mesa $mesa finalizado com sucesso!',
+          'Pedido da mesa $mesa enviado ao caixa com sucesso!',
         );
       } else {
         _mostrarMensagem(
-          'Não foi possível finalizar. Confira o status da comanda.',
+          'Não foi possível enviar. Confira o status da comanda.',
         );
       }
     } finally {
@@ -229,7 +251,12 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
     if (mesa == null || mesa.isEmpty) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text("D'Vanille"),
+          title: SvgPicture.asset(
+            'assets/images/logoreal.svg',
+            width: 72,
+            height: 56,
+            fit: BoxFit.contain,
+          ),
           centerTitle: true,
         ),
         body: const Center(
@@ -248,11 +275,19 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("D'Vanille"),
+        title: SvgPicture.asset(
+          'assets/images/logoreal.svg',
+          width: 150,
+          height: 95,
+          fit: BoxFit.contain,
+        ),
         centerTitle: true,
       ),
       body: ListenableBuilder(
-        listenable: _comandas,
+        listenable: Listenable.merge([
+          _comandas,
+          AppState.instance,
+        ]),
         builder: (context, _) {
           final atual = _comandas.comandaDaMesa(mesa);
 
@@ -262,9 +297,13 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
             );
           }
 
-          final enviado = atual.status == 'enviado ao caixa';
           final encerrada = atual.status == 'encerrada';
-          final bloqueada = enviado || encerrada;
+
+          // Histórico de pedidos enviados para esta mesa.
+          final historicoPedidos = AppState.instance.pedidos
+              .where((pedido) => pedido.mesa == mesa)
+              .toList()
+            ..sort((a, b) => b.data.compareTo(a.data));
 
           return Center(
             child: ConstrainedBox(
@@ -275,7 +314,6 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                 children: [
                   const SizedBox(height: 36),
 
-                  // Cabeçalho seguindo o padrão da página Contato.
                   Column(
                     children: [
                       const Text(
@@ -317,6 +355,96 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
 
                   const SizedBox(height: 24),
 
+                  // HISTÓRICO DE PEDIDOS
+                  Text(
+                    'Histórico de pedidos',
+                    style: tema.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  if (historicoPedidos.isEmpty)
+                    const Card(
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Text(
+                          'Você ainda não enviou nenhum pedido. '
+                          'Seus pedidos aparecerão aqui após a confirmação.',
+                        ),
+                      ),
+                    )
+                  else
+                    ...historicoPedidos.map(
+                      (pedido) => Card(
+                        child: ExpansionTile(
+                          leading: const Icon(
+                            Icons.receipt_long_outlined,
+                          ),
+                          title: Text('Pedido ${pedido.id}'),
+                          subtitle: Text(
+                            '${pedido.data} • ${pedido.status}',
+                          ),
+                          trailing: Text(
+                            money(pedido.total),
+                            style: tema.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          childrenPadding: const EdgeInsets.fromLTRB(
+                            16,
+                            0,
+                            16,
+                            16,
+                          ),
+                          children: [
+                            const Divider(),
+                            ...pedido.itens.map(
+                              (item) => Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 6,
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '${item.qtd}x ${item.nome}',
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(money(item.subtotal)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const Divider(),
+                            Row(
+                              children: [
+                                const Expanded(
+                                  child: Text(
+                                    'Total do pedido',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  money(pedido.total),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  const SizedBox(height: 24),
+
                   Text(
                     'O que você deseja fazer?',
                     style: tema.textTheme.titleLarge?.copyWith(
@@ -329,9 +457,9 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
-                      onPressed: bloqueada ? null : () => _fazerPedido(mesa),
+                      onPressed: encerrada ? null : () => _fazerPedido(mesa),
                       icon: const Icon(Icons.restaurant_menu),
-                      label: const Text('Fazer pedido'),
+                      label: const Text('Fazer novo pedido'),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
@@ -346,8 +474,7 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                       onPressed: _verComanda,
                       icon: const Icon(Icons.shopping_cart_outlined),
                       label: Text(
-                        'Ver comanda e carrinho da mesa'
-                        ' (${atual.quantidadeItens} itens)',
+                        'Ver itens pendentes (${atual.quantidadeItens})',
                       ),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -360,7 +487,7 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: atual.atendimentoSolicitado || bloqueada
+                      onPressed: atual.atendimentoSolicitado || encerrada
                           ? null
                           : () {
                               _comandas.solicitarAtendimento(mesa);
@@ -395,7 +522,7 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                   Container(
                     key: _itensComandaKey,
                     child: Text(
-                      'Comanda da mesa',
+                      'Itens pendentes da comanda',
                       style: tema.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -409,9 +536,8 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                       child: Padding(
                         padding: EdgeInsets.all(18),
                         child: Text(
-                          'Sua comanda está vazia. '
-                          'Toque em "Fazer pedido" para escolher '
-                          'produtos no cardápio.',
+                          'Não há itens pendentes. '
+                          'Você pode fazer um novo pedido quando desejar.',
                         ),
                       ),
                     )
@@ -425,7 +551,7 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                             '\nSubtotal: ${money(item.subtotal)}',
                           ),
                           isThreeLine: true,
-                          trailing: bloqueada
+                          trailing: encerrada
                               ? null
                               : Wrap(
                                   spacing: 0,
@@ -483,12 +609,12 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _linhaTotal(
-                            'Quantidade de itens',
+                            'Quantidade de itens pendentes',
                             '${atual.quantidadeItens}',
                           ),
                           const SizedBox(height: 8),
                           _linhaTotal(
-                            'Total do pedido',
+                            'Total dos itens pendentes',
                             money(atual.total),
                             destaque: true,
                           ),
@@ -497,31 +623,6 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                             const Text(
                               'Esta comanda foi encerrada.',
                               textAlign: TextAlign.center,
-                            )
-                          else if (enviado)
-                            const Column(
-                              children: [
-                                Icon(
-                                  Icons.check_circle_outline,
-                                  size: 42,
-                                  color: Colors.green,
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  'Pedido finalizado!',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                SizedBox(height: 6),
-                                Text(
-                                  'O pedido foi marcado como enviado ao '
-                                  'caixa nesta demonstração. O envio real '
-                                  'depende da integração com o backend.',
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
                             )
                           else
                             FilledButton.icon(
@@ -539,8 +640,8 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                                   : const Icon(Icons.check_circle_outline),
                               label: Text(
                                 _finalizando
-                                    ? 'Finalizando...'
-                                    : 'Finalizar pedido',
+                                    ? 'Enviando...'
+                                    : 'Enviar novo pedido',
                               ),
                             ),
                         ],

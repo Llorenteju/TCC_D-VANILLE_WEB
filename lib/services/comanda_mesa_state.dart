@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 
 import '../models/comanda_mesa.dart';
+import '../models/pedido.dart';
 import '../models/produto.dart';
+import 'app_state.dart';
 
 class ComandaMesaState extends ChangeNotifier {
   ComandaMesaState._();
@@ -39,8 +41,8 @@ class ComandaMesaState extends ChangeNotifier {
   }
 
   bool _podeEditar(ComandaMesa comanda) {
-    return comanda.status != 'encerrada' &&
-        comanda.status != 'enviado ao caixa';
+    // A comanda permanece editável até ser encerrada.
+    return comanda.status != 'encerrada';
   }
 
   void adicionarProduto({
@@ -60,6 +62,9 @@ class ComandaMesaState extends ChangeNotifier {
       preco: produto.preco,
       quantidade: quantidade,
     );
+
+    // Ao começar um novo pedido, a comanda volta a ficar aberta.
+    comanda.status = 'aberta';
 
     notifyListeners();
   }
@@ -94,7 +99,6 @@ class ComandaMesaState extends ChangeNotifier {
 
     if (numeroMesa.isEmpty) return;
 
-    // O cliente pode chamar o garçom mesmo sem pedir produtos.
     final comanda = abrirComanda(numeroMesa);
 
     if (!_podeEditar(comanda)) return;
@@ -103,27 +107,75 @@ class ComandaMesaState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Marca a comanda como enviada ao caixa.
+  /// Registra um novo pedido sem encerrar a comanda da mesa.
   ///
-  /// Retorna false se não existir, estiver vazia, encerrada
-  /// ou já tiver sido enviada.
+  /// Cada envio cria um Pedido independente no AppState.
+  /// Os itens enviados são removidos da lista pendente para
+  /// impedir que sejam cobrados novamente no próximo envio.
   bool enviarPedidoAoCaixa(String mesa) {
     final numeroMesa = mesa.trim();
 
     if (numeroMesa.isEmpty) return false;
 
+    final state = AppState.instance;
+    final cliente = state.usuarioLogado;
     final comanda = _comandas[numeroMesa];
 
-    if (comanda == null || comanda.itens.isEmpty || !_podeEditar(comanda)) {
+    if (cliente == null ||
+        comanda == null ||
+        comanda.itens.isEmpty ||
+        !_podeEditar(comanda)) {
       return false;
     }
 
-    comanda.status = 'enviado ao caixa';
+    final agora = DateTime.now();
+
+    final dataFormatada = '${agora.day.toString().padLeft(2, '0')}/'
+        '${agora.month.toString().padLeft(2, '0')}/'
+        '${agora.year} '
+        '${agora.hour.toString().padLeft(2, '0')}:'
+        '${agora.minute.toString().padLeft(2, '0')}';
+
+    final itensEnviados = comanda.itens
+        .map(
+          (item) => ItemPedido(
+            produtoId: item.produtoId,
+            nome: item.nome,
+            preco: item.preco,
+            qtd: item.quantidade,
+          ),
+        )
+        .toList();
+
+    final totalEnviado = comanda.total;
+
+    final pedido = Pedido(
+      id: 'PD-${agora.microsecondsSinceEpoch}',
+      clienteEmail: cliente.email,
+      itens: itensEnviados,
+      total: totalEnviado,
+      data: dataFormatada,
+      status: 'recebido',
+      modo: 'caixa',
+      mesa: numeroMesa,
+    );
+
+    // Registra este envio como um pedido independente.
+    state.pedidos.add(pedido);
+
+    // Limpa somente os itens já enviados, não o histórico de pedidos.
+    comanda.itens.clear();
+
+    // Mantém a mesma comanda aberta para novas compras.
+    comanda.status = 'aberta';
+
+    state.notifyListeners();
     notifyListeners();
 
     return true;
   }
 
+  /// Encerra definitivamente a comanda da mesa.
   void encerrarComanda(String mesa) {
     final comanda = _comandas[mesa.trim()];
 

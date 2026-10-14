@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../app/app.dart';
+
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 final GlobalKey<ScaffoldMessengerState> messengerKey =
@@ -9,6 +11,7 @@ final GlobalKey<ScaffoldMessengerState> messengerKey =
 void showToast(
   String mensagem, [
   String icone = '✓',
+  String? mesa,
 ]) {
   WidgetsBinding.instance.addPostFrameCallback((_) {
     final messenger = messengerKey.currentState;
@@ -74,6 +77,17 @@ void showToast(
           BlendMode.srcIn,
         ),
       );
+    } else if (icone == 'comanda_mesa.svg' || icone == 'comanda_mesa') {
+      iconeWidget = SvgPicture.asset(
+        'assets/images/comanda_mesa.svg',
+        width: 22,
+        height: 22,
+        fit: BoxFit.contain,
+        colorFilter: const ColorFilter.mode(
+          corTexto,
+          BlendMode.srcIn,
+        ),
+      );
     } else if (icone == 'cupom.svg') {
       iconeWidget = SvgPicture.asset(
         'assets/images/cupom.svg',
@@ -119,8 +133,14 @@ void showToast(
 
     final mostrarIrAoCarrinho = icone == 'carrinho.svg';
 
+    final mostrarVerComanda =
+        (icone == 'comanda_mesa.svg' || icone == 'comanda_mesa') &&
+            mesa != null &&
+            mesa.trim().isNotEmpty;
+
     messenger
       ..clearSnackBars()
+      ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           content: Row(
@@ -148,10 +168,22 @@ void showToast(
                     );
                   },
                 )
-              : null,
-          duration: const Duration(
-            milliseconds: 4000,
-          ),
+              : mostrarVerComanda
+                  ? SnackBarAction(
+                      label: 'Ver comanda',
+                      textColor: Colors.white,
+                      onPressed: () {
+                        navigatorKey.currentState?.pushNamed(
+                          '/comanda-mesa',
+                          arguments: {
+                            'mesa': mesa.trim(),
+                          },
+                        );
+                      },
+                    )
+                  : null,
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
           shape: const StadiumBorder(),
           margin: const EdgeInsets.fromLTRB(
             16,

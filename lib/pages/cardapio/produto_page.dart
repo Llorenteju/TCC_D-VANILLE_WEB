@@ -38,7 +38,27 @@ class _ProdutoPageState extends State<ProdutoPage> {
 
       if (numeroMesa != null && numeroMesa.isNotEmpty) {
         mesa = numeroMesa;
+      } else if (argumentos['modo']?.toString() == 'mesa') {
+        _recuperarMesaDaUrl();
       }
+    } else {
+      _recuperarMesaDaUrl();
+    }
+  }
+
+  void _recuperarMesaDaUrl() {
+    final fragmento = Uri.base.fragment;
+    final rotaFragmento = Uri.tryParse(fragmento);
+
+    mesa = rotaFragmento?.queryParameters['mesa'] ??
+        Uri.base.queryParameters['mesa'];
+
+    final numeroMesa = mesa?.trim();
+
+    if (numeroMesa != null && numeroMesa.isNotEmpty) {
+      mesa = numeroMesa;
+    } else {
+      mesa = null;
     }
   }
 
@@ -306,6 +326,18 @@ class _ProdutoPageState extends State<ProdutoPage> {
                 ),
               ),
               FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: DVanilleColors.blush,
+                  foregroundColor: DVanilleColors.darkTaupe,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
                 onPressed: () {
                   ComandaMesaState.instance.adicionarProduto(
                     mesa: mesa!,
@@ -317,7 +349,8 @@ class _ProdutoPageState extends State<ProdutoPage> {
                     '$quantidade '
                         '${quantidade == 1 ? 'unidade adicionada' : 'unidades adicionadas'} '
                         'à comanda da mesa $mesa!',
-                    '✓',
+                    'comanda_mesa.svg',
+                    mesa!,
                   );
                 },
                 icon: const Icon(Icons.add_shopping_cart),

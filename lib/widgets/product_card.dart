@@ -19,7 +19,6 @@ class ProductCard extends StatelessWidget {
   final bool acaoUnica;
 
   /// Define se o card permite adicionar produtos.
-  /// Mantém o comportamento atual por padrão.
   final bool permitirAdicionar;
 
   /// Número da mesa quando o cardápio é acessado pelo QR Code.
@@ -234,15 +233,19 @@ class ProductCard extends StatelessWidget {
       ),
       onPressed: () {
         if (_modoMesa) {
+          final numeroMesa = mesa!.trim();
+
           ComandaMesaState.instance.adicionarProduto(
-            mesa: mesa!.trim(),
+            mesa: numeroMesa,
             produto: produto,
           );
 
           showToast(
-            'Produto adicionado à comanda da mesa ${mesa!.trim()}!',
-            '✓',
+            'Produto adicionado à comanda da mesa $numeroMesa!',
+            'comanda_mesa.svg',
+            numeroMesa,
           );
+
           return;
         }
 

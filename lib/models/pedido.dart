@@ -20,14 +20,18 @@ class Pedido {
   final List<ItemPedido> itens;
   final double total;
 
-  /// Data já formatada (dd/MM/yyyy HH:mm), como no protótipo HTML.
+  /// Data formatada como dd/MM/yyyy HH:mm.
   final String data;
 
   /// recebido | em preparação | pronto | finalizado
   String status;
 
-  /// 'caixa' ou 'retirar'
+  /// 'caixa' ou 'retirar'.
   final String modo;
+
+  /// Número da mesa para pedidos feitos pelo QR Code.
+  /// Nulo para pedidos comuns do site.
+  final String? mesa;
 
   Pedido({
     required this.id,
@@ -37,8 +41,11 @@ class Pedido {
     required this.data,
     this.status = 'recebido',
     this.modo = 'caixa',
+    this.mesa,
   });
 
-  String get resumoItens =>
-      itens.map((i) => '${i.qtd}x ${i.nome}').join(', ');
+  /// Indica se o pedido foi feito por uma mesa.
+  bool get ehPedidoDeMesa => mesa != null && mesa!.trim().isNotEmpty;
+
+  String get resumoItens => itens.map((i) => '${i.qtd}x ${i.nome}').join(', ');
 }
