@@ -22,18 +22,23 @@ class AcompanharPedidoPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final id = ModalRoute.of(context)?.settings.arguments;
     final state = AppState.instance;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return PageShell(
       child: ListenableBuilder(
         listenable: state,
         builder: (context, _) {
           final pedido = state.pedidoPorId(id is String ? id : null);
+
           if (pedido == null) {
             return const EstadoVazio(
-                emoji: '📦', titulo: 'Pedido não encontrado.');
+              emoji: '📦',
+              titulo: 'Pedido não encontrado.',
+            );
           }
 
-          // "recebido" já considera o pagamento confirmado, como no protótipo.
+          // "recebido" já considera o pagamento confirmado,
+          // como no protótipo.
           final indiceAtual = pedido.status == 'recebido'
               ? 1
               : etapas.indexWhere((e) => e[0] == pedido.status);
@@ -54,16 +59,29 @@ class AcompanharPedidoPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     for (var i = 0; i < etapas.length; i++)
-                      _etapa(etapas[i][1], i <= indiceAtual,
-                          i == etapas.length - 1),
+                      _etapa(
+                        etapas[i][1],
+                        i <= indiceAtual,
+                        i == etapas.length - 1,
+                        isDark,
+                      ),
                   ],
                 ),
               ),
               const SizedBox(height: 30),
               OutlinedButton(
-                onPressed: () => Navigator.of(context)
-                    .pushNamedAndRemoveUntil(
-                        Routes.meusPedidos, (r) => false),
+                style: isDark
+                    ? OutlinedButton.styleFrom(
+                        foregroundColor: DVanilleColors.darkRose,
+                        side: BorderSide(
+                          color: DVanilleColors.darkRose,
+                        ),
+                      )
+                    : null,
+                onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
+                  Routes.meusPedidos,
+                  (r) => false,
+                ),
                 child: const Text('Voltar'),
               ),
             ],
@@ -73,7 +91,22 @@ class AcompanharPedidoPage extends StatelessWidget {
     );
   }
 
-  Widget _etapa(String titulo, bool concluida, bool ultima) {
+  Widget _etapa(
+    String titulo,
+    bool concluida,
+    bool ultima,
+    bool isDark,
+  ) {
+    final corConcluida =
+        isDark ? DVanilleColors.darkRose : DVanilleColors.taupe;
+
+    final corPendente =
+        isDark ? DVanilleColors.darkSurface : DVanilleColors.cream2;
+
+    final corBorda = isDark ? DVanilleColors.darkBorder : DVanilleColors.line;
+
+    final corTexto = isDark ? DVanilleColors.darkInk : DVanilleColors.ink;
+
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,39 +118,44 @@ class AcompanharPedidoPage extends StatelessWidget {
                 height: 28,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: concluida
-                      ? DVanilleColors.taupe
-                      : DVanilleColors.cream2,
+                  color: concluida ? corConcluida : corPendente,
                   border: Border.all(
-                      color: concluida
-                          ? DVanilleColors.taupe
-                          : DVanilleColors.line,
-                      width: 2),
+                    color: concluida ? corConcluida : corBorda,
+                    width: 2,
+                  ),
                 ),
                 alignment: Alignment.center,
-                child: Text(concluida ? '✓' : '○',
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: concluida
-                            ? Colors.white
-                            : DVanilleColors.taupe)),
+                child: Text(
+                  concluida ? '✓' : '○',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: concluida
+                        ? (isDark ? DVanilleColors.darkCream : Colors.white)
+                        : (isDark
+                            ? DVanilleColors.darkTextSecondary
+                            : DVanilleColors.taupe),
+                  ),
+                ),
               ),
               if (!ultima)
                 Container(
                   width: 2,
                   height: 34,
-                  color: concluida
-                      ? DVanilleColors.taupe
-                      : DVanilleColors.line,
+                  color: concluida ? corConcluida : corBorda,
                 ),
             ],
           ),
           const SizedBox(width: 14),
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: Text(titulo,
-                style: const TextStyle(fontWeight: FontWeight.w800)),
+            child: Text(
+              titulo,
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: corTexto,
+              ),
+            ),
           ),
         ],
       ),

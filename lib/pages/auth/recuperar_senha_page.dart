@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../../app/app.dart';
@@ -18,6 +17,16 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
 
   bool enviado = false;
   String? erroEmail;
+
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
+  Color get corDestaque =>
+      isDark ? DVanilleColors.darkRose : DVanilleColors.rose;
+
+  Color get corTexto => isDark ? DVanilleColors.darkInk : DVanilleColors.ink;
+
+  Color get corTextoSecundario =>
+      isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.darkTaupe;
 
   bool _emailValido(String valor) {
     final emailNormalizado = valor.trim();
@@ -60,6 +69,26 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
     super.dispose();
   }
 
+  /// Estilo dos botões da página.
+  ButtonStyle get estiloBotao {
+    return FilledButton.styleFrom(
+      backgroundColor: isDark ? DVanilleColors.darkRose : DVanilleColors.rose,
+      foregroundColor: isDark ? DVanilleColors.darkCream : DVanilleColors.white,
+      minimumSize: const Size(190, 52),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 28,
+        vertical: 14,
+      ),
+      textStyle: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(30),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return PageShell(
@@ -80,20 +109,24 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
       padding: const EdgeInsets.all(32),
       child: Column(
         children: [
-          const Text(
+          Text(
             'Recuperar senha',
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'CreamCake',
               fontSize: 42,
               fontWeight: FontWeight.w400,
-              color: DVanilleColors.rose,
+              color: corDestaque,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Informe seu e-mail cadastrado para receber '
             'as instruções de recuperação.',
             textAlign: TextAlign.center,
+            style: TextStyle(
+              color: corTexto,
+            ),
           ),
           const SizedBox(height: 22),
           TextField(
@@ -101,6 +134,7 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,
             autocorrect: false,
+            style: TextStyle(color: corTexto),
             onChanged: (_) {
               if (erroEmail != null) {
                 setState(() {
@@ -121,6 +155,7 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
             width: double.infinity,
             child: FilledButton(
               onPressed: _enviar,
+              style: estiloBotao,
               child: const Text('Enviar'),
             ),
           ),
@@ -144,21 +179,36 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
           textAlign: TextAlign.center,
           style: AppTheme.display(
             size: 30,
-            color: DVanilleColors.darkTaupe,
+            color: corTextoSecundario,
           ),
         ),
         const SizedBox(height: 10),
-        const Text(
+        Text(
           'Se o e-mail informado estiver cadastrado, você receberá '
           'as instruções para recuperar sua senha.',
           textAlign: TextAlign.center,
+          style: TextStyle(
+            color: corTexto,
+          ),
         ),
-        const SizedBox(height: 24),
-        FilledButton(
-          onPressed: () => Navigator.of(context)
-              .pushNamedAndRemoveUntil(Routes.login, (r) => false),
-          child: const Text('Voltar ao login'),
+        const SizedBox(height: 30),
+
+        // Botão com largura e altura definidas.
+        SizedBox(
+          width: 220,
+          height: 52,
+          child: FilledButton(
+            onPressed: () => Navigator.of(context)
+                .pushNamedAndRemoveUntil(Routes.login, (r) => false),
+            style: estiloBotao,
+            child: const FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text('Voltar ao login'),
+            ),
+          ),
         ),
+
+        const SizedBox(height: 6),
         TextButton(
           onPressed: () {
             setState(() {
@@ -179,18 +229,21 @@ class IconeSucesso extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: 78,
       height: 78,
-      decoration: const BoxDecoration(
-        color: Color(0xFFE4EEE0),
+      decoration: BoxDecoration(
+        color: isDark ? DVanilleColors.darkSurface : const Color(0xFFE4EEE0),
         shape: BoxShape.circle,
+        border: isDark ? Border.all(color: DVanilleColors.darkBorder) : null,
       ),
       alignment: Alignment.center,
-      child: const Icon(
+      child: Icon(
         Icons.check,
         size: 40,
-        color: Color(0xFF3D6B3A),
+        color: isDark ? DVanilleColors.darkRose : const Color(0xFF3D6B3A),
       ),
     );
   }

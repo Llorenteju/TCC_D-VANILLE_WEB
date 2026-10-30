@@ -20,6 +20,17 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
   final state = AppState.instance;
   final cupom = TextEditingController();
 
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
+  Color get corTexto =>
+      isDark ? DVanilleColors.darkInk : DVanilleColors.darkTaupe;
+
+  Color get corTextoSecundario =>
+      isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.taupe;
+
+  Color get corBorda =>
+      isDark ? DVanilleColors.darkBorder : DVanilleColors.line;
+
   @override
   void dispose() {
     cupom.dispose();
@@ -27,6 +38,14 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
   }
 
   void _aplicarCupom() {
+    if (cupom.text.trim().toUpperCase() == 'ANIVERSARIO') {
+      showToast(
+        'Este cupom é exclusivo para pedidos realizados pela comanda da mesa.',
+        '⚠️',
+      );
+      return;
+    }
+
     if (state.aplicarCupom(cupom.text)) {
       showToast(
         'Cupom aplicado com sucesso!',
@@ -65,10 +84,10 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
           return Column(
             children: [
               const SizedBox(height: 56),
-              const ContentWidth(
+              ContentWidth(
                 child: Column(
                   children: [
-                    Text(
+                    const Text(
                       'Carrinho',
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -78,7 +97,7 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
                         color: DVanilleColors.rose,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       'Revise seus itens',
                       textAlign: TextAlign.center,
@@ -86,7 +105,7 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
                         fontSize: 24,
                         fontWeight: FontWeight.w600,
                         fontStyle: FontStyle.italic,
-                        color: DVanilleColors.darkTaupe,
+                        color: corTextoSecundario,
                       ),
                     ),
                   ],
@@ -128,11 +147,9 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(
-            color: DVanilleColors.line,
-          ),
+          bottom: BorderSide(color: corBorda),
         ),
       ),
       child: Row(
@@ -143,13 +160,20 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
             child: ehValePresente
                 ? Container(
                     decoration: BoxDecoration(
-                      color: DVanilleColors.blush2,
+                      color: isDark
+                          ? DVanilleColors.darkSurface
+                          : DVanilleColors.blush2,
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: corBorda),
                     ),
                     padding: const EdgeInsets.all(18),
                     child: SvgPicture.asset(
                       'assets/images/presente.svg',
                       fit: BoxFit.contain,
+                      colorFilter: ColorFilter.mode(
+                        isDark ? DVanilleColors.darkRose : DVanilleColors.rose,
+                        BlendMode.srcIn,
+                      ),
                     ),
                   )
                 : ImagemProduto(
@@ -168,24 +192,28 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
               children: [
                 Text(
                   item.nome,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15.5,
                     fontWeight: FontWeight.w800,
+                    color: corTexto,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '${money(item.preco)} · Subtotal: ${money(item.subtotal)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: DVanilleColors.darkTaupe,
+                    color: corTextoSecundario,
                   ),
                 ),
                 if (ehValePresente && item.destinatario.trim().isNotEmpty) ...[
                   const SizedBox(height: 5),
                   Text(
                     'Para: ${item.destinatario}',
-                    style: const TextStyle(fontSize: 12.5),
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: corTextoSecundario,
+                    ),
                   ),
                 ],
               ],
@@ -222,6 +250,10 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
               width: 20,
               height: 20,
               fit: BoxFit.contain,
+              colorFilter: ColorFilter.mode(
+                isDark ? DVanilleColors.darkRose : DVanilleColors.darkTaupe,
+                BlendMode.srcIn,
+              ),
             ),
           ),
         ],
@@ -242,7 +274,7 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
             'Resumo',
             style: AppTheme.display(
               size: 22,
-              color: DVanilleColors.darkTaupe,
+              color: corTexto,
             ),
           ),
           const SizedBox(height: 10),
@@ -252,7 +284,7 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
               'Desconto (${state.cupomAplicado})',
               '- ${money(state.desconto)}',
             ),
-          const Divider(color: DVanilleColors.line),
+          Divider(color: corBorda),
           _linhaResumo(
             'Total',
             money(state.total),
@@ -260,17 +292,17 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
           ),
           if (temProdutos && temValePresentes) ...[
             const SizedBox(height: 12),
-            const CaixaAlerta(
+            CaixaAlerta(
               'Os alimentos e os vale-presentes precisam ser finalizados separadamente. Remova um dos tipos de item para continuar.',
             ),
           ],
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Cupom de desconto',
             style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 13.5,
-              color: DVanilleColors.darkTaupe,
+              color: corTexto,
             ),
           ),
           const SizedBox(height: 6),
@@ -280,8 +312,27 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
                 child: TextField(
                   controller: cupom,
                   textCapitalization: TextCapitalization.characters,
-                  decoration: const InputDecoration(
+                  style: TextStyle(color: corTexto),
+                  decoration: InputDecoration(
                     hintText: 'Ex: PRIMEIRACOMPRA',
+                    hintStyle: TextStyle(
+                      color: corTextoSecundario,
+                    ),
+                    filled: true,
+                    fillColor: isDark
+                        ? DVanilleColors.darkCream
+                        : DVanilleColors.white,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: corBorda),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: DVanilleColors.rose,
+                        width: 1.5,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -300,8 +351,14 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
                 vertical: 6,
               ),
               decoration: BoxDecoration(
-                color: const Color(0xFFE4EEE0),
+                color:
+                    isDark ? const Color(0xFF304333) : const Color(0xFFE4EEE0),
                 borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: isDark
+                      ? const Color(0xFF557A59)
+                      : const Color(0xFFC6D9C0),
+                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -311,22 +368,30 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
                     width: 18,
                     height: 18,
                     fit: BoxFit.contain,
+                    colorFilter: ColorFilter.mode(
+                      isDark
+                          ? const Color(0xFFA7D4A1)
+                          : const Color(0xFF3D6B3A),
+                      BlendMode.srcIn,
+                    ),
                   ),
                   const SizedBox(width: 7),
                   Text(
                     '${state.cupomAplicado} aplicado',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF3D6B3A),
+                      color: isDark
+                          ? const Color(0xFFA7D4A1)
+                          : const Color(0xFF3D6B3A),
                     ),
                   ),
                 ],
               ),
             )
           else
-            const DicaCampo(
-              'Experimente: PRIMEIRACOMPRA ou ANIVERSARIO',
+            DicaCampo(
+              'Experimente: PRIMEIRACOMPRA',
             ),
           const SizedBox(height: 18),
           SizedBox(
@@ -354,7 +419,7 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
     final estilo = TextStyle(
       fontSize: destaque ? 18 : 14.5,
       fontWeight: destaque ? FontWeight.w800 : FontWeight.w500,
-      color: destaque ? DVanilleColors.darkTaupe : null,
+      color: destaque ? corTexto : corTextoSecundario,
     );
 
     return Padding(

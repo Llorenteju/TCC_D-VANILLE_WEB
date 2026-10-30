@@ -23,6 +23,14 @@ class MeusValesPresentePage extends StatelessWidget {
       child: ListenableBuilder(
         listenable: state,
         builder: (context, _) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+
+          final corTexto =
+              isDark ? DVanilleColors.darkInk : DVanilleColors.darkTaupe;
+
+          final corTextoSecundario =
+              isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.taupe;
+
           final usuario = state.usuarioLogado;
           final email = usuario?.email.trim().toLowerCase() ?? '';
 
@@ -36,10 +44,10 @@ class MeusValesPresentePage extends StatelessWidget {
           return Column(
             children: [
               const SizedBox(height: 48),
-              const ContentWidth(
+              ContentWidth(
                 child: Column(
                   children: [
-                    Text(
+                    const Text(
                       'Meus vales-presente',
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -49,13 +57,13 @@ class MeusValesPresentePage extends StatelessWidget {
                         color: DVanilleColors.rose,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text(
                       'Seus presentes especiais, reunidos em um só lugar.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 15,
-                        color: DVanilleColors.darkTaupe,
+                        color: corTextoSecundario,
                       ),
                     ),
                   ],
@@ -65,7 +73,7 @@ class MeusValesPresentePage extends StatelessWidget {
               ContentWidth(
                 maxWidth: 850,
                 child: vales.isEmpty
-                    ? _estadoVazio(context)
+                    ? _estadoVazio(context, isDark, corTexto)
                     : Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -73,15 +81,21 @@ class MeusValesPresentePage extends StatelessWidget {
                             vales.length == 1
                                 ? 'Você tem 1 vale-presente'
                                 : 'Você tem ${vales.length} vales-presente',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
-                              color: DVanilleColors.darkTaupe,
+                              color: corTexto,
                             ),
                           ),
                           const SizedBox(height: 16),
                           for (final vale in vales) ...[
-                            _cartaoVale(context, vale),
+                            _cartaoVale(
+                              context,
+                              vale,
+                              isDark,
+                              corTexto,
+                              corTextoSecundario,
+                            ),
                             const SizedBox(height: 16),
                           ],
                         ],
@@ -95,7 +109,11 @@ class MeusValesPresentePage extends StatelessWidget {
     );
   }
 
-  Widget _estadoVazio(BuildContext context) {
+  Widget _estadoVazio(
+    BuildContext context,
+    bool isDark,
+    Color corTexto,
+  ) {
     return InfoBox(
       padding: const EdgeInsets.all(30),
       child: Column(
@@ -106,20 +124,25 @@ class MeusValesPresentePage extends StatelessWidget {
             color: DVanilleColors.rose,
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Você ainda não tem vales-presente',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 19,
               fontWeight: FontWeight.w700,
-              color: DVanilleColors.darkTaupe,
+              color: corTexto,
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             'Quando você comprar um vale-presente, ele aparecerá aqui '
             'com seu código e seus detalhes.',
             textAlign: TextAlign.center,
+            style: TextStyle(
+              color: isDark
+                  ? DVanilleColors.darkTextSecondary
+                  : DVanilleColors.taupe,
+            ),
           ),
           const SizedBox(height: 20),
           FilledButton(
@@ -133,8 +156,20 @@ class MeusValesPresentePage extends StatelessWidget {
     );
   }
 
-  Widget _cartaoVale(BuildContext context, ValePresente vale) {
+  Widget _cartaoVale(
+    BuildContext context,
+    ValePresente vale,
+    bool isDark,
+    Color corTexto,
+    Color corTextoSecundario,
+  ) {
     final usado = vale.status.toLowerCase() == 'usado';
+
+    final corFundoCodigo = isDark
+        ? DVanilleColors.darkSurface
+        : DVanilleColors.blush.withValues(alpha: 0.35);
+
+    final corBorda = isDark ? DVanilleColors.darkBorder : DVanilleColors.line;
 
     return InfoBox(
       padding: const EdgeInsets.all(22),
@@ -154,12 +189,12 @@ class MeusValesPresentePage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Vale-presente D’Vanille',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
-                        color: DVanilleColors.darkTaupe,
+                        color: corTexto,
                       ),
                     ),
                     const SizedBox(height: 5),
@@ -182,43 +217,56 @@ class MeusValesPresentePage extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: usado
                       ? Colors.grey.withValues(alpha: 0.15)
-                      : DVanilleColors.blush,
+                      : isDark
+                          ? DVanilleColors.darkSurface
+                          : DVanilleColors.blush,
                   borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: usado ? corBorda : DVanilleColors.rose,
+                  ),
                 ),
                 child: Text(
                   usado ? 'Utilizado' : 'Ativo',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color:
-                        usado ? Colors.grey.shade700 : DVanilleColors.darkTaupe,
+                    color: usado
+                        ? corTextoSecundario
+                        : isDark
+                            ? DVanilleColors.darkRose
+                            : DVanilleColors.darkTaupe,
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 18),
-          const Divider(),
+          Divider(color: corBorda),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Código do vale',
-            style: TextStyle(fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: corTexto,
+            ),
           ),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: DVanilleColors.blush.withValues(alpha: 0.35),
+              color: corFundoCodigo,
               borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: corBorda),
             ),
             child: Row(
               children: [
                 Expanded(
                   child: SelectableText(
                     vale.codigo,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.5,
+                      color: corTexto,
                     ),
                   ),
                 ),
@@ -233,16 +281,21 @@ class MeusValesPresentePage extends StatelessWidget {
                       showToast('Código copiado!', '✓');
                     }
                   },
-                  icon: const Icon(Icons.copy),
+                  icon: Icon(
+                    Icons.copy,
+                    color: isDark
+                        ? DVanilleColors.darkRose
+                        : DVanilleColors.darkTaupe,
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
-          _detalhe('Destinatário', vale.destinatario),
-          _detalhe('Data da compra', vale.criadoEm),
+          _detalhe('Destinatário', vale.destinatario, corTexto),
+          _detalhe('Data da compra', vale.criadoEm, corTexto),
           if (vale.mensagem.trim().isNotEmpty)
-            _detalhe('Mensagem', vale.mensagem),
+            _detalhe('Mensagem', vale.mensagem, corTexto),
           const SizedBox(height: 16),
           Align(
             alignment: Alignment.centerRight,
@@ -257,7 +310,7 @@ class MeusValesPresentePage extends StatelessWidget {
     );
   }
 
-  Widget _detalhe(String titulo, String valor) {
+  Widget _detalhe(String titulo, String valor, Color corTexto) {
     if (valor.trim().isEmpty) {
       return const SizedBox.shrink();
     }
@@ -271,10 +324,18 @@ class MeusValesPresentePage extends StatelessWidget {
             width: 135,
             child: Text(
               titulo,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: corTexto,
+              ),
             ),
           ),
-          Expanded(child: SelectableText(valor)),
+          Expanded(
+            child: SelectableText(
+              valor,
+              style: TextStyle(color: corTexto),
+            ),
+          ),
         ],
       ),
     );
@@ -287,8 +348,6 @@ class MeusValesPresentePage extends StatelessWidget {
     try {
       final documento = pw.Document();
 
-      // Fontes padrão Helvetica: evitam problemas com caracteres
-      // especiais que podem aparecer com algumas fontes incorporadas.
       final fonteNormal = pw.Font.helvetica();
       final fonteNegrito = pw.Font.helveticaBold();
 

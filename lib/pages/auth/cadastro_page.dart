@@ -31,6 +31,19 @@ class _CadastroPageState extends State<CadastroPage> {
   final Set<String> restricoes = {};
   bool notificacoes = true;
 
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
+  Color get corTexto => isDark ? DVanilleColors.darkInk : DVanilleColors.ink;
+
+  Color get corTextoSecundario =>
+      isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.darkTaupe;
+
+  Color get corBorda =>
+      isDark ? DVanilleColors.darkBorder : DVanilleColors.line;
+
+  Color get corDestaque =>
+      isDark ? DVanilleColors.darkRose : DVanilleColors.rose;
+
   @override
   void dispose() {
     nome.dispose();
@@ -66,6 +79,22 @@ class _CadastroPageState extends State<CadastroPage> {
       fieldLabelText: 'Data de nascimento',
       errorFormatText: 'Informe uma data válida.',
       errorInvalidText: 'Selecione uma data válida.',
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+                  primary: corDestaque,
+                  onPrimary:
+                      isDark ? DVanilleColors.darkCream : DVanilleColors.white,
+                  surface: isDark
+                      ? DVanilleColors.darkSurface
+                      : DVanilleColors.cream,
+                  onSurface: corTexto,
+                ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (dataSelecionada == null || !mounted) {
@@ -208,25 +237,25 @@ class _CadastroPageState extends State<CadastroPage> {
   Widget _etapa1() {
     return Column(
       children: [
-        const Text(
+        Text(
           'Criar conta',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontFamily: 'CreamCake',
             fontSize: 42,
             fontWeight: FontWeight.w400,
-            color: DVanilleColors.rose,
+            color: corDestaque,
           ),
         ),
         const SizedBox(height: 2),
-        const Text(
+        Text(
           'Junte-se a nós',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w600,
             fontStyle: FontStyle.italic,
-            color: DVanilleColors.darkTaupe,
+            color: corTextoSecundario,
           ),
         ),
         const SizedBox(height: 24),
@@ -234,6 +263,7 @@ class _CadastroPageState extends State<CadastroPage> {
         TextField(
           controller: nome,
           textCapitalization: TextCapitalization.words,
+          style: TextStyle(color: corTexto),
           decoration: const InputDecoration(
             labelText: 'Nome completo *',
           ),
@@ -242,6 +272,7 @@ class _CadastroPageState extends State<CadastroPage> {
         TextField(
           controller: email,
           keyboardType: TextInputType.emailAddress,
+          style: TextStyle(color: corTexto),
           decoration: const InputDecoration(
             labelText: 'E-mail *',
           ),
@@ -250,6 +281,7 @@ class _CadastroPageState extends State<CadastroPage> {
         TextField(
           controller: telefone,
           keyboardType: TextInputType.phone,
+          style: TextStyle(color: corTexto),
           decoration: const InputDecoration(
             labelText: 'Telefone *',
             hintText: '(11) 90000-0000',
@@ -260,6 +292,7 @@ class _CadastroPageState extends State<CadastroPage> {
           controller: dataNascimento,
           readOnly: true,
           onTap: _selecionarDataNascimento,
+          style: TextStyle(color: corTexto),
           decoration: const InputDecoration(
             labelText: 'Data de nascimento *',
             hintText: 'dd/mm/aaaa',
@@ -270,12 +303,13 @@ class _CadastroPageState extends State<CadastroPage> {
         TextField(
           controller: senha,
           obscureText: true,
+          style: TextStyle(color: corTexto),
           decoration: const InputDecoration(
             labelText: 'Senha *',
           ),
         ),
         const SizedBox(height: 6),
-        const Align(
+        Align(
           alignment: Alignment.centerLeft,
           child: DicaCampo(
             'Mínimo 6 caracteres, com 1 letra maiúscula e 1 caractere especial.',
@@ -285,6 +319,7 @@ class _CadastroPageState extends State<CadastroPage> {
         TextField(
           controller: senha2,
           obscureText: true,
+          style: TextStyle(color: corTexto),
           decoration: const InputDecoration(
             labelText: 'Confirmar senha *',
           ),
@@ -300,7 +335,10 @@ class _CadastroPageState extends State<CadastroPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('Já tem conta?'),
+            Text(
+              'Já tem conta?',
+              style: TextStyle(color: corTexto),
+            ),
             TextButton(
               onPressed: () => Navigator.pushNamed(
                 context,
@@ -317,24 +355,24 @@ class _CadastroPageState extends State<CadastroPage> {
   Widget _etapa2() {
     return Column(
       children: [
-        const Text(
+        Text(
           'Você possui alguma restrição alimentar?',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontFamily: 'CreamCake',
             fontSize: 36,
             fontWeight: FontWeight.w400,
-            color: DVanilleColors.rose,
+            color: corDestaque,
           ),
         ),
         const SizedBox(height: 2),
-        const Text(
+        Text(
           'Quase lá',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w600,
-            color: DVanilleColors.darkTaupe,
+            color: corTextoSecundario,
           ),
         ),
         const SizedBox(height: 22),
@@ -348,6 +386,7 @@ class _CadastroPageState extends State<CadastroPage> {
             return SizedBox(
               width: 210,
               child: InkWell(
+                borderRadius: BorderRadius.circular(12),
                 onTap: () => _alternarRestricao(o[0]),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -355,9 +394,14 @@ class _CadastroPageState extends State<CadastroPage> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
+                    color: selecionado
+                        ? (isDark
+                            ? DVanilleColors.darkCream
+                            : DVanilleColors.blush2)
+                        : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: DVanilleColors.line,
+                      color: selecionado ? corDestaque : corBorda,
                       width: 1.5,
                     ),
                   ),
@@ -365,14 +409,19 @@ class _CadastroPageState extends State<CadastroPage> {
                     children: [
                       Checkbox(
                         value: selecionado,
+                        activeColor: corDestaque,
+                        checkColor: isDark
+                            ? DVanilleColors.darkCream
+                            : DVanilleColors.white,
                         onChanged: (_) => _alternarRestricao(o[0]),
                       ),
                       Expanded(
                         child: Text(
                           o[1],
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w600,
+                            color: corTexto,
                           ),
                         ),
                       ),
@@ -389,12 +438,15 @@ class _CadastroPageState extends State<CadastroPage> {
           onChanged: (v) => setState(
             () => notificacoes = v ?? false,
           ),
+          activeColor: corDestaque,
+          checkColor: isDark ? DVanilleColors.darkCream : DVanilleColors.white,
           controlAffinity: ListTileControlAffinity.leading,
           contentPadding: EdgeInsets.zero,
-          title: const Text(
+          title: Text(
             'Desejo receber notificações de ofertas e novidades',
             style: TextStyle(
               fontSize: 14,
+              color: corTexto,
             ),
           ),
         ),

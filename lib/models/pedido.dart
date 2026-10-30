@@ -20,6 +20,12 @@ class Pedido {
   final List<ItemPedido> itens;
   final double total;
 
+  /// Valor do desconto aplicado ao pedido.
+  final double desconto;
+
+  /// Código do cupom utilizado.
+  final String? cupomAplicado;
+
   /// Data formatada como dd/MM/yyyy HH:mm.
   final String data;
 
@@ -30,7 +36,6 @@ class Pedido {
   final String modo;
 
   /// Número da mesa para pedidos feitos pelo QR Code.
-  /// Nulo para pedidos comuns do site.
   final String? mesa;
 
   Pedido({
@@ -39,12 +44,13 @@ class Pedido {
     required this.itens,
     required this.total,
     required this.data,
+    this.desconto = 0,
+    this.cupomAplicado,
     this.status = 'recebido',
     this.modo = 'caixa',
     this.mesa,
   });
 
-  /// Indica se o pedido foi feito por uma mesa.
   bool get ehPedidoDeMesa => mesa != null && mesa!.trim().isNotEmpty;
 
   String get resumoItens => itens.map((i) => '${i.qtd}x ${i.nome}').join(', ');

@@ -12,7 +12,6 @@ class ItemComandaMesa {
     this.quantidade = 1,
   });
 
-  /// Valor total deste item.
   double get subtotal => preco * quantidade;
 }
 
@@ -22,15 +21,16 @@ class ComandaMesa {
   final String mesa;
   final DateTime criadaEm;
 
-  /// Produtos que ainda não foram enviados como pedido.
   final List<ItemComandaMesa> itens = [];
 
-  /// Estados da comanda:
-  /// aberta, aguardando atendimento e encerrada.
   String status;
-
-  /// Indica se o cliente solicitou atendimento.
   bool atendimentoSolicitado;
+
+  /// Cupom aplicado exclusivamente nesta comanda.
+  String? cupomAplicado;
+
+  /// Percentual de desconto aplicado.
+  double percentualDesconto;
 
   ComandaMesa({
     required this.id,
@@ -38,30 +38,55 @@ class ComandaMesa {
     DateTime? criadaEm,
     this.status = 'aberta',
     this.atendimentoSolicitado = false,
+    this.cupomAplicado,
+    this.percentualDesconto = 0,
   }) : criadaEm = criadaEm ?? DateTime.now();
 
-  /// Quantidade total de unidades nos itens pendentes.
   int get quantidadeItens => itens.fold(
         0,
         (total, item) => total + item.quantidade,
       );
 
-  /// Valor total dos itens pendentes.
-  double get total => itens.fold(
+  /// Soma dos produtos antes do desconto.
+  double get subtotal => itens.fold(
         0.0,
         (soma, item) => soma + item.subtotal,
       );
 
-  /// Indica se não existem itens pendentes.
+  /// Valor descontado da comanda.
+  double get desconto => subtotal * percentualDesconto;
+
+  /// Total final, já considerando o desconto.
+  double get total {
+    final valor = subtotal - desconto;
+    return valor < 0 ? 0 : valor;
+  }
+
   bool get vazia => itens.isEmpty;
 
-  /// Indica se a comanda foi encerrada.
   bool get encerrada => status == 'encerrada';
 
-  /// Indica se a comanda pode receber alterações.
   bool get podeEditar => !encerrada;
 
-  /// Adiciona um produto ou incrementa sua quantidade.
+  bool get temCupom => cupomAplicado != null;
+
+  /// Aplica um cupom à comanda.
+  void aplicarCupom({
+    required String codigo,
+    required double percentual,
+  }) {
+    if (encerrada || itens.isEmpty) return;
+
+    cupomAplicado = codigo;
+    percentualDesconto = percentual;
+  }
+
+  /// Remove o cupom da comanda.
+  void removerCupom() {
+    cupomAplicado = null;
+    percentualDesconto = 0;
+  }
+
   void adicionarItem({
     required String produtoId,
     required String nome,
@@ -88,9 +113,6 @@ class ComandaMesa {
     }
   }
 
-  /// Altera a quantidade de um produto pendente.
-  ///
-  /// Se a quantidade chegar a zero, o item será removido.
   void alterarQuantidade(String produtoId, int variacao) {
     if (encerrada || variacao == 0) return;
 
@@ -110,7 +132,6 @@ class ComandaMesa {
     }
   }
 
-  /// Remove um produto da lista de itens pendentes.
   void removerItem(String produtoId) {
     if (encerrada) return;
 
@@ -119,7 +140,6 @@ class ComandaMesa {
     );
   }
 
-  /// Registra uma solicitação de atendimento.
   void solicitarAtendimento() {
     if (encerrada) return;
 
@@ -127,7 +147,6 @@ class ComandaMesa {
     status = 'aguardando atendimento';
   }
 
-  /// Limpa a solicitação de atendimento.
   void limparSolicitacaoAtendimento() {
     atendimentoSolicitado = false;
 

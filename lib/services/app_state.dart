@@ -1,6 +1,9 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/mock_data.dart';
 import '../models/item_carrinho.dart';
@@ -15,6 +18,93 @@ class AppState extends ChangeNotifier {
   static final AppState instance = AppState._();
 
   AppState._();
+
+  // ================= PERSISTÊNCIA DE USUÁRIOS =================
+
+  static const String _chaveUsuarios = 'dvanille_usuarios';
+
+  /// Recupera os usuários salvos no navegador.
+  ///
+  /// Na primeira execução, mantém e salva os usuários de demonstração.
+  Future<void> carregarDados() async {
+    try {
+      final preferencias = await SharedPreferences.getInstance();
+      final dadosSalvos = preferencias.getString(_chaveUsuarios);
+
+      // Primeira execução: salva os usuários de demonstração.
+      if (dadosSalvos == null) {
+        await salvarUsuarios();
+        return;
+      }
+
+      final List<dynamic> dados = jsonDecode(dadosSalvos);
+
+      final usuariosCarregados = dados.map((item) {
+        final usuario = Map<String, dynamic>.from(item);
+
+        return Usuario(
+          id: usuario['id'] as int,
+          nome: usuario['nome'] as String,
+          email: usuario['email'] as String,
+          senha: usuario['senha'] as String,
+          telefone: usuario['telefone'] as String? ?? '',
+          endereco: usuario['endereco'] as String? ?? '',
+          dataNascimento: usuario['dataNascimento'] == null
+              ? null
+              : DateTime.parse(
+                  usuario['dataNascimento'] as String,
+                ),
+          tipo: usuario['tipo'] as String? ?? 'cliente',
+          restricoes: List<String>.from(
+            usuario['restricoes'] ?? <String>[],
+          ),
+          notificacoes: usuario['notificacoes'] as bool? ?? true,
+        );
+      }).toList();
+
+      usuarios
+        ..clear()
+        ..addAll(usuariosCarregados);
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Erro ao carregar usuários: $e');
+    }
+  }
+
+  /// Salva todos os usuários no armazenamento local do navegador.
+  Future<void> salvarUsuarios() async {
+    try {
+      final preferencias = await SharedPreferences.getInstance();
+
+      final dados = usuarios.map((usuario) {
+        return {
+          'id': usuario.id,
+          'nome': usuario.nome,
+          'email': usuario.email,
+          'senha': usuario.senha,
+          'telefone': usuario.telefone,
+          'endereco': usuario.endereco,
+          'dataNascimento': usuario.dataNascimento?.toIso8601String(),
+          'tipo': usuario.tipo,
+          'restricoes': usuario.restricoes,
+          'notificacoes': usuario.notificacoes,
+        };
+      }).toList();
+
+      await preferencias.setString(
+        _chaveUsuarios,
+        jsonEncode(dados),
+      );
+    } catch (e) {
+      debugPrint('Erro ao salvar usuários: $e');
+    }
+  }
+
+  /// Agenda o salvamento sem alterar a assinatura dos métodos existentes.
+  void _salvarUsuariosAutomaticamente() {
+    unawaited(salvarUsuarios());
+  }
 
   // ----------------- banco de dados em memória -----------------
 
@@ -53,13 +143,15 @@ class AppState extends ChangeNotifier {
   double get subtotal =>
       carrinho.fold(0.0, (soma, item) => soma + item.subtotal);
 
-  /// Desconto calculado a partir do cupom aplicado.
+  /// Desconto calculado exclusivamente sobre produtos alimentícios.
   double get desconto {
     final cupom = cupomAplicado;
 
-    if (cupom == null) return 0;
+    if (cupom == null || itensProdutos.isEmpty) {
+      return 0;
+    }
 
-    return subtotal * (cupons[cupom] ?? 0);
+    return subtotalProdutos * (cupons[cupom] ?? 0);
   }
 
   /// Total do carrinho após o desconto.
@@ -238,8 +330,16 @@ class AppState extends ChangeNotifier {
     required List<String> restricoes,
     required bool notificacoes,
   }) {
+    var maiorId = 0;
+
+    for (final usuarioExistente in usuarios) {
+      if (usuarioExistente.id > maiorId) {
+        maiorId = usuarioExistente.id;
+      }
+    }
+
     final usuario = Usuario(
-      id: usuarios.length + 1,
+      id: maiorId + 1,
       nome: nome,
       email: email,
       senha: senha,
@@ -254,6 +354,7 @@ class AppState extends ChangeNotifier {
     usuarioLogado = usuario;
 
     notifyListeners();
+    _salvarUsuariosAutomaticamente();
 
     return usuario;
   }
@@ -345,6 +446,7 @@ class AppState extends ChangeNotifier {
     }
 
     notifyListeners();
+    _salvarUsuariosAutomaticamente();
 
     return null;
   }
@@ -401,12 +503,24 @@ class AppState extends ChangeNotifier {
       }
     }
 
+    _limparCupomSeNaoHouverProdutos();
+
     notifyListeners();
   }
 
   void removerItem(String id) {
     carrinho.removeWhere((item) => item.id == id);
+
+    _limparCupomSeNaoHouverProdutos();
+
     notifyListeners();
+  }
+
+  /// Remove o cupom quando não existem mais produtos alimentícios.
+  void _limparCupomSeNaoHouverProdutos() {
+    if (itensProdutos.isEmpty && cupomAplicado != null) {
+      cupomAplicado = null;
+    }
   }
 
   void limparCarrinho() {
@@ -416,14 +530,40 @@ class AppState extends ChangeNotifier {
   }
 
   /// Aplica um cupom existente.
+  ///
+  /// PRIMEIRACOMPRA exige cliente logado, sem pedidos anteriores
+  /// e produtos alimentícios no carrinho.
   bool aplicarCupom(String codigo) {
-    final cupom = codigo.trim().toUpperCase();
+    final codigoNormalizado = codigo.trim().toUpperCase();
 
-    if (!cupons.containsKey(cupom)) {
+    if (!cupons.containsKey(codigoNormalizado)) {
       return false;
     }
 
-    cupomAplicado = cupom;
+    // Não permite aplicar cupons quando há somente vale-presentes.
+    if (itensProdutos.isEmpty) {
+      return false;
+    }
+
+    if (codigoNormalizado == 'PRIMEIRACOMPRA') {
+      final usuario = usuarioLogado;
+
+      if (usuario == null) {
+        return false;
+      }
+
+      final jaRealizouCompra = pedidos.any(
+        (pedido) =>
+            pedido.clienteEmail.trim().toLowerCase() ==
+            usuario.email.trim().toLowerCase(),
+      );
+
+      if (jaRealizouCompra) {
+        return false;
+      }
+    }
+
+    cupomAplicado = codigoNormalizado;
     notifyListeners();
 
     return true;
@@ -596,7 +736,6 @@ class AppState extends ChangeNotifier {
   ///
   /// No fluxo de compra, chame este método somente após a
   /// confirmação simulada da compra.
-
   ValePresente emitirValePresente({
     required double valor,
     required String destinatario,

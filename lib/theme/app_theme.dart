@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Paleta idêntica às variáveis CSS do protótipo.
+/// Paleta de cores da D'Vanille.
 class DVanilleColors {
+  // Modo claro
   static const cream = Color(0xFFFFF4E8);
   static const cream2 = Color(0xFFFFEEDD);
   static const taupe = Color(0xFF9C8A73);
@@ -13,13 +14,20 @@ class DVanilleColors {
   static const white = Color(0xFFFFFFFF);
   static const line = Color(0x479C8A73);
 
-  // modo escuro
-  static const darkCream = Color(0xFF2A2420);
+  // Modo escuro - paleta revisada
+  static const darkCream = Color(0xFF241F1B);
   static const darkCream2 = Color(0xFF332B26);
   static const darkSurface = Color(0xFF3A322C);
-  static const darkInk = Color(0xFFF5EDE4);
+  static const darkInk = Color(0xFFFFF4E8);
 
-  // badges de restrição
+  // Textos e detalhes do modo escuro
+  static const darkTextSecondary = Color(0xFFD9C6AF);
+  static const darkTextMuted = Color(0xFFC4AD93);
+  static const darkRose = Color(0xFFE6A9A5);
+  static const darkButton = Color(0xFFB99F82);
+  static const darkBorder = Color(0xFF55483D);
+
+  // Badges de restrição
   static const badgeGluten = Color(0xFFF3E7D3);
   static const badgeLactose = Color(0xFFE4EEE0);
   static const badgeVegan = Color(0xFFDCEEDB);
@@ -27,7 +35,7 @@ class DVanilleColors {
   static const badgeSugar = Color(0xFFF6E4D9);
 }
 
-/// Cores de fundo/texto dos selos de status (mesmas classes do CSS).
+/// Cores de fundo/texto dos selos de status.
 class StatusColors {
   static const Map<String, List<Color>> _map = {
     'recebido': [Color(0xFFFDE9D0), Color(0xFF9A6A12)],
@@ -42,25 +50,24 @@ class StatusColors {
     'ativo': [Color(0xFFE4EEE0), Color(0xFF3D6B3A)],
   };
 
-  static Color fundo(String status) =>
-      (_map[status] ?? _map['recebido']!)[0];
+  static Color fundo(String status) => (_map[status] ?? _map['recebido']!)[0];
 
-  static Color texto(String status) =>
-      (_map[status] ?? _map['recebido']!)[1];
+  static Color texto(String status) => (_map[status] ?? _map['recebido']!)[1];
 }
 
 class AppTheme {
-  /// Fonte "display" (títulos) — aproxima a Cormorant Garamond do HTML.
+  /// Fonte display dos títulos.
   static const List<String> displayFallback = [
     'Georgia',
     'Times New Roman',
     'serif'
   ];
 
-  static TextStyle display(
-          {double size = 28,
-          FontWeight weight = FontWeight.w600,
-          Color? color}) =>
+  static TextStyle display({
+    double size = 28,
+    FontWeight weight = FontWeight.w600,
+    Color? color,
+  }) =>
       TextStyle(
         fontFamilyFallback: displayFallback,
         fontSize: size,
@@ -89,77 +96,153 @@ class AppTheme {
     required Color surface,
     required Color onSurface,
   }) {
+    final isDark = brightness == Brightness.dark;
+
+    final textSecondary =
+        isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.darkTaupe;
+
+    final buttonBackground =
+        isDark ? DVanilleColors.darkButton : DVanilleColors.taupe;
+
+    final buttonForeground =
+        isDark ? DVanilleColors.darkCream : DVanilleColors.white;
+
+    final borderColor =
+        isDark ? DVanilleColors.darkBorder : DVanilleColors.line;
+
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
       scaffoldBackgroundColor: scaffold,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: DVanilleColors.taupe,
+        seedColor: isDark ? DVanilleColors.darkRose : DVanilleColors.taupe,
         brightness: brightness,
         surface: surface,
+        primary: isDark ? DVanilleColors.darkButton : DVanilleColors.taupe,
+        onPrimary: isDark ? DVanilleColors.darkCream : DVanilleColors.white,
+        secondary: isDark ? DVanilleColors.darkRose : DVanilleColors.rose,
+        onSecondary: DVanilleColors.ink,
+        onSurface: onSurface,
       ),
       cardColor: surface,
-      dividerColor: DVanilleColors.line,
+      dividerColor: borderColor,
       appBarTheme: AppBarTheme(
         backgroundColor: scaffold,
-        foregroundColor: DVanilleColors.darkTaupe,
+        foregroundColor:
+            isDark ? DVanilleColors.darkInk : DVanilleColors.darkTaupe,
         elevation: 0,
       ),
-      snackBarTheme: const SnackBarThemeData(
-        backgroundColor: DVanilleColors.darkTaupe,
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor:
+            isDark ? DVanilleColors.darkSurface : DVanilleColors.darkTaupe,
         contentTextStyle: TextStyle(
-            color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
+          color: isDark ? DVanilleColors.darkInk : DVanilleColors.white,
+          fontWeight: FontWeight.w700,
+          fontSize: 14,
+        ),
         behavior: SnackBarBehavior.floating,
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: DVanilleColors.taupe,
-          foregroundColor: Colors.white,
+          backgroundColor: buttonBackground,
+          foregroundColor: buttonForeground,
+          disabledBackgroundColor:
+              isDark ? DVanilleColors.darkSurface : DVanilleColors.cream2,
+          disabledForegroundColor: textSecondary,
           shape: const StadiumBorder(),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          textStyle: const TextStyle(fontWeight: FontWeight.w800),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 16,
+          ),
+          textStyle: const TextStyle(
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: DVanilleColors.darkTaupe,
-          side: const BorderSide(color: DVanilleColors.taupe, width: 1.5),
+          foregroundColor:
+              isDark ? DVanilleColors.darkInk : DVanilleColors.darkTaupe,
+          side: BorderSide(
+            color: isDark ? DVanilleColors.darkTextMuted : DVanilleColors.taupe,
+            width: 1.5,
+          ),
           shape: const StadiumBorder(),
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-          textStyle: const TextStyle(fontWeight: FontWeight.w800),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 22,
+            vertical: 14,
+          ),
+          textStyle: const TextStyle(
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: DVanilleColors.rose,
-          textStyle: const TextStyle(fontWeight: FontWeight.w800),
+          foregroundColor:
+              isDark ? DVanilleColors.darkRose : DVanilleColors.rose,
+          textStyle: const TextStyle(
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: brightness == Brightness.light
-            ? DVanilleColors.cream
-            : DVanilleColors.darkCream2,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        labelStyle: const TextStyle(
-            color: DVanilleColors.darkTaupe, fontWeight: FontWeight.w700),
-        border: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12)),
-          borderSide: BorderSide(color: DVanilleColors.line, width: 1.5),
+        fillColor: isDark ? DVanilleColors.darkSurface : DVanilleColors.cream,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
         ),
-        enabledBorder: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12)),
-          borderSide: BorderSide(color: DVanilleColors.line, width: 1.5),
+        labelStyle: TextStyle(
+          color: isDark
+              ? DVanilleColors.darkTextSecondary
+              : DVanilleColors.darkTaupe,
+          fontWeight: FontWeight.w700,
         ),
-        focusedBorder: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12)),
-          borderSide: BorderSide(color: DVanilleColors.rose, width: 2),
+        hintStyle: TextStyle(
+          color: isDark ? DVanilleColors.darkTextMuted : DVanilleColors.taupe,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: const BorderRadius.all(
+            Radius.circular(12),
+          ),
+          borderSide: BorderSide(
+            color: borderColor,
+            width: 1.5,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: const BorderRadius.all(
+            Radius.circular(12),
+          ),
+          borderSide: BorderSide(
+            color: borderColor,
+            width: 1.5,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: const BorderRadius.all(
+            Radius.circular(12),
+          ),
+          borderSide: BorderSide(
+            color: isDark ? DVanilleColors.darkRose : DVanilleColors.rose,
+            width: 2,
+          ),
         ),
       ),
-      textTheme: Typography.material2021(platform: TargetPlatform.android)
+      textTheme: Typography.material2021(
+        platform: TargetPlatform.android,
+      )
           .black
-          .apply(bodyColor: onSurface, displayColor: onSurface),
+          .apply(
+            bodyColor: onSurface,
+            displayColor: onSurface,
+          )
+          .copyWith(
+            bodyMedium: TextStyle(color: onSurface),
+            bodySmall: TextStyle(color: textSecondary),
+            labelMedium: TextStyle(color: textSecondary),
+          ),
     );
   }
 }

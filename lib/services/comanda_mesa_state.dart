@@ -4,6 +4,7 @@ import '../models/comanda_mesa.dart';
 import '../models/pedido.dart';
 import '../models/produto.dart';
 import 'app_state.dart';
+import '../data/mock_data.dart';
 
 class ComandaMesaState extends ChangeNotifier {
   ComandaMesaState._();
@@ -16,10 +17,6 @@ class ComandaMesaState extends ChangeNotifier {
 
   ComandaMesa? comandaDaMesa(String mesa) => _comandas[mesa.trim()];
 
-  /// Abre uma comanda para a mesa informada.
-  ///
-  /// Se já existir uma comanda aberta, ela será reutilizada.
-  /// Se a comanda anterior estiver encerrada, uma nova será criada.
   ComandaMesa abrirComanda(String mesa) {
     final numeroMesa = mesa.trim();
 
@@ -44,12 +41,10 @@ class ComandaMesaState extends ChangeNotifier {
     return comanda;
   }
 
-  /// Verifica se a comanda ainda pode ser modificada.
   bool _podeEditar(ComandaMesa comanda) {
     return comanda.status != 'encerrada';
   }
 
-  /// Adiciona um produto à comanda da mesa.
   void adicionarProduto({
     required String mesa,
     required Produto produto,
@@ -61,7 +56,6 @@ class ComandaMesaState extends ChangeNotifier {
 
     final comanda = _comandas[numeroMesa];
 
-    // Não cria nem reabre uma comanda encerrada por acidente.
     if (comanda == null || !_podeEditar(comanda)) return;
 
     comanda.adicionarItem(
@@ -71,13 +65,11 @@ class ComandaMesaState extends ChangeNotifier {
       quantidade: quantidade,
     );
 
-    // Mantém a comanda aberta enquanto o cliente adiciona itens.
     comanda.status = 'aberta';
 
     notifyListeners();
   }
 
-  /// Aumenta ou diminui a quantidade de um produto.
   void alterarQuantidade({
     required String mesa,
     required String produtoId,
@@ -92,7 +84,6 @@ class ComandaMesaState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Remove um produto da comanda.
   void removerProduto({
     required String mesa,
     required String produtoId,
@@ -106,7 +97,90 @@ class ComandaMesaState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Solicita atendimento para a mesa.
+  /// Verifica se hoje está na semana do aniversário.
+  ///
+  /// A semana começa na segunda-feira e termina no domingo.
+  bool _estaNaSemanaDoAniversario(DateTime nascimento) {
+    final hoje = DateTime.now();
+
+    // Ajusta o dia para aniversários em 29 de fevereiro.
+    final ultimoDiaDoMes = DateTime(
+      hoje.year,
+      nascimento.month + 1,
+      0,
+    ).day;
+
+    final diaAniversario =
+        nascimento.day > ultimoDiaDoMes ? ultimoDiaDoMes : nascimento.day;
+
+    final aniversario = DateTime(
+      hoje.year,
+      nascimento.month,
+      diaAniversario,
+    );
+
+    final inicioSemana = aniversario.subtract(
+      Duration(days: aniversario.weekday - DateTime.monday),
+    );
+
+    final fimSemana = inicioSemana.add(const Duration(days: 6));
+
+    final dataHoje = DateTime(hoje.year, hoje.month, hoje.day);
+
+    return !dataHoje.isBefore(inicioSemana) && !dataHoje.isAfter(fimSemana);
+  }
+
+  /// Aplica o cupom de aniversário exclusivamente à comanda.
+  bool aplicarCupomAniversario(String mesa) {
+    final numeroMesa = mesa.trim();
+
+    if (numeroMesa.isEmpty) return false;
+
+    final state = AppState.instance;
+    final cliente = state.usuarioLogado;
+    final comanda = _comandas[numeroMesa];
+
+    if (cliente == null ||
+        comanda == null ||
+        comanda.itens.isEmpty ||
+        !_podeEditar(comanda)) {
+      return false;
+    }
+
+    // Impede reaplicação do mesmo cupom.
+    if (comanda.temCupom) return false;
+
+    final nascimento = cliente.dataNascimento;
+
+    if (nascimento == null || !_estaNaSemanaDoAniversario(nascimento)) {
+      return false;
+    }
+
+    final percentual = cupons['ANIVERSARIO'];
+
+    if (percentual == null) return false;
+
+    comanda.aplicarCupom(
+      codigo: 'ANIVERSARIO',
+      percentual: percentual,
+    );
+
+    notifyListeners();
+
+    return true;
+  }
+
+  /// Remove o cupom aplicado à comanda.
+  void removerCupom(String mesa) {
+    final comanda = _comandas[mesa.trim()];
+
+    if (comanda == null || !_podeEditar(comanda)) return;
+
+    comanda.removerCupom();
+
+    notifyListeners();
+  }
+
   void solicitarAtendimento(String mesa) {
     final numeroMesa = mesa.trim();
 
@@ -121,11 +195,6 @@ class ComandaMesaState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Registra um pedido independente no AppState sem encerrar
-  /// a comanda da mesa.
-  ///
-  /// Os itens enviados são removidos da lista pendente para evitar
-  /// que sejam enviados novamente no próximo pedido.
   bool enviarPedidoAoCaixa(String mesa) {
     final numeroMesa = mesa.trim();
 
@@ -150,7 +219,6 @@ class ComandaMesaState extends ChangeNotifier {
         '${agora.hour.toString().padLeft(2, '0')}:'
         '${agora.minute.toString().padLeft(2, '0')}';
 
-    // Copia os itens pendentes para o novo pedido.
     final itensEnviados = comanda.itens
         .map(
           (item) => ItemPedido(
@@ -163,36 +231,36 @@ class ComandaMesaState extends ChangeNotifier {
         .toList();
 
     final totalEnviado = comanda.total;
+    final descontoEnviado = comanda.desconto;
+    final cupomEnviado = comanda.cupomAplicado;
 
     final pedido = Pedido(
       id: 'PD-${agora.microsecondsSinceEpoch}',
       clienteEmail: cliente.email,
       itens: itensEnviados,
       total: totalEnviado,
+      desconto: descontoEnviado,
+      cupomAplicado: cupomEnviado,
       data: dataFormatada,
       status: 'recebido',
       modo: 'caixa',
       mesa: numeroMesa,
     );
 
-    // Cada envio é registrado como um pedido independente.
     state.pedidos.add(pedido);
 
-    // Remove somente os itens enviados.
-    // O histórico dos pedidos anteriores permanece disponível.
+    // Limpa os itens e o cupom após o envio.
     comanda.itens.clear();
+    comanda.removerCupom();
 
-    // A comanda continua aberta para novos pedidos.
     comanda.status = 'aberta';
 
-    // Atualiza as telas que acompanham os pedidos e a comanda.
     state.notifyListeners();
     notifyListeners();
 
     return true;
   }
 
-  /// Encerra definitivamente a comanda atual da mesa.
   void encerrarComanda(String mesa) {
     final comanda = _comandas[mesa.trim()];
 

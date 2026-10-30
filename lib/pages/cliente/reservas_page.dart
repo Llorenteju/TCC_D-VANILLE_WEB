@@ -33,6 +33,18 @@ class _ReservasPageState extends State<ReservasPage> {
 
   bool tentouEnviar = false;
 
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
+  Color get corTitulo => isDark ? DVanilleColors.darkRose : DVanilleColors.rose;
+
+  Color get corSubtitulo =>
+      isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.darkTaupe;
+
+  Color get corTexto => isDark ? DVanilleColors.darkInk : DVanilleColors.ink;
+
+  Color get corTextoSecundario =>
+      isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.taupe;
+
   @override
   void initState() {
     super.initState();
@@ -78,6 +90,26 @@ class _ReservasPageState extends State<ReservasPage> {
         hoje.year + 2,
       ),
       helpText: 'Selecione a data da reserva',
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: isDark
+                ? const ColorScheme.dark(
+                    primary: DVanilleColors.darkRose,
+                    onPrimary: DVanilleColors.darkInk,
+                    surface: DVanilleColors.darkSurface,
+                    onSurface: DVanilleColors.darkInk,
+                  )
+                : const ColorScheme.light(
+                    primary: DVanilleColors.rose,
+                    onPrimary: Colors.white,
+                    surface: DVanilleColors.cream,
+                    onSurface: DVanilleColors.ink,
+                  ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (escolhida != null) {
@@ -236,11 +268,9 @@ class _ReservasPageState extends State<ReservasPage> {
         children: [
           const SizedBox(height: 56),
 
-          // ==========================================================
           // TÍTULO
-          // ==========================================================
 
-          const ContentWidth(
+          ContentWidth(
             child: Column(
               children: [
                 Text(
@@ -250,10 +280,10 @@ class _ReservasPageState extends State<ReservasPage> {
                     fontFamily: 'CreamCake',
                     fontSize: 48,
                     fontWeight: FontWeight.w400,
-                    color: DVanilleColors.rose,
+                    color: corTitulo,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   'Garanta seu lugar',
                   textAlign: TextAlign.center,
@@ -261,7 +291,7 @@ class _ReservasPageState extends State<ReservasPage> {
                     fontSize: 24,
                     fontWeight: FontWeight.w600,
                     fontStyle: FontStyle.italic,
-                    color: DVanilleColors.darkTaupe,
+                    color: corSubtitulo,
                   ),
                 ),
               ],
@@ -270,9 +300,7 @@ class _ReservasPageState extends State<ReservasPage> {
 
           const SizedBox(height: 24),
 
-          // ==========================================================
           // BOTÃO MINHAS RESERVAS
-          // ==========================================================
 
           OutlinedButton.icon(
             onPressed: () {
@@ -292,9 +320,7 @@ class _ReservasPageState extends State<ReservasPage> {
 
           const SizedBox(height: 41),
 
-          // ==========================================================
           // FORMULÁRIO
-          // ==========================================================
 
           ContentWidth(
             maxWidth: 760,
@@ -305,9 +331,7 @@ class _ReservasPageState extends State<ReservasPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ==================================================
                     // NOME + E-MAIL
-                    // ==================================================
 
                     _par(
                       estreito,
@@ -316,6 +340,7 @@ class _ReservasPageState extends State<ReservasPage> {
                           controller: nome,
                           validator: _validarObrigatorio,
                           autovalidateMode: AutovalidateMode.onUserInteraction,
+                          style: TextStyle(color: corTexto),
                           decoration: const InputDecoration(
                             labelText: 'Nome *',
                           ),
@@ -325,6 +350,7 @@ class _ReservasPageState extends State<ReservasPage> {
                           keyboardType: TextInputType.emailAddress,
                           validator: _validarEmail,
                           autovalidateMode: AutovalidateMode.onUserInteraction,
+                          style: TextStyle(color: corTexto),
                           decoration: const InputDecoration(
                             labelText: 'E-mail *',
                           ),
@@ -334,9 +360,7 @@ class _ReservasPageState extends State<ReservasPage> {
 
                     const SizedBox(height: 14),
 
-                    // ==================================================
                     // TELEFONE + QUANTIDADE
-                    // ==================================================
 
                     _par(
                       estreito,
@@ -346,6 +370,7 @@ class _ReservasPageState extends State<ReservasPage> {
                           keyboardType: TextInputType.phone,
                           validator: _validarTelefone,
                           autovalidateMode: AutovalidateMode.onUserInteraction,
+                          style: TextStyle(color: corTexto),
                           decoration: const InputDecoration(
                             labelText: 'Telefone *',
                             hintText: '(11) 98765-4321',
@@ -356,6 +381,7 @@ class _ReservasPageState extends State<ReservasPage> {
                           keyboardType: TextInputType.number,
                           validator: _validarPessoas,
                           autovalidateMode: AutovalidateMode.onUserInteraction,
+                          style: TextStyle(color: corTexto),
                           decoration: const InputDecoration(
                             labelText: 'Quantidade de pessoas *',
                           ),
@@ -365,9 +391,7 @@ class _ReservasPageState extends State<ReservasPage> {
 
                     const SizedBox(height: 14),
 
-                    // ==================================================
                     // DATA + HORÁRIO
-                    // ==================================================
 
                     _par(
                       estreito,
@@ -391,8 +415,9 @@ class _ReservasPageState extends State<ReservasPage> {
                                       '${data!.month.toString().padLeft(2, '0')}/'
                                       '${data!.year}',
                               style: TextStyle(
-                                color:
-                                    data == null ? DVanilleColors.taupe : null,
+                                color: data == null
+                                    ? corTextoSecundario
+                                    : corTexto,
                               ),
                             ),
                           ),
@@ -432,12 +457,11 @@ class _ReservasPageState extends State<ReservasPage> {
 
                     const SizedBox(height: 14),
 
-                    // ==================================================
                     // PREFERÊNCIAS — OPCIONAL
-                    // ==================================================
 
                     TextFormField(
                       controller: preferencias,
+                      style: TextStyle(color: corTexto),
                       decoration: const InputDecoration(
                         labelText: 'Preferências de produtos',
                         hintText:
@@ -447,13 +471,12 @@ class _ReservasPageState extends State<ReservasPage> {
 
                     const SizedBox(height: 14),
 
-                    // ==================================================
                     // INFORMAÇÕES ADICIONAIS — OPCIONAL
-                    // ==================================================
 
                     TextFormField(
                       controller: observacoes,
                       maxLines: 3,
+                      style: TextStyle(color: corTexto),
                       decoration: const InputDecoration(
                         labelText: 'Informações adicionais',
                         hintText: 'Digite alguma informação importante...',
@@ -462,9 +485,7 @@ class _ReservasPageState extends State<ReservasPage> {
 
                     const SizedBox(height: 22),
 
-                    // ==================================================
                     // BOTÃO
-                    // ==================================================
 
                     SizedBox(
                       width: double.infinity,
@@ -480,6 +501,8 @@ class _ReservasPageState extends State<ReservasPage> {
               ),
             ),
           ),
+
+          const SizedBox(height: 56),
         ],
       ),
     );

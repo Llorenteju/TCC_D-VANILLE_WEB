@@ -34,12 +34,23 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final isDark = tema.brightness == Brightness.dark;
+
+    final corTexto = tema.textTheme.bodyLarge?.color ??
+        (isDark ? Colors.white : DVanilleColors.ink);
+
+    final corTextoSecundario =
+        isDark ? const Color(0xFFD0C2B5) : DVanilleColors.darkTaupe;
+
+    final corBorda = isDark ? const Color(0xFF51453C) : DVanilleColors.line;
+
     return Container(
       width: 272,
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: tema.cardColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: DVanilleColors.line),
+        border: Border.all(color: corBorda),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -87,9 +98,10 @@ class ProductCard extends StatelessWidget {
               children: [
                 Text(
                   produto.nome,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16.5,
                     fontWeight: FontWeight.w800,
+                    color: corTexto,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -108,10 +120,10 @@ class ProductCard extends StatelessWidget {
                     produto.descricao,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       height: 1.4,
-                      color: DVanilleColors.darkTaupe,
+                      color: corTextoSecundario,
                     ),
                   ),
                 ),
@@ -142,10 +154,12 @@ class ProductCard extends StatelessWidget {
                         padding: const EdgeInsets.only(bottom: 3),
                         child: Text(
                           money(produto.precoAntigo!),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             decoration: TextDecoration.lineThrough,
-                            color: DVanilleColors.taupe,
+                            color: isDark
+                                ? const Color(0xFFB8A99B)
+                                : DVanilleColors.taupe,
                           ),
                         ),
                       ),
@@ -188,8 +202,15 @@ class ProductCard extends StatelessWidget {
     BuildContext context, {
     bool largo = false,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return OutlinedButton(
       style: OutlinedButton.styleFrom(
+        foregroundColor:
+            isDark ? const Color(0xFFE8D6C7) : DVanilleColors.darkTaupe,
+        side: BorderSide(
+          color: isDark ? const Color(0xFF8D7765) : DVanilleColors.taupe,
+        ),
         padding: const EdgeInsets.symmetric(
           horizontal: 10,
           vertical: 10,
@@ -214,14 +235,17 @@ class ProductCard extends StatelessWidget {
     BuildContext context, {
     bool largo = false,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final texto = _modoMesa
         ? (largo ? 'Adicionar à comanda' : '+ Comanda')
         : (largo ? 'Adicionar ao carrinho' : '+ Carrinho');
 
     return FilledButton(
       style: FilledButton.styleFrom(
-        backgroundColor: DVanilleColors.blush,
-        foregroundColor: DVanilleColors.darkTaupe,
+        backgroundColor:
+            isDark ? const Color(0xFFC99B91) : DVanilleColors.blush,
+        foregroundColor: const Color(0xFF3A2D28),
         padding: EdgeInsets.symmetric(
           horizontal: largo ? 20 : 14,
           vertical: 10,

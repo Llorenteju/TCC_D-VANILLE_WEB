@@ -25,6 +25,7 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = AppState.instance;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return PageShell(
       activeRoute: Routes.home,
@@ -47,31 +48,37 @@ class HomePage extends StatelessWidget {
                     Text(
                       'Nossa proposta',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'CreamCake',
                         fontSize: 42,
                         fontWeight: FontWeight.w400,
-                        color: DVanilleColors.rose,
+                        color: isDark
+                            ? DVanilleColors.darkRose
+                            : DVanilleColors.rose,
                       ),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
+                    Text(
                       'Sabor, acolhimento e inclusão em cada detalhe.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
-                        color: DVanilleColors.darkTaupe,
+                        color: isDark
+                            ? DVanilleColors.darkTextSecondary
+                            : DVanilleColors.darkTaupe,
                       ),
                     ),
                     const SizedBox(height: 10),
-                    const Text(
+                    Text(
                       "Cada produto da D'Vanille traz ingredientes, informações nutricionais e indicação de restrições alimentares de forma clara, para que você escolha com segurança e prazer.",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 15,
                         height: 1.5,
-                        color: DVanilleColors.ink,
+                        color: isDark
+                            ? DVanilleColors.darkInk
+                            : DVanilleColors.ink,
                       ),
                     ),
                     const SizedBox(height: 30),
@@ -90,25 +97,32 @@ class HomePage extends StatelessWidget {
                       Text(
                         'Selecionados para você',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'CreamCake',
                           fontSize: 42,
                           fontWeight: FontWeight.w400,
-                          color: DVanilleColors.rose,
+                          color: isDark
+                              ? DVanilleColors.darkRose
+                              : DVanilleColors.rose,
                         ),
                       ),
                       const SizedBox(height: 6),
-                      const Text(
+                      Text(
                         'Produtos em destaque',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
-                          color: DVanilleColors.darkTaupe,
+                          color: isDark
+                              ? DVanilleColors.darkTextSecondary
+                              : DVanilleColors.darkTaupe,
                         ),
                       ),
                       const SizedBox(height: 34),
-                      GradeProdutos(produtos: destaques),
+                      GradeProdutos(
+                        produtos: destaques,
+                        permitirAdicionar: false,
+                      ),
                       const SizedBox(height: 30),
                       OutlinedButton(
                         onPressed: () =>
@@ -116,7 +130,7 @@ class HomePage extends StatelessWidget {
                           Routes.cardapio,
                           (r) => false,
                         ),
-                        child: const Text('Ver cardápio completo'),
+                        child: Text('Ver cardápio completo'),
                       ),
                     ],
                   ),
@@ -129,25 +143,32 @@ class HomePage extends StatelessWidget {
                     Text(
                       'Não perca',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'CreamCake',
                         fontSize: 42,
                         fontWeight: FontWeight.w400,
-                        color: DVanilleColors.rose,
+                        color: isDark
+                            ? DVanilleColors.darkRose
+                            : DVanilleColors.rose,
                       ),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
+                    Text(
                       'Ofertas da semana',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
-                        color: DVanilleColors.darkTaupe,
+                        color: isDark
+                            ? DVanilleColors.darkTextSecondary
+                            : DVanilleColors.darkTaupe,
                       ),
                     ),
                     const SizedBox(height: 34),
-                    GradeProdutos(produtos: ofertas),
+                    GradeProdutos(
+                      produtos: ofertas,
+                      permitirAdicionar: false,
+                    ),
                     const SizedBox(height: 30),
                     FilledButton(
                       style: FilledButton.styleFrom(
@@ -159,7 +180,7 @@ class HomePage extends StatelessWidget {
                         Routes.ofertas,
                         (r) => false,
                       ),
-                      child: const Text('Ver todas as ofertas'),
+                      child: Text('Ver todas as ofertas'),
                     ),
                   ],
                 ),
@@ -187,7 +208,9 @@ class HomePage extends StatelessWidget {
                                 'Localização',
                                 style: AppTheme.display(
                                   size: 22,
-                                  color: DVanilleColors.darkTaupe,
+                                  color: isDark
+                                      ? DVanilleColors.darkTextSecondary
+                                      : DVanilleColors.darkTaupe,
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -213,7 +236,9 @@ class HomePage extends StatelessWidget {
                                 'Horário de funcionamento',
                                 style: AppTheme.display(
                                   size: 22,
-                                  color: DVanilleColors.darkTaupe,
+                                  color: isDark
+                                      ? DVanilleColors.darkTextSecondary
+                                      : DVanilleColors.darkTaupe,
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -242,6 +267,8 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _hero(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return ContentWidth(
       padding: const EdgeInsets.fromLTRB(24, 56, 24, 0),
       child: Column(
@@ -249,12 +276,12 @@ class HomePage extends StatelessWidget {
           Text(
             'Bem-vindo à',
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'CreamCake',
               fontSize: 38,
               fontWeight: FontWeight.w400,
-              color: DVanilleColors.rose,
-              height: 0.95,
+              color: isDark ? DVanilleColors.darkRose : DVanilleColors.rose,
+              height: 1.5,
             ),
           ),
           Transform.translate(
@@ -262,11 +289,13 @@ class HomePage extends StatelessWidget {
             child: Text(
               "D'Vanille",
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: 'CreamCake',
-                fontSize: 68,
-                fontWeight: FontWeight.w400,
-                color: DVanilleColors.darkTaupe,
+              style: TextStyle(
+                fontFamily: 'DancingScript',
+                fontSize: 65,
+                fontWeight: FontWeight.w600,
+                color: isDark
+                    ? DVanilleColors.darkTextSecondary
+                    : DVanilleColors.darkTaupe,
                 height: 0.95,
               ),
             ),
@@ -274,13 +303,15 @@ class HomePage extends StatelessWidget {
           const SizedBox(height: 4),
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 600),
-            child: const Text(
+            child: Text(
               'Uma cafeteria pensada para acolher todas as pessoas, com sabor, tecnologia e informação nutricional clara para quem possui restrições alimentares.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16.5,
                 height: 1.6,
-                color: DVanilleColors.darkTaupe,
+                color: isDark
+                    ? DVanilleColors.darkTextSecondary
+                    : DVanilleColors.darkTaupe,
               ),
             ),
           ),
@@ -295,7 +326,7 @@ class HomePage extends StatelessWidget {
                   Routes.cardapio,
                   (r) => false,
                 ),
-                child: const Text('Conheça nosso cardápio'),
+                child: Text('Conheça nosso cardápio'),
               ),
             ],
           ),
@@ -315,11 +346,13 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _secaoAplicativo(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 56),
       decoration: BoxDecoration(
-        color: DVanilleColors.blush2,
+        color: isDark ? DVanilleColors.darkSurface : DVanilleColors.blush2,
         borderRadius: BorderRadius.circular(32),
       ),
       child: ContentWidth(
@@ -332,34 +365,37 @@ class HomePage extends StatelessWidget {
                   ? CrossAxisAlignment.center
                   : CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Sua comida favorita na palma da sua mão',
                   textAlign: TextAlign.left,
                   style: TextStyle(
                     fontFamily: 'CreamCake',
                     fontSize: 42,
                     fontWeight: FontWeight.w400,
-                    color: DVanilleColors.rose,
+                    color:
+                        isDark ? DVanilleColors.darkRose : DVanilleColors.rose,
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'Deu vontade? A D’Vanille vai até você.',
                   textAlign: TextAlign.left,
                   style: TextStyle(
                     fontSize: 23,
                     fontWeight: FontWeight.w700,
-                    color: DVanilleColors.darkTaupe,
+                    color: isDark
+                        ? DVanilleColors.darkTextSecondary
+                        : DVanilleColors.darkTaupe,
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Peça suas delícias favoritas pelo nosso app e receba no conforto de casa.',
                   textAlign: TextAlign.left,
                   style: TextStyle(
                     fontSize: 16,
                     height: 1.6,
-                    color: DVanilleColors.ink,
+                    color: isDark ? DVanilleColors.darkInk : DVanilleColors.ink,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -371,29 +407,32 @@ class HomePage extends StatelessWidget {
                   children: [
                     FilledButton(
                       style: FilledButton.styleFrom(
-                        backgroundColor: DVanilleColors.darkTaupe,
-                        foregroundColor: Colors.white,
+                        backgroundColor: isDark
+                            ? DVanilleColors.darkButton
+                            : DVanilleColors.darkTaupe,
+                        foregroundColor:
+                            isDark ? DVanilleColors.darkCream : Colors.white,
                       ),
                       onPressed: () {
                         showDialog(
                           context: context,
                           builder: (context) {
                             return AlertDialog(
-                              title: const Text('App D’Vanille'),
-                              content: const Text(
+                              title: Text('App D’Vanille'),
+                              content: Text(
                                 'Em breve você poderá baixar o aplicativo D’Vanille e fazer seus pedidos por delivery.',
                               ),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.of(context).pop(),
-                                  child: const Text('Fechar'),
+                                  child: Text('Fechar'),
                                 ),
                               ],
                             );
                           },
                         );
                       },
-                      child: const Text('Pedir pelo app'),
+                      child: Text('Pedir pelo app'),
                     ),
                   ],
                 ),
@@ -475,7 +514,9 @@ class HomePage extends StatelessWidget {
                               width: 7,
                               height: 7,
                               decoration: BoxDecoration(
-                                color: DVanilleColors.darkTaupe,
+                                color: isDark
+                                    ? DVanilleColors.darkTextSecondary
+                                    : DVanilleColors.darkTaupe,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -487,7 +528,7 @@ class HomePage extends StatelessWidget {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
+                              Text(
                                 '09:41',
                                 style: TextStyle(
                                   fontSize: 10,
@@ -520,8 +561,8 @@ class HomePage extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 18),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 18),
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
@@ -584,7 +625,7 @@ class HomePage extends StatelessWidget {
                                       ),
                                     ),
                                     const SizedBox(height: 5),
-                                    const Text(
+                                    Text(
                                       'D’Vanille',
                                       style: TextStyle(
                                         fontSize: 8.5,
@@ -612,7 +653,7 @@ class HomePage extends StatelessWidget {
                               color: Colors.white.withValues(alpha: 0.18),
                             ),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Toque no app D’Vanille para pedir',
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -710,7 +751,7 @@ class HomePage extends StatelessWidget {
         const SizedBox(height: 5),
         Text(
           nome,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 8.5,
             fontWeight: FontWeight.w600,
             color: DVanilleColors.cream,
@@ -782,6 +823,7 @@ class HomePage extends StatelessWidget {
     Categoria c,
     double largura,
   ) {
+    
     final caminhoImagem = _iconesCategorias[c.id];
 
     return InkWell(
@@ -816,7 +858,7 @@ class HomePage extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
                 color: DVanilleColors.darkTaupe,
@@ -843,7 +885,7 @@ class HomePage extends StatelessWidget {
           Expanded(
             child: Text(
               texto,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14.5,
                 color: DVanilleColors.ink,
               ),
@@ -866,6 +908,7 @@ class _BeneficioApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -877,7 +920,7 @@ class _BeneficioApp extends StatelessWidget {
         const SizedBox(width: 7),
         Text(
           texto,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13.5,
             fontWeight: FontWeight.w700,
             color: DVanilleColors.darkTaupe,

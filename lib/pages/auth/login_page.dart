@@ -20,6 +20,14 @@ class _LoginPageState extends State<LoginPage> {
 
   String? erro;
 
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
+  Color get corDestaque =>
+      isDark ? DVanilleColors.darkRose : DVanilleColors.rose;
+
+  Color get corSubtitulo =>
+      isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.darkTaupe;
+
   @override
   void dispose() {
     email.dispose();
@@ -76,11 +84,11 @@ class _LoginPageState extends State<LoginPage> {
                   Text(
                     'Bem-vindo de volta',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'CreamCake',
                       fontSize: 42,
                       fontWeight: FontWeight.w400,
-                      color: DVanilleColors.rose,
+                      color: corDestaque,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -90,7 +98,7 @@ class _LoginPageState extends State<LoginPage> {
                     style: AppTheme.display(
                       size: 26,
                       weight: FontWeight.w600,
-                      color: DVanilleColors.darkTaupe,
+                      color: corSubtitulo,
                     ).copyWith(
                       fontStyle: FontStyle.italic,
                     ),
@@ -118,9 +126,20 @@ class _LoginPageState extends State<LoginPage> {
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: _entrar,
-                      child: const Text(
-                        'Entrar',
-                      ),
+                      style: isDark
+                          ? FilledButton.styleFrom(
+                              backgroundColor: DVanilleColors.darkRose,
+                              foregroundColor: DVanilleColors.darkCream,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                              ),
+                              textStyle: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            )
+                          : null,
+                      child: const Text('Entrar'),
                     ),
                   ),
                   const SizedBox(height: 10),

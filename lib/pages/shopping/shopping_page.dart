@@ -1,9 +1,9 @@
+
 import 'package:flutter/material.dart';
 
 import '../../app/app.dart';
 import '../../models/item_carrinho.dart';
 import '../../services/app_state.dart';
-import '../../services/navigation.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/page_shell.dart';
 import '../../widgets/ui_kit.dart';
@@ -30,6 +30,18 @@ class _ShoppingPageState extends State<ShoppingPage> {
     150.0,
   ];
 
+  bool get isDark =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  Color get corTitulo =>
+      isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.darkTaupe;
+
+  Color get corTexto =>
+      isDark ? DVanilleColors.darkInk : DVanilleColors.ink;
+
+  Color get corDestaque =>
+      isDark ? DVanilleColors.darkRose : DVanilleColors.rose;
+
   @override
   void dispose() {
     nome.dispose();
@@ -37,14 +49,24 @@ class _ShoppingPageState extends State<ShoppingPage> {
     super.dispose();
   }
 
+  void _mostrarMensagem(String texto) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(texto),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
+
   void _adicionar() {
     final destinatario = nome.text.trim();
     final textoMensagem = mensagem.text.trim();
 
     if (destinatario.isEmpty) {
-      showToast(
+      _mostrarMensagem(
         'Informe o nome de quem receberá o vale-presente.',
-        'presente.svg',
       );
       return;
     }
@@ -63,9 +85,8 @@ class _ShoppingPageState extends State<ShoppingPage> {
       ),
     );
 
-    showToast(
+    _mostrarMensagem(
       'Vale-presente adicionado ao carrinho!',
-      'presente.svg',
     );
 
     Navigator.of(context).pushNamedAndRemoveUntil(
@@ -81,7 +102,7 @@ class _ShoppingPageState extends State<ShoppingPage> {
       child: Column(
         children: [
           const SizedBox(height: 56),
-          const ContentWidth(
+          ContentWidth(
             child: Column(
               children: [
                 Text(
@@ -91,10 +112,10 @@ class _ShoppingPageState extends State<ShoppingPage> {
                     fontFamily: 'CreamCake',
                     fontSize: 48,
                     fontWeight: FontWeight.w400,
-                    color: DVanilleColors.rose,
+                    color: corDestaque,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   'Presenteie com carinho',
                   textAlign: TextAlign.center,
@@ -102,7 +123,7 @@ class _ShoppingPageState extends State<ShoppingPage> {
                     fontSize: 21,
                     fontWeight: FontWeight.w600,
                     fontStyle: FontStyle.italic,
-                    color: DVanilleColors.darkTaupe,
+                    color: corTitulo,
                   ),
                 ),
               ],
@@ -125,13 +146,13 @@ class _ShoppingPageState extends State<ShoppingPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Personalize seu presente',
                         style: TextStyle(
                           fontFamily: 'CreamCake',
                           fontSize: 48,
                           fontWeight: FontWeight.w400,
-                          color: DVanilleColors.darkTaupe,
+                          color: corTitulo,
                         ),
                       ),
                       const SizedBox(height: 18),
@@ -142,15 +163,16 @@ class _ShoppingPageState extends State<ShoppingPage> {
                         ),
                         child: Text(
                           money(valor),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w800,
-                            color: DVanilleColors.darkTaupe,
+                            color: corTitulo,
                           ),
                         ),
                       ),
                       const SizedBox(height: 14),
                       TextField(
                         controller: nome,
+                        style: TextStyle(color: corTexto),
                         decoration: const InputDecoration(
                           labelText: 'Nome do presenteado',
                         ),
@@ -159,6 +181,7 @@ class _ShoppingPageState extends State<ShoppingPage> {
                       TextField(
                         controller: mensagem,
                         maxLines: 3,
+                        style: TextStyle(color: corTexto),
                         decoration: const InputDecoration(
                           labelText: 'Mensagem',
                           hintText: 'Escreva uma mensagem especial...',
@@ -180,6 +203,7 @@ class _ShoppingPageState extends State<ShoppingPage> {
               ],
             ),
           ),
+          const SizedBox(height: 56),
         ],
       ),
     );
@@ -188,10 +212,30 @@ class _ShoppingPageState extends State<ShoppingPage> {
   Widget _cartao(double v) {
     final selecionado = v == valor;
 
+    final coresGradiente = isDark
+        ? const [
+            Color(0xFF57403F),
+            Color(0xFF624747),
+            Color(0xFF503B3B),
+            Color(0xFF684B4B),
+            Color(0xFF57403F),
+          ]
+        : const [
+            Color(0xFFF2D1D2),
+            Color(0xFFEFC9CA),
+            Color(0xFFF5DCDD),
+            Color(0xFFEBC3C5),
+            Color(0xFFEFCACB),
+          ];
+
+    final corCartaoTexto =
+        isDark ? DVanilleColors.darkInk : DVanilleColors.taupe;
+
     return InkWell(
       onTap: () {
         setState(() {
           valor = v;
+          erro = null;
         });
       },
       borderRadius: BorderRadius.circular(18),
@@ -200,33 +244,31 @@ class _ShoppingPageState extends State<ShoppingPage> {
         height: 185,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            stops: [
+            stops: const [
               0.0,
               0.35,
               0.55,
               0.75,
               1.0,
             ],
-            colors: [
-              Color(0xFFF2D1D2),
-              Color(0xFFEFC9CA),
-              Color(0xFFF5DCDD),
-              Color(0xFFEBC3C5),
-              Color(0xFFEFCACB),
-            ],
+            colors: coresGradiente,
           ),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: selecionado ? DVanilleColors.rose : Colors.transparent,
-            width: 3,
+            color: selecionado
+                ? corDestaque
+                : isDark
+                    ? DVanilleColors.darkBorder
+                    : Colors.transparent,
+            width: selecionado ? 3 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: DVanilleColors.rose.withValues(alpha: 0.08),
-              blurRadius: 6,
+              color: corDestaque.withValues(alpha: 0.12),
+              blurRadius: 8,
               offset: const Offset(0, 3),
             ),
           ],
@@ -234,10 +276,10 @@ class _ShoppingPageState extends State<ShoppingPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               "VALE-PRESENTE D'VANILLE",
               style: TextStyle(
-                color: DVanilleColors.taupe,
+                color: corCartaoTexto,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 letterSpacing: .6,
@@ -256,7 +298,7 @@ class _ShoppingPageState extends State<ShoppingPage> {
                   style: AppTheme.display(
                     size: 25,
                     weight: FontWeight.w700,
-                    color: DVanilleColors.taupe,
+                    color: corCartaoTexto,
                   ),
                 ),
               ),

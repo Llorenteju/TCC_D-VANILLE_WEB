@@ -13,6 +13,29 @@ class MeusPedidosPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = AppState.instance;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final corDestaque = isDark ? DVanilleColors.darkRose : DVanilleColors.rose;
+
+    final corTextoSecundario =
+        isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.darkTaupe;
+
+    final corTexto = isDark ? DVanilleColors.darkInk : DVanilleColors.ink;
+
+    final estiloBotao = isDark
+        ? FilledButton.styleFrom(
+            backgroundColor: DVanilleColors.darkRose,
+            foregroundColor: DVanilleColors.darkCream,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 22,
+              vertical: 14,
+            ),
+            textStyle: const TextStyle(
+              fontWeight: FontWeight.w700,
+            ),
+          )
+        : null;
+
     return PageShell(
       child: ListenableBuilder(
         listenable: state,
@@ -28,11 +51,11 @@ class MeusPedidosPage extends StatelessWidget {
                     Text(
                       'Meus pedidos',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'CreamCake',
                         fontSize: 48,
                         fontWeight: FontWeight.w400,
-                        color: DVanilleColors.rose,
+                        color: corDestaque,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -41,7 +64,7 @@ class MeusPedidosPage extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: AppTheme.display(
                         size: 24,
-                        color: DVanilleColors.darkTaupe,
+                        color: corTextoSecundario,
                       ).copyWith(
                         fontStyle: FontStyle.italic,
                       ),
@@ -55,6 +78,7 @@ class MeusPedidosPage extends StatelessWidget {
                   emoji: '📦',
                   titulo: 'Você ainda não fez nenhum pedido.',
                   acao: FilledButton(
+                    style: estiloBotao,
                     onPressed: () =>
                         Navigator.of(context).pushNamedAndRemoveUntil(
                       Routes.cardapio,
@@ -76,21 +100,23 @@ class MeusPedidosPage extends StatelessWidget {
                                 children: [
                                   Row(
                                     children: [
-                                      Text(
-                                        p.id,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 16,
+                                      Expanded(
+                                        child: Text(
+                                          p.id,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 16,
+                                            color: corTexto,
+                                          ),
                                         ),
                                       ),
-                                      const SizedBox(width: 12),
                                       StatusPill(p.status),
-                                      const Spacer(),
+                                      const SizedBox(width: 12),
                                       Text(
                                         money(p.total),
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.w800,
-                                          color: DVanilleColors.darkTaupe,
+                                          color: corTextoSecundario,
                                         ),
                                       ),
                                     ],
@@ -100,7 +126,10 @@ class MeusPedidosPage extends StatelessWidget {
                                   const SizedBox(height: 6),
                                   Text(
                                     p.resumoItens,
-                                    style: const TextStyle(fontSize: 14),
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: corTexto,
+                                    ),
                                   ),
                                   const SizedBox(height: 12),
                                   OutlinedButton(
@@ -109,6 +138,15 @@ class MeusPedidosPage extends StatelessWidget {
                                       Routes.acompanharPedido,
                                       arguments: p.id,
                                     ),
+                                    style: isDark
+                                        ? OutlinedButton.styleFrom(
+                                            foregroundColor:
+                                                DVanilleColors.darkRose,
+                                            side: BorderSide(
+                                              color: DVanilleColors.darkRose,
+                                            ),
+                                          )
+                                        : null,
                                     child: const Text('Ver pedido'),
                                   ),
                                 ],

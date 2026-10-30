@@ -13,6 +13,14 @@ class OfertasPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = AppState.instance;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final corDestaque = isDark ? DVanilleColors.darkRose : DVanilleColors.rose;
+
+    final corTitulo =
+        isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.darkTaupe;
+
+    final corTexto = isDark ? DVanilleColors.darkInk : DVanilleColors.ink;
 
     return PageShell(
       activeRoute: Routes.ofertas,
@@ -24,7 +32,7 @@ class OfertasPage extends StatelessWidget {
           return Column(
             children: [
               const SizedBox(height: 56),
-              const ContentWidth(
+              ContentWidth(
                 child: Column(
                   children: [
                     Text(
@@ -34,10 +42,10 @@ class OfertasPage extends StatelessWidget {
                         fontFamily: 'CreamCake',
                         fontSize: 48,
                         fontWeight: FontWeight.w400,
-                        color: DVanilleColors.rose,
+                        color: corDestaque,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       'Aproveite nossas ofertas especiais',
                       textAlign: TextAlign.center,
@@ -45,7 +53,7 @@ class OfertasPage extends StatelessWidget {
                         fontSize: 24,
                         fontWeight: FontWeight.w600,
                         fontStyle: FontStyle.italic,
-                        color: DVanilleColors.darkTaupe,
+                        color: corTitulo,
                       ),
                     ),
                   ],
@@ -77,24 +85,30 @@ class OfertasPage extends StatelessWidget {
                       child: Column(
                         children: [
                           Text(
-                            "Bem Vindo à D'Vanille",
+                            "Bem-vindo à D'Vanille",
                             textAlign: TextAlign.center,
                             style: AppTheme.display(
                               size: 38,
-                              color: DVanilleColors.darkTaupe,
+                              color: corTitulo,
                             ).copyWith(
                               fontFamily: 'CreamCake',
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
+                          Text(
                             'Ganhe um desconto especial na sua primeira compra com o cupom PRIMEIRACOMPRA, também disponível no nosso aplicativo mobile.',
                             textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: corTexto,
+                            ),
                           ),
                           const SizedBox(height: 14),
-                          const Text(
-                            'Cupom de aniversário: disponível mediante verificação da data de nascimento cadastrada no perfil. O benefício é liberado durante o período do aniversário.',
+                          Text(
+                            'Presenteie-se no seu aniversário! Clientes cadastrados que estiverem na semana do aniversário podem aproveitar 15% de desconto com o cupom ANIVERSARIO. Para utilizar o benefício, é necessário acessar a comanda digital pelo QR Code disponível na mesa da cafeteria, estar conectado à conta e aplicar o cupom diretamente na comanda. Esse benefício é exclusivo para pedidos realizados pela comanda da mesa e não está disponível no carrinho do site ou no aplicativo mobile.',
                             textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: corTexto,
+                            ),
                           ),
                         ],
                       ),
@@ -102,6 +116,7 @@ class OfertasPage extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(height: 56),
             ],
           );
         },

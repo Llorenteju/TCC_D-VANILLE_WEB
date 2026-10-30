@@ -26,6 +26,7 @@ import '../pages/cliente/reserva_confirmada_page.dart';
 import '../pages/cliente/reservas_page.dart';
 import '../pages/cliente/vales_compra_confirmada_page.dart';
 import '../pages/conheca/conheca_page.dart';
+import '../pages/apresentacao/apresentacao_site_page.dart';
 import '../pages/contato/contato_page.dart';
 import '../pages/home/home_page.dart';
 import '../pages/ofertas/ofertas_page.dart';
@@ -37,6 +38,7 @@ import '../theme/app_theme.dart';
 class Routes {
   static const home = '/';
   static const conheca = '/conheca';
+  static const apresentacaoSite = '/apresentacao-site';
   static const cardapio = '/cardapio';
   static const produto = '/produto';
 
@@ -135,33 +137,27 @@ class DVanilleApp extends StatelessWidget {
   static final Map<String, WidgetBuilder> _paginas = {
     Routes.home: (_) => const HomePage(),
     Routes.conheca: (_) => const ConhecaPage(),
+    Routes.apresentacaoSite: (_) => const ApresentacaoSitePage(),
     Routes.cardapio: (_) => const CardapioPage(),
     Routes.produto: (_) => const ProdutoPage(),
-
     Routes.login: (_) => const LoginPage(),
     Routes.cadastro: (_) => const CadastroPage(),
     Routes.recuperarSenha: (_) => const RecuperarSenhaPage(),
-
     Routes.perfil: (_) => const PerfilPage(),
     Routes.carrinho: (_) => const CarrinhoPage(),
     Routes.checkout: (_) => const CheckoutPage(),
     Routes.pedidoConfirmado: (_) => const PedidoConfirmadoPage(),
     Routes.valesCompraConfirmada: (_) => const ValesCompraConfirmadaPage(),
-
     Routes.meusPedidos: (_) => const MeusPedidosPage(),
     Routes.meusValesPresente: (_) => const MeusValesPresentePage(),
     Routes.minhasReservas: (_) => const MinhasReservasPage(),
     Routes.acompanharPedido: (_) => const AcompanharPedidoPage(),
     Routes.reservas: (_) => const ReservasPage(),
     Routes.reservaConfirmada: (_) => const ReservaConfirmadaPage(),
-
     Routes.ofertas: (_) => const OfertasPage(),
     Routes.shopping: (_) => const ShoppingPage(),
     Routes.contato: (_) => const ContatoPage(),
-
-    // A comanda da mesa continua acessível sem login.
     Routes.comandaMesa: (_) => const ComandaMesaPage(),
-
     Routes.admin: (_) => const AdminDashboardPage(),
     Routes.adminProdutos: (_) => const AdminProdutosPage(),
     Routes.adminProdutoForm: (_) => const AdminProdutoFormPage(),
@@ -195,12 +191,45 @@ class DVanilleApp extends StatelessWidget {
 
     final builder = _paginas[nome] ?? _paginas[Routes.home]!;
 
-    return MaterialPageRoute<dynamic>(
-      builder: builder,
+    return PageRouteBuilder<dynamic>(
       settings: RouteSettings(
         name: nome,
         arguments: argumentos,
       ),
+
+      // Duração da entrada e da saída da página.
+      transitionDuration: const Duration(milliseconds: 350),
+      reverseTransitionDuration: const Duration(milliseconds: 300),
+
+      // Construção da página.
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return builder(context);
+      },
+
+      // Efeito visual da transição.
+      transitionsBuilder: (
+        context,
+        animation,
+        secondaryAnimation,
+        child,
+      ) {
+        final curva = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+
+        return FadeTransition(
+          opacity: curva,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.025, 0),
+              end: Offset.zero,
+            ).animate(curva),
+            child: child,
+          ),
+        );
+      },
     );
   }
 

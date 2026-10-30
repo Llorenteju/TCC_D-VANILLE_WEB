@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../app/app.dart';
 import '../../models/vale_presente.dart';
-
-import '../../services/app_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/page_shell.dart';
 import '../../widgets/ui_kit.dart';
@@ -11,9 +9,21 @@ import '../../widgets/ui_kit.dart';
 class ValesCompraConfirmadaPage extends StatelessWidget {
   const ValesCompraConfirmadaPage({super.key});
 
+  String _formatarDinheiro(double valor) {
+    return 'R\$ ${valor.toStringAsFixed(2).replaceAll('.', ',')}';
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Os vales recém-emitidos são enviados pela navegação.
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final corDestaque = isDark ? DVanilleColors.darkRose : DVanilleColors.rose;
+
+    final corTexto = isDark ? DVanilleColors.darkInk : DVanilleColors.ink;
+
+    final corTextoSecundario =
+        isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.darkTaupe;
+
     final argumentos = ModalRoute.of(context)?.settings.arguments;
     final vales =
         argumentos is List<ValePresente> ? argumentos : <ValePresente>[];
@@ -34,10 +44,10 @@ class ValesCompraConfirmadaPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Icon(
+              Icon(
                 Icons.check_circle_outline,
                 size: 76,
-                color: DVanilleColors.rose,
+                color: corDestaque,
               ),
               const SizedBox(height: 18),
               Text(
@@ -46,42 +56,45 @@ class ValesCompraConfirmadaPage extends StatelessWidget {
                 style: AppTheme.display(
                   size: 38,
                   weight: FontWeight.w700,
-                  color: DVanilleColors.darkTaupe,
+                  color: corTextoSecundario,
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 'Confira os dados dos seus vale-presentes.',
                 textAlign: TextAlign.center,
+                style: TextStyle(color: corTexto),
               ),
               const SizedBox(height: 28),
               if (vales.isEmpty)
-                const InfoBox(
+                InfoBox(
                   child: Text(
                     'Não encontramos os códigos desta compra. '
                     'Consulte seus vale-presentes na área correspondente.',
                     textAlign: TextAlign.center,
+                    style: TextStyle(color: corTexto),
                   ),
                 )
               else ...[
-                ...vales.map(_cartaoVale),
+                ...vales.map((vale) => _cartaoVale(vale, isDark)),
                 const SizedBox(height: 18),
                 InfoBox(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Total da compra',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
+                          color: corTexto,
                         ),
                       ),
                       Text(
-                        money(total),
-                        style: const TextStyle(
+                        _formatarDinheiro(total),
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
-                          color: DVanilleColors.darkTaupe,
+                          color: corTextoSecundario,
                         ),
                       ),
                     ],
@@ -92,6 +105,19 @@ class ValesCompraConfirmadaPage extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
+                  style: isDark
+                      ? FilledButton.styleFrom(
+                          backgroundColor: DVanilleColors.darkRose,
+                          foregroundColor: DVanilleColors.darkCream,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        )
+                      : null,
                   onPressed: () {
                     Navigator.of(context).pushNamedAndRemoveUntil(
                       Routes.shopping,
@@ -105,6 +131,14 @@ class ValesCompraConfirmadaPage extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
+                  style: isDark
+                      ? OutlinedButton.styleFrom(
+                          foregroundColor: DVanilleColors.darkRose,
+                          side: BorderSide(
+                            color: DVanilleColors.darkRose,
+                          ),
+                        )
+                      : null,
                   onPressed: () {
                     Navigator.of(context).pushNamedAndRemoveUntil(
                       Routes.home,
@@ -115,10 +149,13 @@ class ValesCompraConfirmadaPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Guarde os códigos para consultar os vales posteriormente.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: corTextoSecundario,
+                ),
               ),
             ],
           ),
@@ -127,7 +164,14 @@ class ValesCompraConfirmadaPage extends StatelessWidget {
     );
   }
 
-  Widget _cartaoVale(ValePresente vale) {
+  Widget _cartaoVale(ValePresente vale, bool isDark) {
+    final corDestaque = isDark ? DVanilleColors.darkRose : DVanilleColors.rose;
+
+    final corTexto = isDark ? DVanilleColors.darkInk : DVanilleColors.ink;
+
+    final corTextoSecundario =
+        isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.darkTaupe;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: InfoBox(
@@ -136,10 +180,10 @@ class ValesCompraConfirmadaPage extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.card_giftcard,
                   size: 30,
-                  color: DVanilleColors.rose,
+                  color: corDestaque,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -148,44 +192,59 @@ class ValesCompraConfirmadaPage extends StatelessWidget {
                     style: AppTheme.display(
                       size: 23,
                       weight: FontWeight.w700,
-                      color: DVanilleColors.darkTaupe,
+                      color: corTextoSecundario,
                     ),
                   ),
                 ),
                 Text(
-                  money(vale.valor),
-                  style: const TextStyle(
+                  _formatarDinheiro(vale.valor),
+                  style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 17,
+                    color: corTexto,
                   ),
                 ),
               ],
             ),
-            const Divider(height: 28),
-            const Text(
+            Divider(
+              height: 28,
+              color: isDark ? DVanilleColors.darkBorder : DVanilleColors.line,
+            ),
+            Text(
               'Código do vale',
-              style: TextStyle(fontSize: 13),
+              style: TextStyle(
+                fontSize: 13,
+                color: corTextoSecundario,
+              ),
             ),
             const SizedBox(height: 5),
             SelectableText(
               vale.codigo,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 19,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 1.1,
+                color: corDestaque,
               ),
             ),
             const SizedBox(height: 14),
-            Text('Destinatário: ${vale.destinatario}'),
+            Text(
+              'Destinatário: ${vale.destinatario}',
+              style: TextStyle(color: corTexto),
+            ),
             if (vale.mensagem.trim().isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text('Mensagem: ${vale.mensagem}'),
+              Text(
+                'Mensagem: ${vale.mensagem}',
+                style: TextStyle(color: corTexto),
+              ),
             ],
             const SizedBox(height: 10),
             Text(
               'Status: ${vale.status}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w600,
+                color: corTextoSecundario,
               ),
             ),
           ],

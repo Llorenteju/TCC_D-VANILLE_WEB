@@ -20,15 +20,23 @@ class MinhasReservasPage extends StatelessWidget {
       child: ListenableBuilder(
         listenable: state,
         builder: (context, _) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+
+          final corTexto =
+              isDark ? DVanilleColors.darkInk : DVanilleColors.darkTaupe;
+
+          final corTextoSecundario =
+              isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.taupe;
+
           final reservas = state.minhasReservas;
 
           return Column(
             children: [
               const SizedBox(height: 56),
-              const ContentWidth(
+              ContentWidth(
                 child: Column(
                   children: [
-                    Text(
+                    const Text(
                       'Minhas reservas',
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -38,7 +46,7 @@ class MinhasReservasPage extends StatelessWidget {
                         color: DVanilleColors.rose,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       'Acompanhe suas reservas',
                       textAlign: TextAlign.center,
@@ -46,7 +54,7 @@ class MinhasReservasPage extends StatelessWidget {
                         fontSize: 24,
                         fontWeight: FontWeight.w600,
                         fontStyle: FontStyle.italic,
-                        color: DVanilleColors.darkTaupe,
+                        color: corTextoSecundario,
                       ),
                     ),
                   ],
@@ -56,7 +64,7 @@ class MinhasReservasPage extends StatelessWidget {
               ContentWidth(
                 maxWidth: 850,
                 child: reservas.isEmpty
-                    ? _vazio(context)
+                    ? _vazio(context, isDark, corTexto, corTextoSecundario)
                     : Column(
                         children: [
                           for (final reserva in reservas)
@@ -65,6 +73,9 @@ class MinhasReservasPage extends StatelessWidget {
                               child: _cartaoReserva(
                                 context,
                                 reserva,
+                                isDark,
+                                corTexto,
+                                corTextoSecundario,
                               ),
                             ),
                         ],
@@ -77,7 +88,12 @@ class MinhasReservasPage extends StatelessWidget {
     );
   }
 
-  Widget _vazio(BuildContext context) {
+  Widget _vazio(
+    BuildContext context,
+    bool isDark,
+    Color corTexto,
+    Color corTextoSecundario,
+  ) {
     return InfoBox(
       padding: const EdgeInsets.all(35),
       child: Column(
@@ -87,6 +103,10 @@ class MinhasReservasPage extends StatelessWidget {
             width: 85,
             height: 85,
             fit: BoxFit.contain,
+            colorFilter: ColorFilter.mode(
+              isDark ? DVanilleColors.darkRose : DVanilleColors.rose,
+              BlendMode.srcIn,
+            ),
           ),
           const SizedBox(height: 22),
           Text(
@@ -94,17 +114,17 @@ class MinhasReservasPage extends StatelessWidget {
             textAlign: TextAlign.center,
             style: AppTheme.display(
               size: 24,
-              color: DVanilleColors.darkTaupe,
+              color: corTexto,
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             'Faça uma reserva para garantir seu lugar na D’Vanille.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 15,
               height: 1.5,
-              color: DVanilleColors.darkTaupe,
+              color: corTextoSecundario,
             ),
           ),
           const SizedBox(height: 24),
@@ -125,9 +145,7 @@ class MinhasReservasPage extends StatelessWidget {
                 BlendMode.srcIn,
               ),
             ),
-            label: const Text(
-              'Fazer uma reserva',
-            ),
+            label: const Text('Fazer uma reserva'),
           ),
         ],
       ),
@@ -137,10 +155,16 @@ class MinhasReservasPage extends StatelessWidget {
   Widget _cartaoReserva(
     BuildContext context,
     Reserva reserva,
+    bool isDark,
+    Color corTexto,
+    Color corTextoSecundario,
   ) {
-    final podeCancelar = reserva.status.toLowerCase() != 'cancelada' &&
-        reserva.status.toLowerCase() != 'concluida' &&
-        reserva.status.toLowerCase() != 'concluída';
+    final status = reserva.status.toLowerCase();
+
+    final podeCancelar =
+        status != 'cancelada' && status != 'concluida' && status != 'concluída';
+
+    final corBorda = isDark ? DVanilleColors.darkBorder : DVanilleColors.line;
 
     return InfoBox(
       padding: const EdgeInsets.all(26),
@@ -155,12 +179,19 @@ class MinhasReservasPage extends StatelessWidget {
                 height: 54,
                 padding: const EdgeInsets.all(13),
                 decoration: BoxDecoration(
-                  color: DVanilleColors.blush2,
+                  color: isDark
+                      ? DVanilleColors.darkSurface
+                      : DVanilleColors.blush2,
                   borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: corBorda),
                 ),
                 child: SvgPicture.asset(
                   'assets/images/agenda.svg',
                   fit: BoxFit.contain,
+                  colorFilter: ColorFilter.mode(
+                    isDark ? DVanilleColors.darkRose : DVanilleColors.rose,
+                    BlendMode.srcIn,
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
@@ -172,7 +203,7 @@ class MinhasReservasPage extends StatelessWidget {
                       'Reserva ${reserva.id}',
                       style: AppTheme.display(
                         size: 23,
-                        color: DVanilleColors.darkTaupe,
+                        color: corTexto,
                       ),
                     ),
                     const SizedBox(height: 5),
@@ -181,7 +212,7 @@ class MinhasReservasPage extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: _statusCor(reserva.status),
+                        color: _statusCor(reserva.status, isDark),
                       ),
                     ),
                   ],
@@ -190,57 +221,69 @@ class MinhasReservasPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 22),
-          const Divider(
-            color: DVanilleColors.line,
-          ),
+          Divider(color: corBorda),
           const SizedBox(height: 16),
           _linha(
             'Data',
             _formatarData(reserva.data),
             Icons.calendar_today_outlined,
+            corTexto,
+            corTextoSecundario,
           ),
           _linha(
             'Horário',
             reserva.horario,
             Icons.access_time_outlined,
+            corTexto,
+            corTextoSecundario,
           ),
           _linha(
             'Pessoas',
             '${reserva.pessoas}',
             Icons.people_outline,
+            corTexto,
+            corTextoSecundario,
           ),
           _linha(
             'Nome',
             reserva.nome,
             Icons.person_outline,
+            corTexto,
+            corTextoSecundario,
           ),
           _linha(
             'E-mail',
             reserva.email,
             Icons.email_outlined,
+            corTexto,
+            corTextoSecundario,
           ),
           _linha(
             'Telefone',
             reserva.telefone,
             Icons.phone_outlined,
+            corTexto,
+            corTextoSecundario,
           ),
           if (reserva.preferencias.trim().isNotEmpty)
             _linha(
               'Preferências',
               reserva.preferencias,
               Icons.restaurant_menu_outlined,
+              corTexto,
+              corTextoSecundario,
             ),
           if (reserva.observacoes.trim().isNotEmpty)
             _linha(
               'Informações adicionais',
               reserva.observacoes,
               Icons.notes_outlined,
+              corTexto,
+              corTextoSecundario,
             ),
           if (podeCancelar) ...[
             const SizedBox(height: 10),
-            const Divider(
-              color: DVanilleColors.line,
-            ),
+            Divider(color: corBorda),
             const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
@@ -255,13 +298,11 @@ class MinhasReservasPage extends StatelessWidget {
                   Icons.cancel_outlined,
                   size: 19,
                 ),
-                label: const Text(
-                  'Cancelar reserva',
-                ),
+                label: const Text('Cancelar reserva'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF9B5555),
+                  foregroundColor: const Color(0xFFB96D6D),
                   side: const BorderSide(
-                    color: Color(0xFF9B5555),
+                    color: Color(0xFFB96D6D),
                   ),
                 ),
               ),
@@ -276,24 +317,33 @@ class MinhasReservasPage extends StatelessWidget {
     BuildContext context,
     Reserva reserva,
   ) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final corTexto = isDark ? DVanilleColors.darkInk : DVanilleColors.darkTaupe;
+
+    final corSecundaria =
+        isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.taupe;
+
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text(
+          backgroundColor:
+              isDark ? DVanilleColors.darkSurface : DVanilleColors.cream,
+          title: Text(
             'Cancelar reserva?',
+            style: TextStyle(color: corTexto),
           ),
           content: Text(
             'Tem certeza que deseja cancelar a reserva ${reserva.id}?',
+            style: TextStyle(color: corSecundaria),
           ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop(false);
               },
-              child: const Text(
-                'Voltar',
-              ),
+              child: const Text('Voltar'),
             ),
             FilledButton(
               onPressed: () {
@@ -302,9 +352,7 @@ class MinhasReservasPage extends StatelessWidget {
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF9B5555),
               ),
-              child: const Text(
-                'Cancelar reserva',
-              ),
+              child: const Text('Cancelar reserva'),
             ),
           ],
         );
@@ -330,6 +378,8 @@ class MinhasReservasPage extends StatelessWidget {
     String titulo,
     String valor,
     IconData icone,
+    Color corTexto,
+    Color corTextoSecundario,
   ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 13),
@@ -339,26 +389,27 @@ class MinhasReservasPage extends StatelessWidget {
           Icon(
             icone,
             size: 20,
-            color: DVanilleColors.taupe,
+            color: corTextoSecundario,
           ),
           const SizedBox(width: 12),
           SizedBox(
             width: 145,
             child: Text(
               titulo,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: DVanilleColors.darkTaupe,
+                color: corTexto,
               ),
             ),
           ),
           Expanded(
             child: Text(
               valor,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 height: 1.4,
+                color: corTextoSecundario,
               ),
             ),
           ),
@@ -397,21 +448,21 @@ class MinhasReservasPage extends StatelessWidget {
     }
   }
 
-  Color _statusCor(String status) {
+  Color _statusCor(String status, bool isDark) {
     switch (status.toLowerCase()) {
       case 'confirmada':
-        return const Color(0xFF4D7650);
+        return isDark ? const Color(0xFF91C99A) : const Color(0xFF4D7650);
 
       case 'cancelada':
-        return const Color(0xFF9B5555);
+        return isDark ? const Color(0xFFE69A9A) : const Color(0xFF9B5555);
 
       case 'concluida':
       case 'concluída':
-        return DVanilleColors.taupe;
+        return isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.taupe;
 
       case 'solicitada':
       default:
-        return DVanilleColors.rose;
+        return isDark ? DVanilleColors.darkRose : DVanilleColors.rose;
     }
   }
 }

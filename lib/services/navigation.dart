@@ -40,7 +40,6 @@ void showToast(
     } else if (iconeNotificacao == '🎁' ||
         iconeNotificacao == 'presente.svg' ||
         iconeNotificacao == 'vales_finalizados') {
-      // O identificador de finalização também usa o ícone de presente.
       iconeWidget = SvgPicture.asset(
         'assets/images/presente.svg',
         width: 22,
@@ -225,7 +224,10 @@ void showToast(
                           },
                         )
                       : null,
-          duration: const Duration(seconds: 6),
+
+          // Tempo de exibição da notificação.
+          duration: const Duration(milliseconds: 1000),
+
           behavior: SnackBarBehavior.floating,
           shape: const StadiumBorder(),
           margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),

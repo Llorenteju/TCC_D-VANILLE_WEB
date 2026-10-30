@@ -30,6 +30,19 @@ class _CardapioPageState extends State<CardapioPage> {
 
   bool get modoMesa => mesa != null && mesa!.trim().isNotEmpty;
 
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
+  Color get corTitulo =>
+      isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.darkTaupe;
+
+  Color get corTexto => isDark ? DVanilleColors.darkInk : DVanilleColors.ink;
+
+  Color get corDestaque =>
+      isDark ? DVanilleColors.darkRose : DVanilleColors.rose;
+
+  Color get corBorda =>
+      isDark ? DVanilleColors.darkBorder : DVanilleColors.line;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -45,7 +58,6 @@ class _CardapioPageState extends State<CardapioPage> {
       final modo = argumentos['modo']?.toString();
       final numeroMesa = argumentos['mesa']?.toString().trim();
 
-      // Somente a navegação identificada como "mesa" libera pedidos.
       if (modo == 'mesa' && numeroMesa != null && numeroMesa.isNotEmpty) {
         mesa = numeroMesa;
       }
@@ -93,11 +105,11 @@ class _CardapioPageState extends State<CardapioPage> {
                     Text(
                       'Nosso Cardápio',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'CreamCake',
                         fontSize: 48,
                         fontWeight: FontWeight.w300,
-                        color: DVanilleColors.rose,
+                        color: corDestaque,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -109,7 +121,7 @@ class _CardapioPageState extends State<CardapioPage> {
                       style: AppTheme.display(
                         size: 24,
                         weight: FontWeight.w600,
-                        color: DVanilleColors.darkTaupe,
+                        color: corTitulo,
                       ).copyWith(fontStyle: FontStyle.italic),
                     ),
                     const SizedBox(height: 10),
@@ -118,9 +130,9 @@ class _CardapioPageState extends State<CardapioPage> {
                           ? 'Mesa $mesa · Escolha os produtos que deseja pedir.'
                           : 'Pesquise, filtre por restrições alimentares e veja tudo sobre ingredientes e valores nutricionais.',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
-                        color: DVanilleColors.darkTaupe,
+                        color: corTitulo,
                       ),
                     ),
                     if (modoMesa) ...[
@@ -147,11 +159,11 @@ class _CardapioPageState extends State<CardapioPage> {
                     if (recomendados.isNotEmpty) ...[
                       Text(
                         'Recomendado para você',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'CreamCake',
                           fontSize: 36,
                           fontWeight: FontWeight.w400,
-                          color: DVanilleColors.darkTaupe,
+                          color: corTitulo,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -247,32 +259,29 @@ class _CardapioPageState extends State<CardapioPage> {
       onChanged: (valor) {
         setState(() => busca = valor);
       },
-      decoration: const InputDecoration(
+      style: TextStyle(color: corTexto),
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: Theme.of(context).cardColor,
         prefixIcon: Icon(
           Icons.search,
-          color: DVanilleColors.taupe,
+          color: corTitulo,
         ),
         hintText: 'Pesquisar produtos, ex: café, cupcake, sem glúten...',
+        hintStyle: TextStyle(
+          color: isDark ? DVanilleColors.darkTextMuted : DVanilleColors.taupe,
+        ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(999)),
-          borderSide: BorderSide(
-            color: DVanilleColors.line,
-            width: 1.5,
-          ),
+          borderRadius: BorderRadius.circular(999),
+          borderSide: BorderSide(color: corBorda, width: 1.5),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(999)),
-          borderSide: BorderSide(
-            color: DVanilleColors.line,
-            width: 1.5,
-          ),
+          borderRadius: BorderRadius.circular(999),
+          borderSide: BorderSide(color: corBorda, width: 1.5),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(999)),
-          borderSide: BorderSide(
-            color: DVanilleColors.rose,
-            width: 2,
-          ),
+          borderRadius: BorderRadius.circular(999),
+          borderSide: BorderSide(color: corDestaque, width: 2),
         ),
       ),
     );
@@ -288,7 +297,7 @@ class _CardapioPageState extends State<CardapioPage> {
             'Filtrar por restrição',
             style: AppTheme.display(
               size: 19,
-              color: DVanilleColors.darkTaupe,
+              color: corTitulo,
             ),
           ),
           const SizedBox(height: 6),
@@ -309,7 +318,9 @@ class _CardapioPageState extends State<CardapioPage> {
                   children: [
                     Checkbox(
                       value: filtros.contains(entrada.key),
-                      activeColor: DVanilleColors.taupe,
+                      activeColor: corDestaque,
+                      checkColor: DVanilleColors.white,
+                      side: BorderSide(color: corTitulo),
                       onChanged: (valor) {
                         setState(() {
                           if (valor == true) {
@@ -323,9 +334,10 @@ class _CardapioPageState extends State<CardapioPage> {
                     Expanded(
                       child: Text(
                         entrada.value,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
+                          color: corTexto,
                         ),
                       ),
                     ),

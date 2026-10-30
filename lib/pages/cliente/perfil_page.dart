@@ -39,6 +39,24 @@ class _PerfilPageState extends State<PerfilPage> {
 
   String? mensagem;
 
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
+  Color get corTitulo => isDark ? DVanilleColors.darkRose : DVanilleColors.rose;
+
+  Color get corSecao =>
+      isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.darkTaupe;
+
+  Color get corTexto => isDark ? DVanilleColors.darkInk : DVanilleColors.ink;
+
+  Color get corTextoSecundario =>
+      isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.taupe;
+
+  Color get corChipSelecionado =>
+      isDark ? DVanilleColors.darkSurface : DVanilleColors.blush;
+
+  Color get corCheck =>
+      isDark ? DVanilleColors.darkRose : DVanilleColors.darkTaupe;
+
   @override
   void initState() {
     super.initState();
@@ -100,6 +118,26 @@ class _PerfilPageState extends State<PerfilPage> {
       helpText: 'Selecione sua data de nascimento',
       cancelText: 'Cancelar',
       confirmText: 'Confirmar',
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: isDark
+                ? const ColorScheme.dark(
+                    primary: DVanilleColors.darkRose,
+                    onPrimary: DVanilleColors.darkInk,
+                    surface: DVanilleColors.darkSurface,
+                    onSurface: DVanilleColors.darkInk,
+                  )
+                : const ColorScheme.light(
+                    primary: DVanilleColors.rose,
+                    onPrimary: Colors.white,
+                    surface: DVanilleColors.cream,
+                    onSurface: DVanilleColors.ink,
+                  ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (selecionada == null || !mounted) {
@@ -191,16 +229,23 @@ class _PerfilPageState extends State<PerfilPage> {
       }
     }
 
-    state.atualizarPerfil(
+    final erro = state.atualizarPerfil(
       nome: nome.text.trim(),
       email: email.text.trim(),
       telefone: telefone.text.trim(),
       endereco: endereco.text.trim(),
       dataNascimento: dataNascimentoSelecionada,
       notificacoes: notificacoes,
+      senhaAtual: solicitouTrocaSenha ? senhaAtual.text : null,
       novaSenha: solicitouTrocaSenha ? novaSenha.text : null,
+      confirmarNovaSenha: solicitouTrocaSenha ? confirmarSenha.text : null,
       restricoes: restricoes.toList(),
     );
+
+    if (erro != null) {
+      _mostrarMensagem(erro);
+      return;
+    }
 
     senhaAtual.clear();
     novaSenha.clear();
@@ -228,6 +273,7 @@ class _PerfilPageState extends State<PerfilPage> {
     return TextField(
       controller: controller,
       keyboardType: tipo,
+      style: TextStyle(color: corTexto),
       onChanged: (_) {
         if (mensagem != null) {
           setState(() {
@@ -235,7 +281,9 @@ class _PerfilPageState extends State<PerfilPage> {
           });
         }
       },
-      decoration: InputDecoration(labelText: label),
+      decoration: InputDecoration(
+        labelText: label,
+      ),
     );
   }
 
@@ -250,6 +298,7 @@ class _PerfilPageState extends State<PerfilPage> {
       controller: controller,
       obscureText: !mostrar,
       autofillHints: const [AutofillHints.password],
+      style: TextStyle(color: corTexto),
       onChanged: (_) {
         if (mensagem != null) {
           setState(() {
@@ -271,6 +320,27 @@ class _PerfilPageState extends State<PerfilPage> {
     );
   }
 
+  Widget _tituloSecao(String texto) {
+    return Text(
+      texto,
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        color: corSecao,
+      ),
+    );
+  }
+
+  Widget _textoAuxiliar(String texto) {
+    return Text(
+      texto,
+      style: TextStyle(
+        fontSize: 13,
+        color: corTextoSecundario,
+      ),
+    );
+  }
+
   Widget _informacao(String titulo, String valor) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -281,13 +351,18 @@ class _PerfilPageState extends State<PerfilPage> {
             width: 150,
             child: Text(
               titulo,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: DVanilleColors.darkTaupe,
+                color: corTextoSecundario,
               ),
             ),
           ),
-          Expanded(child: Text(valor)),
+          Expanded(
+            child: Text(
+              valor,
+              style: TextStyle(color: corTexto),
+            ),
+          ),
         ],
       ),
     );
@@ -330,7 +405,10 @@ class _PerfilPageState extends State<PerfilPage> {
       child: Column(
         children: [
           const SizedBox(height: 56),
-          const ContentWidth(
+
+          // TÍTULO
+
+          ContentWidth(
             child: Column(
               children: [
                 Text(
@@ -340,10 +418,10 @@ class _PerfilPageState extends State<PerfilPage> {
                     fontFamily: 'CreamCake',
                     fontSize: 48,
                     fontWeight: FontWeight.w400,
-                    color: DVanilleColors.rose,
+                    color: corTitulo,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   'Minha conta',
                   textAlign: TextAlign.center,
@@ -351,13 +429,17 @@ class _PerfilPageState extends State<PerfilPage> {
                     fontSize: 24,
                     fontWeight: FontWeight.w600,
                     fontStyle: FontStyle.italic,
-                    color: DVanilleColors.darkTaupe,
+                    color: corSecao,
                   ),
                 ),
               ],
             ),
           ),
+
           const SizedBox(height: 30),
+
+          // FORMULÁRIO
+
           ContentWidth(
             maxWidth: 760,
             child: InfoBox(
@@ -372,15 +454,12 @@ class _PerfilPageState extends State<PerfilPage> {
                     ),
                     const SizedBox(height: 14),
                   ],
-                  const Text(
-                    'Dados pessoais',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: DVanilleColors.darkTaupe,
-                    ),
-                  ),
+
+                  // DADOS PESSOAIS
+
+                  _tituloSecao('Dados pessoais'),
                   const SizedBox(height: 14),
+
                   _linha(estreito, [
                     _campo(nome, 'Nome completo *'),
                     _campo(
@@ -389,7 +468,9 @@ class _PerfilPageState extends State<PerfilPage> {
                       tipo: TextInputType.emailAddress,
                     ),
                   ]),
+
                   const SizedBox(height: 14),
+
                   _linha(estreito, [
                     _campo(
                       telefone,
@@ -400,6 +481,7 @@ class _PerfilPageState extends State<PerfilPage> {
                       controller: dataNascimento,
                       readOnly: true,
                       onTap: _selecionarDataNascimento,
+                      style: TextStyle(color: corTexto),
                       decoration: const InputDecoration(
                         labelText: 'Data de nascimento *',
                         hintText: 'dd/mm/aaaa',
@@ -407,30 +489,32 @@ class _PerfilPageState extends State<PerfilPage> {
                       ),
                     ),
                   ]),
+
                   const SizedBox(height: 14),
+
                   TextField(
                     controller: endereco,
+                    style: TextStyle(color: corTexto),
                     decoration: const InputDecoration(
                       labelText: 'Endereço',
                       hintText: 'Informe seu endereço',
                     ),
                   ),
+
                   const SizedBox(height: 24),
-                  const Text(
-                    'Segurança da conta',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: DVanilleColors.darkTaupe,
-                    ),
-                  ),
+
+                  // SEGURANÇA DA CONTA
+
+                  _tituloSecao('Segurança da conta'),
                   const SizedBox(height: 8),
-                  const Text(
+
+                  _textoAuxiliar(
                     'Para trocar sua senha, confirme a senha atual '
                     'e informe a nova senha duas vezes.',
-                    style: TextStyle(fontSize: 13),
                   ),
+
                   const SizedBox(height: 14),
+
                   _campoSenha(
                     controller: senhaAtual,
                     label: 'Senha atual',
@@ -442,7 +526,9 @@ class _PerfilPageState extends State<PerfilPage> {
                       });
                     },
                   ),
+
                   const SizedBox(height: 14),
+
                   _campoSenha(
                     controller: novaSenha,
                     label: 'Nova senha (opcional)',
@@ -454,7 +540,9 @@ class _PerfilPageState extends State<PerfilPage> {
                       });
                     },
                   ),
+
                   const SizedBox(height: 14),
+
                   _campoSenha(
                     controller: confirmarSenha,
                     label: 'Confirmar nova senha',
@@ -466,26 +554,27 @@ class _PerfilPageState extends State<PerfilPage> {
                       });
                     },
                   ),
+
                   const SizedBox(height: 8),
-                  const DicaCampo(
+
+                  DicaCampo(
                     'A senha deve ter no mínimo 6 caracteres, '
-                    '1 letra maiúscula e 1 caractere especial. ',
+                    '1 letra maiúscula e 1 caractere especial.',
                   ),
+
                   const SizedBox(height: 24),
-                  const Text(
-                    'Restrições alimentares',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: DVanilleColors.darkTaupe,
-                    ),
-                  ),
+
+                  // RESTRIÇÕES ALIMENTARES
+
+                  _tituloSecao('Restrições alimentares'),
                   const SizedBox(height: 8),
-                  const Text(
+
+                  _textoAuxiliar(
                     'Selecione todas as opções que se aplicam a você.',
-                    style: TextStyle(fontSize: 13),
                   ),
+
                   const SizedBox(height: 10),
+
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -495,8 +584,16 @@ class _PerfilPageState extends State<PerfilPage> {
                       return FilterChip(
                         label: Text(e.value),
                         selected: ativo,
-                        selectedColor: DVanilleColors.blush,
-                        checkmarkColor: DVanilleColors.darkTaupe,
+                        selectedColor: corChipSelecionado,
+                        checkmarkColor: corCheck,
+                        labelStyle: TextStyle(
+                          color: ativo ? corTexto : corTextoSecundario,
+                        ),
+                        side: BorderSide(
+                          color: isDark
+                              ? DVanilleColors.darkBorder
+                              : DVanilleColors.line,
+                        ),
                         onSelected: (valor) {
                           setState(() {
                             if (valor) {
@@ -519,16 +616,14 @@ class _PerfilPageState extends State<PerfilPage> {
                       );
                     }).toList(),
                   ),
+
                   const SizedBox(height: 24),
-                  const Text(
-                    'Preferências',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: DVanilleColors.darkTaupe,
-                    ),
-                  ),
+
+                  // PREFERÊNCIAS
+
+                  _tituloSecao('Preferências'),
                   const SizedBox(height: 8),
+
                   CheckboxListTile(
                     value: notificacoes,
                     onChanged: (valor) {
@@ -539,34 +634,49 @@ class _PerfilPageState extends State<PerfilPage> {
                     },
                     controlAffinity: ListTileControlAffinity.leading,
                     contentPadding: EdgeInsets.zero,
-                    title: const Text(
+                    activeColor: corCheck,
+                    checkColor:
+                        isDark ? DVanilleColors.darkCream : Colors.white,
+                    title: Text(
                       'Desejo receber notificações de ofertas e novidades',
-                      style: TextStyle(fontSize: 14),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: corTexto,
+                      ),
                     ),
                   ),
+
                   const SizedBox(height: 16),
-                  const Divider(),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Informações da conta',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: DVanilleColors.darkTaupe,
-                    ),
+
+                  Divider(
+                    color: isDark
+                        ? DVanilleColors.darkBorder
+                        : DVanilleColors.line,
                   ),
+
                   const SizedBox(height: 12),
+
+                  // INFORMAÇÕES DA CONTA
+
+                  _tituloSecao('Informações da conta'),
+                  const SizedBox(height: 12),
+
                   _informacao(
                     'Tipo de conta',
                     usuario?.tipo == 'admin' ? 'Administrador' : 'Cliente',
                   ),
+
                   _informacao(
                     'Data de nascimento',
                     dataNascimento.text.isEmpty
                         ? 'Não informada'
                         : dataNascimento.text,
                   ),
+
                   const SizedBox(height: 24),
+
+                  // AÇÕES
+
                   Wrap(
                     spacing: 12,
                     runSpacing: 12,

@@ -22,6 +22,16 @@ class _ContatoPageState extends State<ContatoPage> {
   String? enviado;
   bool erroFormulario = false;
 
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
+  Color get corTitulo =>
+      isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.darkTaupe;
+
+  Color get corTexto => isDark ? DVanilleColors.darkInk : DVanilleColors.ink;
+
+  Color get corDestaque =>
+      isDark ? DVanilleColors.darkRose : DVanilleColors.rose;
+
   @override
   void dispose() {
     nome.dispose();
@@ -92,7 +102,7 @@ class _ContatoPageState extends State<ContatoPage> {
             'Informações',
             style: AppTheme.display(
               size: 22,
-              color: DVanilleColors.darkTaupe,
+              color: corTitulo,
             ),
           ),
           const SizedBox(height: 12),
@@ -112,9 +122,7 @@ class _ContatoPageState extends State<ContatoPage> {
             Icons.mail_outline,
             'contato@dvanille.com.br',
           ),
-          _linhaInstagram(
-            '@dvanille.cafe',
-          ),
+          _linhaInstagram('@dvanille.cafe'),
           const SizedBox(height: 14),
           const DicaCampo(
             "Equipe D'Vanille: Ana Clara, Julia, Karina e Viviane.",
@@ -137,6 +145,7 @@ class _ContatoPageState extends State<ContatoPage> {
               Expanded(
                 child: TextField(
                   controller: nome,
+                  style: TextStyle(color: corTexto),
                   decoration: InputDecoration(
                     labelText: 'Nome',
                     errorText: erroFormulario && nome.text.trim().isEmpty
@@ -155,6 +164,7 @@ class _ContatoPageState extends State<ContatoPage> {
                 child: TextField(
                   controller: email,
                   keyboardType: TextInputType.emailAddress,
+                  style: TextStyle(color: corTexto),
                   decoration: InputDecoration(
                     labelText: 'E-mail',
                     hintText: 'exemplo@email.com',
@@ -178,6 +188,7 @@ class _ContatoPageState extends State<ContatoPage> {
           const SizedBox(height: 14),
           TextField(
             controller: assunto,
+            style: TextStyle(color: corTexto),
             decoration: InputDecoration(
               labelText: 'Assunto',
               errorText: erroFormulario && assunto.text.trim().isEmpty
@@ -194,6 +205,7 @@ class _ContatoPageState extends State<ContatoPage> {
           TextField(
             controller: mensagem,
             maxLines: 4,
+            style: TextStyle(color: corTexto),
             decoration: InputDecoration(
               labelText: 'Mensagem',
               alignLabelWithHint: true,
@@ -212,9 +224,7 @@ class _ContatoPageState extends State<ContatoPage> {
             width: double.infinity,
             child: FilledButton(
               onPressed: _enviar,
-              child: const Text(
-                'Enviar mensagem',
-              ),
+              child: const Text('Enviar mensagem'),
             ),
           ),
         ],
@@ -232,11 +242,11 @@ class _ContatoPageState extends State<ContatoPage> {
                 Text(
                   'Fale conosco',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'CreamCake',
                     fontSize: 48,
                     fontWeight: FontWeight.w400,
-                    color: DVanilleColors.rose,
+                    color: corDestaque,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -246,7 +256,7 @@ class _ContatoPageState extends State<ContatoPage> {
                   style: AppTheme.display(
                     size: 24,
                     weight: FontWeight.w600,
-                    color: DVanilleColors.darkTaupe,
+                    color: corTitulo,
                   ).copyWith(
                     fontStyle: FontStyle.italic,
                   ),
@@ -279,6 +289,7 @@ class _ContatoPageState extends State<ContatoPage> {
                     ],
                   ),
           ),
+          const SizedBox(height: 56),
         ],
       ),
     );
@@ -289,23 +300,22 @@ class _ContatoPageState extends State<ContatoPage> {
     String texto,
   ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: 6,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
             icone,
             size: 18,
-            color: DVanilleColors.rose,
+            color: corDestaque,
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               texto,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14.5,
+                color: corTexto,
               ),
             ),
           ),
@@ -316,9 +326,7 @@ class _ContatoPageState extends State<ContatoPage> {
 
   Widget _linhaInstagram(String texto) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: 6,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -331,8 +339,9 @@ class _ContatoPageState extends State<ContatoPage> {
           Expanded(
             child: Text(
               texto,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14.5,
+                color: corTexto,
               ),
             ),
           ),
