@@ -596,6 +596,7 @@ class AppState extends ChangeNotifier {
   ///
   /// No fluxo de compra, chame este método somente após a
   /// confirmação simulada da compra.
+
   ValePresente emitirValePresente({
     required double valor,
     required String destinatario,
@@ -609,6 +610,7 @@ class AppState extends ChangeNotifier {
       criadoEm: _formatarData(DateTime.now()),
       destinatario: destinatario,
       mensagem: mensagem,
+      compradorEmail: usuarioLogado?.email ?? '',
     );
 
     valePresentes.add(vale);

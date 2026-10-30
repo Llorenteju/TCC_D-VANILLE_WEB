@@ -49,16 +49,9 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
         listenable: state,
         builder: (context, _) {
           if (state.carrinho.isEmpty) {
-            return EstadoVazio(
+            return const EstadoVazio(
               emoji: 'carrinho.svg',
               titulo: 'Seu carrinho está vazio',
-              acao: OutlinedButton(
-                onPressed: () => Navigator.pushNamed(
-                  context,
-                  Routes.meusPedidos,
-                ),
-                child: const Text('Meus pedidos'),
-              ),
             );
           }
 

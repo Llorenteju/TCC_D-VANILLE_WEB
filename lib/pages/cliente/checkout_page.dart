@@ -17,10 +17,7 @@ class CheckoutPage extends StatelessWidget {
     final state = AppState.instance;
 
     if (state.carrinho.isEmpty) {
-      showToast(
-        'Seu carrinho está vazio.',
-        '⚠️',
-      );
+      showToast('Seu carrinho está vazio.', '⚠️');
       return;
     }
 
@@ -81,13 +78,11 @@ class CheckoutPage extends StatelessWidget {
 
     // Verifica novamente o carrinho após o diálogo.
     if (state.carrinho.isEmpty) {
-      showToast(
-        'Seu carrinho está vazio.',
-        '⚠️',
-      );
+      showToast('Seu carrinho está vazio.', '⚠️');
       return;
     }
 
+    // Finalização da compra dos vale-presentes.
     if (ehCompraVale) {
       final vales = state.confirmarCompraValePresentes();
 
@@ -99,22 +94,23 @@ class CheckoutPage extends StatelessWidget {
         return;
       }
 
-      showToast(
-        'Compra confirmada! Seus vale-presentes foram emitidos.',
-        'confete.svg',
-      );
-
-      // Nesta etapa, usamos a tela de confirmação existente
-      // apenas para evitar criar uma rota ainda não cadastrada.
-      // A próxima etapa poderá apresentar os códigos emitidos.
-      Navigator.of(context).pushNamedAndRemoveUntil(
+      // Navega para a página de destino.
+      navigatorKey.currentState?.pushNamedAndRemoveUntil(
         Routes.shopping,
         (route) => false,
+      );
+
+      // O botão "Meus vales-presente" aparece somente
+      // após a finalização da compra dos vales.
+      showToast(
+        'Compra confirmada! Seus vale-presentes foram emitidos.',
+        'vales_finalizados',
       );
 
       return;
     }
 
+    // Finalização do pedido de alimentos.
     if (state.itensProdutos.isEmpty) {
       showToast(
         'Não existem produtos para criar o pedido.',
@@ -125,15 +121,15 @@ class CheckoutPage extends StatelessWidget {
 
     final pedido = state.criarPedido(modo);
 
-    showToast(
-      'Pedido realizado com sucesso!',
-      'confete.svg',
-    );
-
-    Navigator.of(context).pushNamedAndRemoveUntil(
+    navigatorKey.currentState?.pushNamedAndRemoveUntil(
       Routes.pedidoConfirmado,
       (route) => false,
       arguments: pedido.id,
+    );
+
+    showToast(
+      'Pedido realizado com sucesso!',
+      'confete.svg',
     );
   }
 
@@ -150,12 +146,12 @@ class CheckoutPage extends StatelessWidget {
           final temProdutos = state.itensProdutos.isNotEmpty;
           final temVales = state.itensValePresentes.isNotEmpty;
           final compraMista = temProdutos && temVales;
+          final compraSomenteVales = temVales && !temProdutos;
 
-          final titulo = temVales && !temProdutos
-              ? 'Finalizar compra'
-              : 'Finalizar pedido';
+          final titulo =
+              compraSomenteVales ? 'Finalizar compra' : 'Finalizar pedido';
 
-          final subtitulo = temVales && !temProdutos
+          final subtitulo = compraSomenteVales
               ? 'Confira os dados dos seus vale-presentes'
               : 'Confirme os dados do seu pedido';
 
@@ -176,9 +172,7 @@ class CheckoutPage extends StatelessWidget {
                 Text(usuario?.telefone ?? ''),
                 const SizedBox(height: 22),
                 Text(
-                  temVales && !temProdutos
-                      ? 'Vale-presentes'
-                      : 'Itens do pedido',
+                  compraSomenteVales ? 'Vale-presentes' : 'Itens do pedido',
                   style: AppTheme.display(
                     size: 22,
                     color: DVanilleColors.darkTaupe,
@@ -221,9 +215,7 @@ class CheckoutPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Divider(
-                  color: DVanilleColors.line,
-                ),
+                const Divider(color: DVanilleColors.line),
                 _linha(
                   'Subtotal',
                   money(state.subtotal),
@@ -258,7 +250,7 @@ class CheckoutPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  temVales && !temProdutos
+                  compraSomenteVales
                       ? 'Confirmar compra'
                       : 'Como deseja prosseguir?',
                   style: AppTheme.display(
@@ -267,43 +259,36 @@ class CheckoutPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                DicaCampo(
-                  temVales && !temProdutos
-                      ? 'Esta é uma confirmação simulada. '
-                          'Nenhum pagamento real será processado.'
-                      : 'Válido para atendimento presencial.',
-                ),
+
+                // A orientação presencial aparece apenas
+                // para pedidos de alimentos.
+                if (!compraSomenteVales)
+                  const DicaCampo(
+                    'Válido para atendimento presencial.',
+                  ),
+
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: compraMista
-                        ? null
-                        : () => _confirmar(
-                              context,
-                              'caixa',
-                            ),
+                    onPressed:
+                        compraMista ? null : () => _confirmar(context, 'caixa'),
                     child: Text(
-                      temVales && !temProdutos
+                      compraSomenteVales
                           ? 'Confirmar compra dos vales'
                           : 'Enviar pedido ao caixa',
                     ),
                   ),
                 ),
-                if (!temVales || temProdutos) ...[
+                if (!compraSomenteVales) ...[
                   const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: compraMista
                           ? null
-                          : () => _confirmar(
-                                context,
-                                'retirar',
-                              ),
-                      child: const Text(
-                        'Retirar na cafeteria',
-                      ),
+                          : () => _confirmar(context, 'retirar'),
+                      child: const Text('Retirar na cafeteria'),
                     ),
                   ),
                 ],
@@ -385,20 +370,12 @@ class CheckoutPage extends StatelessWidget {
     );
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: 5,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            titulo,
-            style: estilo,
-          ),
-          Text(
-            valor,
-            style: estilo,
-          ),
+          Text(titulo, style: estilo),
+          Text(valor, style: estilo),
         ],
       ),
     );

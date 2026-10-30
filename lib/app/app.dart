@@ -18,6 +18,7 @@ import '../pages/cliente/carrinho_page.dart';
 import '../pages/cliente/checkout_page.dart';
 import '../pages/cliente/comanda_mesa_page.dart';
 import '../pages/cliente/meus_pedidos_page.dart';
+import '../pages/cliente/meus_vales_presente_page.dart';
 import '../pages/cliente/minhas_reservas_page.dart';
 import '../pages/cliente/pedido_confirmado_page.dart';
 import '../pages/cliente/perfil_page.dart';
@@ -50,6 +51,7 @@ class Routes {
   static const valesCompraConfirmada = '/vales-compra-confirmada';
 
   static const meusPedidos = '/meus-pedidos';
+  static const meusValesPresente = '/meus-vales-presente';
   static const minhasReservas = '/minhas-reservas';
   static const acompanharPedido = '/pedido';
   static const reservas = '/reservas';
@@ -75,6 +77,7 @@ class Routes {
     pedidoConfirmado,
     valesCompraConfirmada,
     meusPedidos,
+    meusValesPresente,
     minhasReservas,
     acompanharPedido,
     reservas,
@@ -103,14 +106,12 @@ class RedirecionamentoLogin {
 class DVanilleApp extends StatelessWidget {
   const DVanilleApp({super.key});
 
-  /// Identifica a rota tanto no caminho normal quanto no fragmento (#).
   String _rotaInicial() {
     final uri = Uri.base;
 
     debugPrint('URL COMPLETA: $uri');
     debugPrint('FRAGMENTO: ${uri.fragment}');
 
-    // Exemplo: http://localhost:60149/#/comanda-mesa?mesa=4
     final fragmento = uri.fragment;
 
     if (fragmento.isNotEmpty) {
@@ -148,6 +149,7 @@ class DVanilleApp extends StatelessWidget {
     Routes.valesCompraConfirmada: (_) => const ValesCompraConfirmadaPage(),
 
     Routes.meusPedidos: (_) => const MeusPedidosPage(),
+    Routes.meusValesPresente: (_) => const MeusValesPresentePage(),
     Routes.minhasReservas: (_) => const MinhasReservasPage(),
     Routes.acompanharPedido: (_) => const AcompanharPedidoPage(),
     Routes.reservas: (_) => const ReservasPage(),
@@ -157,7 +159,7 @@ class DVanilleApp extends StatelessWidget {
     Routes.shopping: (_) => const ShoppingPage(),
     Routes.contato: (_) => const ContatoPage(),
 
-    // Acesso à comanda sem exigir login.
+    // A comanda da mesa continua acessível sem login.
     Routes.comandaMesa: (_) => const ComandaMesaPage(),
 
     Routes.admin: (_) => const AdminDashboardPage(),

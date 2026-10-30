@@ -5,9 +5,14 @@ class ValePresente {
 
   /// ativo | usado
   String status;
+
   final String criadoEm;
   final String destinatario;
   final String mensagem;
+
+  /// E-mail do cliente que comprou o vale.
+  /// Opcional para manter compatibilidade com os vales já cadastrados.
+  final String compradorEmail;
 
   ValePresente({
     required this.id,
@@ -17,5 +22,6 @@ class ValePresente {
     required this.criadoEm,
     this.destinatario = '',
     this.mensagem = '',
+    this.compradorEmail = '',
   });
 }

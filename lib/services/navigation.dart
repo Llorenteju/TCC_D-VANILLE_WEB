@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import '../app/app.dart';
-
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 final GlobalKey<ScaffoldMessengerState> messengerKey =
@@ -19,10 +17,16 @@ void showToast(
     if (messenger == null) return;
 
     const corTexto = Colors.white;
+    final mensagemMinuscula = mensagem.toLowerCase();
 
-    Widget iconeWidget;
+    // Define o ícone da notificação.
+    final iconeNotificacao = mensagemMinuscula.contains('senha alterada')
+        ? 'trocarsenha.svg'
+        : icone;
 
-    if (icone == '🔒' || icone == 'cadeado.svg') {
+    late final Widget iconeWidget;
+
+    if (iconeNotificacao == '🔒' || iconeNotificacao == 'cadeado.svg') {
       iconeWidget = SvgPicture.asset(
         'assets/images/cadeado.svg',
         width: 22,
@@ -33,7 +37,10 @@ void showToast(
           BlendMode.srcIn,
         ),
       );
-    } else if (icone == '🎁' || icone == 'presente.svg') {
+    } else if (iconeNotificacao == '🎁' ||
+        iconeNotificacao == 'presente.svg' ||
+        iconeNotificacao == 'vales_finalizados') {
+      // O identificador de finalização também usa o ícone de presente.
       iconeWidget = SvgPicture.asset(
         'assets/images/presente.svg',
         width: 22,
@@ -44,7 +51,7 @@ void showToast(
           BlendMode.srcIn,
         ),
       );
-    } else if (icone == 'palmas.svg') {
+    } else if (iconeNotificacao == 'palmas.svg') {
       iconeWidget = SvgPicture.asset(
         'assets/images/palmas.svg',
         width: 22,
@@ -55,7 +62,29 @@ void showToast(
           BlendMode.srcIn,
         ),
       );
-    } else if (icone == 'lixeira.svg') {
+    } else if (iconeNotificacao == 'tchau.svg' || iconeNotificacao == '👋') {
+      iconeWidget = SvgPicture.asset(
+        'assets/images/tchau.svg',
+        width: 22,
+        height: 22,
+        fit: BoxFit.contain,
+        colorFilter: const ColorFilter.mode(
+          corTexto,
+          BlendMode.srcIn,
+        ),
+      );
+    } else if (iconeNotificacao == 'trocarsenha.svg') {
+      iconeWidget = SvgPicture.asset(
+        'assets/images/trocarsenha.svg',
+        width: 22,
+        height: 22,
+        fit: BoxFit.contain,
+        colorFilter: const ColorFilter.mode(
+          corTexto,
+          BlendMode.srcIn,
+        ),
+      );
+    } else if (iconeNotificacao == 'lixeira.svg') {
       iconeWidget = SvgPicture.asset(
         'assets/images/lixeira.svg',
         width: 22,
@@ -66,7 +95,7 @@ void showToast(
           BlendMode.srcIn,
         ),
       );
-    } else if (icone == 'carrinho.svg') {
+    } else if (iconeNotificacao == 'carrinho.svg') {
       iconeWidget = SvgPicture.asset(
         'assets/images/carrinho.svg',
         width: 22,
@@ -77,7 +106,8 @@ void showToast(
           BlendMode.srcIn,
         ),
       );
-    } else if (icone == 'comanda_mesa.svg' || icone == 'comanda_mesa') {
+    } else if (iconeNotificacao == 'comanda_mesa.svg' ||
+        iconeNotificacao == 'comanda_mesa') {
       iconeWidget = SvgPicture.asset(
         'assets/images/comanda_mesa.svg',
         width: 22,
@@ -88,7 +118,7 @@ void showToast(
           BlendMode.srcIn,
         ),
       );
-    } else if (icone == 'cupom.svg') {
+    } else if (iconeNotificacao == 'cupom.svg') {
       iconeWidget = SvgPicture.asset(
         'assets/images/cupom.svg',
         width: 22,
@@ -99,7 +129,7 @@ void showToast(
           BlendMode.srcIn,
         ),
       );
-    } else if (icone == 'agenda.svg') {
+    } else if (iconeNotificacao == 'agenda.svg') {
       iconeWidget = SvgPicture.asset(
         'assets/images/agenda.svg',
         width: 22,
@@ -110,7 +140,7 @@ void showToast(
           BlendMode.srcIn,
         ),
       );
-    } else if (icone == 'confete.svg') {
+    } else if (iconeNotificacao == 'confete.svg') {
       iconeWidget = SvgPicture.asset(
         'assets/images/confete.svg',
         width: 22,
@@ -123,7 +153,7 @@ void showToast(
       );
     } else {
       iconeWidget = Text(
-        icone,
+        iconeNotificacao,
         style: const TextStyle(
           fontSize: 18,
           color: corTexto,
@@ -131,12 +161,15 @@ void showToast(
       );
     }
 
-    final mostrarIrAoCarrinho = icone == 'carrinho.svg';
+    // Ações disponíveis nas notificações.
+    final mostrarMeusVales = iconeNotificacao == 'vales_finalizados';
 
-    final mostrarVerComanda =
-        (icone == 'comanda_mesa.svg' || icone == 'comanda_mesa') &&
-            mesa != null &&
-            mesa.trim().isNotEmpty;
+    final mostrarIrAoCarrinho = iconeNotificacao == 'carrinho.svg';
+
+    final mostrarVerComanda = (iconeNotificacao == 'comanda_mesa.svg' ||
+            iconeNotificacao == 'comanda_mesa') &&
+        mesa != null &&
+        mesa.trim().isNotEmpty;
 
     messenger
       ..clearSnackBars()
@@ -158,39 +191,44 @@ void showToast(
               ),
             ],
           ),
-          action: mostrarIrAoCarrinho
+          action: mostrarMeusVales
               ? SnackBarAction(
-                  label: 'Ir ao carrinho',
+                  label: 'Meus vales-presente',
                   textColor: Colors.white,
                   onPressed: () {
                     navigatorKey.currentState?.pushNamed(
-                      '/carrinho',
+                      '/meus-vales-presente',
                     );
                   },
                 )
-              : mostrarVerComanda
+              : mostrarIrAoCarrinho
                   ? SnackBarAction(
-                      label: 'Ver comanda',
+                      label: 'Ir ao carrinho',
                       textColor: Colors.white,
                       onPressed: () {
                         navigatorKey.currentState?.pushNamed(
-                          '/comanda-mesa',
-                          arguments: {
-                            'mesa': mesa.trim(),
-                          },
+                          '/carrinho',
                         );
                       },
                     )
-                  : null,
-          duration: const Duration(seconds: 2),
+                  : mostrarVerComanda
+                      ? SnackBarAction(
+                          label: 'Ver comanda',
+                          textColor: Colors.white,
+                          onPressed: () {
+                            navigatorKey.currentState?.pushNamed(
+                              '/comanda-mesa',
+                              arguments: {
+                                'mesa': mesa.trim(),
+                              },
+                            );
+                          },
+                        )
+                      : null,
+          duration: const Duration(seconds: 6),
           behavior: SnackBarBehavior.floating,
           shape: const StadiumBorder(),
-          margin: const EdgeInsets.fromLTRB(
-            16,
-            0,
-            16,
-            20,
-          ),
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
         ),
       );
   });

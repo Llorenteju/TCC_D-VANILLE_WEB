@@ -24,8 +24,6 @@ class OfertasPage extends StatelessWidget {
           return Column(
             children: [
               const SizedBox(height: 56),
-
-              // Título principal da página
               const ContentWidth(
                 child: Column(
                   children: [
@@ -53,9 +51,7 @@ class OfertasPage extends StatelessWidget {
                   ],
                 ),
               ),
-
               const SizedBox(height: 50),
-
               ContentWidth(
                 child: Column(
                   children: [
@@ -69,6 +65,7 @@ class OfertasPage extends StatelessWidget {
                         produtos: lista,
                         mostrarPercentual: true,
                         acaoUnica: true,
+                        permitirAdicionar: false,
                       ),
                     const SizedBox(height: 16),
                     const DicaCampo(

@@ -146,13 +146,11 @@ class _PerfilPageState extends State<PerfilPage> {
       return;
     }
 
-    // Verifica se a pessoa iniciou uma troca de senha.
     final solicitouTrocaSenha = senhaAtual.text.isNotEmpty ||
         novaSenha.text.isNotEmpty ||
         confirmarSenha.text.isNotEmpty;
 
     if (solicitouTrocaSenha) {
-      // Todos os campos são obrigatórios para trocar a senha.
       if (senhaAtual.text.isEmpty ||
           novaSenha.text.isEmpty ||
           confirmarSenha.text.isEmpty) {
@@ -163,7 +161,6 @@ class _PerfilPageState extends State<PerfilPage> {
         return;
       }
 
-      // Confere a senha atual antes de salvar qualquer alteração.
       if (senhaAtual.text != usuario.senha) {
         _mostrarMensagem(
           'A senha atual está incorreta. Confira e tente novamente.',
@@ -171,7 +168,6 @@ class _PerfilPageState extends State<PerfilPage> {
         return;
       }
 
-      // A confirmação precisa ser igual à nova senha.
       if (novaSenha.text != confirmarSenha.text) {
         _mostrarMensagem(
           'A confirmação não coincide com a nova senha.',
@@ -179,7 +175,6 @@ class _PerfilPageState extends State<PerfilPage> {
         return;
       }
 
-      // Aplica as regras de senha que já existem no projeto.
       if (!AppState.senhaValida(novaSenha.text)) {
         _mostrarMensagem(
           'A nova senha deve ter no mínimo 6 caracteres, '
@@ -196,7 +191,6 @@ class _PerfilPageState extends State<PerfilPage> {
       }
     }
 
-    // Só atualiza os dados depois que todas as validações passam.
     state.atualizarPerfil(
       nome: nome.text.trim(),
       email: email.text.trim(),
@@ -216,15 +210,12 @@ class _PerfilPageState extends State<PerfilPage> {
       mensagem = 'Dados atualizados com sucesso!';
     });
 
-    showToast(
-      'Perfil atualizado!',
-      '✓',
-    );
+    showToast('Perfil atualizado!', '✓');
 
     if (solicitouTrocaSenha) {
       showToast(
         'Senha alterada! Se não foi você, proteja sua conta.',
-        '🔐',
+        'trocarsenha.svg',
       );
     }
   }
@@ -244,9 +235,7 @@ class _PerfilPageState extends State<PerfilPage> {
           });
         }
       },
-      decoration: InputDecoration(
-        labelText: label,
-      ),
+      decoration: InputDecoration(labelText: label),
     );
   }
 
@@ -298,18 +287,13 @@ class _PerfilPageState extends State<PerfilPage> {
               ),
             ),
           ),
-          Expanded(
-            child: Text(valor),
-          ),
+          Expanded(child: Text(valor)),
         ],
       ),
     );
   }
 
-  Widget _linha(
-    bool estreito,
-    List<Widget> filhos,
-  ) {
+  Widget _linha(bool estreito, List<Widget> filhos) {
     if (estreito) {
       return Column(
         children: [
@@ -397,38 +381,32 @@ class _PerfilPageState extends State<PerfilPage> {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  _linha(
-                    estreito,
-                    [
-                      _campo(nome, 'Nome completo *'),
-                      _campo(
-                        email,
-                        'E-mail *',
-                        tipo: TextInputType.emailAddress,
-                      ),
-                    ],
-                  ),
+                  _linha(estreito, [
+                    _campo(nome, 'Nome completo *'),
+                    _campo(
+                      email,
+                      'E-mail *',
+                      tipo: TextInputType.emailAddress,
+                    ),
+                  ]),
                   const SizedBox(height: 14),
-                  _linha(
-                    estreito,
-                    [
-                      _campo(
-                        telefone,
-                        'Telefone *',
-                        tipo: TextInputType.phone,
+                  _linha(estreito, [
+                    _campo(
+                      telefone,
+                      'Telefone *',
+                      tipo: TextInputType.phone,
+                    ),
+                    TextField(
+                      controller: dataNascimento,
+                      readOnly: true,
+                      onTap: _selecionarDataNascimento,
+                      decoration: const InputDecoration(
+                        labelText: 'Data de nascimento *',
+                        hintText: 'dd/mm/aaaa',
+                        suffixIcon: Icon(Icons.calendar_month),
                       ),
-                      TextField(
-                        controller: dataNascimento,
-                        readOnly: true,
-                        onTap: _selecionarDataNascimento,
-                        decoration: const InputDecoration(
-                          labelText: 'Data de nascimento *',
-                          hintText: 'dd/mm/aaaa',
-                          suffixIcon: Icon(Icons.calendar_month),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ]),
                   const SizedBox(height: 14),
                   TextField(
                     controller: endereco,
@@ -491,7 +469,7 @@ class _PerfilPageState extends State<PerfilPage> {
                   const SizedBox(height: 8),
                   const DicaCampo(
                     'A senha deve ter no mínimo 6 caracteres, '
-                    '1 letra maiúscula e 1 caractere especial. '
+                    '1 letra maiúscula e 1 caractere especial. ',
                   ),
                   const SizedBox(height: 24),
                   const Text(
@@ -600,9 +578,9 @@ class _PerfilPageState extends State<PerfilPage> {
                       OutlinedButton(
                         onPressed: () => Navigator.pushNamed(
                           context,
-                          Routes.meusPedidos,
+                          Routes.meusValesPresente,
                         ),
-                        child: const Text('Meus pedidos'),
+                        child: const Text('Meus vales-presente'),
                       ),
                       OutlinedButton(
                         onPressed: () => Navigator.pushNamed(
@@ -615,10 +593,7 @@ class _PerfilPageState extends State<PerfilPage> {
                         onPressed: () {
                           state.logout();
 
-                          showToast(
-                            'Você saiu da sua conta.',
-                            '👋',
-                          );
+                          showToast('Você saiu da sua conta.', '👋');
 
                           Navigator.of(context).pushNamedAndRemoveUntil(
                             Routes.home,

@@ -11,17 +11,10 @@ import 'ui_kit.dart';
 
 class ProductCard extends StatelessWidget {
   final Produto produto;
-
-  /// Mostra o percentual de desconto nas ofertas.
   final bool mostrarPercentual;
-
-  /// Exibe somente o botão principal.
   final bool acaoUnica;
-
-  /// Define se o card permite adicionar produtos.
   final bool permitirAdicionar;
-
-  /// Número da mesa quando o cardápio é acessado pelo QR Code.
+  final bool bloquearOferta;
   final String? mesa;
 
   const ProductCard({
@@ -30,10 +23,14 @@ class ProductCard extends StatelessWidget {
     this.mostrarPercentual = false,
     this.acaoUnica = false,
     this.permitirAdicionar = true,
+    this.bloquearOferta = false,
     this.mesa,
   });
 
   bool get _modoMesa => mesa != null && mesa!.trim().isNotEmpty;
+
+  bool get _podeAdicionar =>
+      permitirAdicionar && !(bloquearOferta && produto.oferta);
 
   @override
   Widget build(BuildContext context) {
@@ -163,21 +160,24 @@ class ProductCard extends StatelessWidget {
             child: acaoUnica
                 ? SizedBox(
                     width: double.infinity,
-                    child: permitirAdicionar
+                    child: _podeAdicionar
                         ? _botaoAdicionar(context, largo: true)
                         : _botaoVerProduto(context, largo: true),
                   )
-                : Row(
-                    children: [
-                      Expanded(
-                        child: _botaoVerProduto(context),
+                : _podeAdicionar
+                    ? Row(
+                        children: [
+                          Expanded(
+                            child: _botaoVerProduto(context),
+                          ),
+                          const SizedBox(width: 8),
+                          _botaoAdicionar(context),
+                        ],
+                      )
+                    : SizedBox(
+                        width: double.infinity,
+                        child: _botaoVerProduto(context, largo: true),
                       ),
-                      if (permitirAdicionar) ...[
-                        const SizedBox(width: 8),
-                        _botaoAdicionar(context),
-                      ],
-                    ],
-                  ),
           ),
         ],
       ),
@@ -279,6 +279,7 @@ class GradeProdutos extends StatelessWidget {
   final bool mostrarPercentual;
   final bool acaoUnica;
   final bool permitirAdicionar;
+  final bool bloquearOferta;
   final String? mesa;
 
   const GradeProdutos({
@@ -287,6 +288,7 @@ class GradeProdutos extends StatelessWidget {
     this.mostrarPercentual = false,
     this.acaoUnica = false,
     this.permitirAdicionar = true,
+    this.bloquearOferta = false,
     this.mesa,
   });
 
@@ -303,6 +305,7 @@ class GradeProdutos extends StatelessWidget {
               mostrarPercentual: mostrarPercentual,
               acaoUnica: acaoUnica,
               permitirAdicionar: permitirAdicionar,
+              bloquearOferta: bloquearOferta,
               mesa: mesa,
             ),
           )

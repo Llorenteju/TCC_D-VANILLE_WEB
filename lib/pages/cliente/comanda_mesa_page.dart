@@ -88,7 +88,11 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        SnackBar(content: Text(mensagem)),
+        SnackBar(
+          content: Text(mensagem),
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
   }
 
@@ -180,12 +184,6 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Após confirmar, os itens enviados não poderão '
-                    'ser alterados nesta demonstração.',
-                    style: TextStyle(fontSize: 12),
                   ),
                 ],
               ),
@@ -299,7 +297,6 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
 
           final encerrada = atual.status == 'encerrada';
 
-          // Histórico de pedidos enviados para esta mesa.
           final historicoPedidos = AppState.instance.pedidos
               .where((pedido) => pedido.mesa == mesa)
               .toList()
@@ -313,7 +310,6 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                 padding: const EdgeInsets.all(20),
                 children: [
                   const SizedBox(height: 36),
-
                   Column(
                     children: [
                       const Text(
@@ -340,31 +336,22 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 20),
-
                   Text(
                     'Mesa $mesa',
                     textAlign: TextAlign.center,
                     style: tema.textTheme.titleMedium,
                   ),
-
                   const SizedBox(height: 20),
-
                   _resumoComanda(atual, tema),
-
                   const SizedBox(height: 24),
-
-                  // HISTÓRICO DE PEDIDOS
                   Text(
                     'Histórico de pedidos',
                     style: tema.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-
                   const SizedBox(height: 12),
-
                   if (historicoPedidos.isEmpty)
                     const Card(
                       child: Padding(
@@ -378,6 +365,7 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                   else
                     ...historicoPedidos.map(
                       (pedido) => Card(
+                        clipBehavior: Clip.antiAlias,
                         child: ExpansionTile(
                           leading: const Icon(
                             Icons.receipt_long_outlined,
@@ -400,6 +388,13 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                           ),
                           children: [
                             const Divider(),
+
+                            // Acompanhamento visível ao cliente.
+                            _linhaDoTempoPedido(pedido.status, tema),
+
+                            const SizedBox(height: 16),
+                            const Divider(),
+
                             ...pedido.itens.map(
                               (item) => Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -442,18 +437,14 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                         ),
                       ),
                     ),
-
                   const SizedBox(height: 24),
-
                   Text(
                     'O que você deseja fazer?',
                     style: tema.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-
                   const SizedBox(height: 14),
-
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
@@ -465,9 +456,7 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 10),
-
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
@@ -481,44 +470,27 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 10),
-
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: atual.atendimentoSolicitado || encerrada
+                      onPressed: encerrada
                           ? null
                           : () {
                               _comandas.solicitarAtendimento(mesa);
+
                               _mostrarMensagem(
-                                'Solicitação de atendimento registrada '
-                                'para a mesa $mesa nesta demonstração.',
+                                'Garçom solicitado para a mesa $mesa!',
                               );
                             },
                       icon: const Icon(Icons.room_service_outlined),
-                      label: Text(
-                        atual.atendimentoSolicitado
-                            ? 'Garçom solicitado'
-                            : 'Chamar garçom',
-                      ),
+                      label: const Text('Chamar garçom'),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                     ),
                   ),
-
-                  if (atual.atendimentoSolicitado) ...[
-                    const SizedBox(height: 8),
-                    const Text(
-                      'A solicitação foi registrada no protótipo. '
-                      'Uma notificação real à equipe depende do backend.',
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-
                   const SizedBox(height: 32),
-
                   Container(
                     key: _itensComandaKey,
                     child: Text(
@@ -528,9 +500,7 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 12),
-
                   if (atual.itens.isEmpty)
                     const Card(
                       child: Padding(
@@ -599,9 +569,7 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                         ),
                       ),
                     ),
-
                   const SizedBox(height: 16),
-
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(18),
@@ -648,9 +616,7 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
                   Text(
                     'D’Vanille — uma experiência de café feita para você.',
                     textAlign: TextAlign.center,
@@ -661,6 +627,175 @@ class _ComandaMesaPageState extends State<ComandaMesaPage> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _linhaDoTempoPedido(String status, ThemeData tema) {
+    final etapas = [
+      {
+        'status': 'recebido',
+        'titulo': 'Pedido recebido',
+        'descricao': 'Seu pedido foi enviado com sucesso.',
+        'icone': Icons.receipt_long_outlined,
+      },
+      {
+        'status': 'em preparação',
+        'titulo': 'Em preparação',
+        'descricao': 'Estamos preparando seu pedido com carinho.',
+        'icone': Icons.soup_kitchen_outlined,
+      },
+      {
+        'status': 'pronto',
+        'titulo': 'Pedido pronto',
+        'descricao': 'Seu pedido está pronto!',
+        'icone': Icons.room_service_outlined,
+      },
+      {
+        'status': 'finalizado',
+        'titulo': 'Pedido finalizado',
+        'descricao': 'O atendimento deste pedido foi concluído.',
+        'icone': Icons.check_circle_outline,
+      },
+    ];
+
+    final statusAtual = status.trim().toLowerCase();
+
+    final indiceAtual = etapas.indexWhere(
+      (etapa) => etapa['status'] == statusAtual,
+    );
+
+    final indiceAtivo = indiceAtual < 0 ? 0 : indiceAtual;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: tema.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: DVanilleColors.rose.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Acompanhe seu pedido',
+            style: tema.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: DVanilleColors.darkTaupe,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'O andamento é atualizado conforme o status do pedido.',
+            style: tema.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 20),
+          ...List.generate(etapas.length, (indice) {
+            final etapa = etapas[indice];
+            final concluida = indice < indiceAtivo;
+            final atual = indice == indiceAtivo;
+
+            final icone = etapa['icone'] as IconData;
+
+            return IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(
+                    width: 36,
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            color: concluida || atual
+                                ? DVanilleColors.rose
+                                : tema.colorScheme.surfaceContainerHighest,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            concluida ? Icons.check : icone,
+                            size: 17,
+                            color: concluida || atual
+                                ? Colors.white
+                                : tema.disabledColor,
+                          ),
+                        ),
+                        if (indice < etapas.length - 1)
+                          Expanded(
+                            child: Container(
+                              width: 2,
+                              margin: const EdgeInsets.symmetric(vertical: 3),
+                              color: concluida
+                                  ? DVanilleColors.rose
+                                  : tema.dividerColor,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        bottom: indice < etapas.length - 1 ? 20 : 0,
+                        top: 3,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            etapa['titulo'] as String,
+                            style: tema.textTheme.bodyLarge?.copyWith(
+                              fontWeight: atual || concluida
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: atual ? DVanilleColors.rose : null,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            etapa['descricao'] as String,
+                            style: tema.textTheme.bodySmall?.copyWith(
+                              color: tema.colorScheme.onSurface
+                                  .withValues(alpha: 0.7),
+                            ),
+                          ),
+                          if (atual) ...[
+                            const SizedBox(height: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: DVanilleColors.rose.withValues(
+                                  alpha: 0.15,
+                                ),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                'Etapa atual',
+                                style: tema.textTheme.labelSmall?.copyWith(
+                                  color: DVanilleColors.darkTaupe,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
       ),
     );
   }

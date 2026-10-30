@@ -16,6 +16,10 @@ class ComandaMesaState extends ChangeNotifier {
 
   ComandaMesa? comandaDaMesa(String mesa) => _comandas[mesa.trim()];
 
+  /// Abre uma comanda para a mesa informada.
+  ///
+  /// Se já existir uma comanda aberta, ela será reutilizada.
+  /// Se a comanda anterior estiver encerrada, uma nova será criada.
   ComandaMesa abrirComanda(String mesa) {
     final numeroMesa = mesa.trim();
 
@@ -40,21 +44,25 @@ class ComandaMesaState extends ChangeNotifier {
     return comanda;
   }
 
+  /// Verifica se a comanda ainda pode ser modificada.
   bool _podeEditar(ComandaMesa comanda) {
-    // A comanda permanece editável até ser encerrada.
     return comanda.status != 'encerrada';
   }
 
+  /// Adiciona um produto à comanda da mesa.
   void adicionarProduto({
     required String mesa,
     required Produto produto,
     int quantidade = 1,
   }) {
-    if (quantidade <= 0) return;
+    final numeroMesa = mesa.trim();
 
-    final comanda = abrirComanda(mesa);
+    if (numeroMesa.isEmpty || quantidade <= 0) return;
 
-    if (!_podeEditar(comanda)) return;
+    final comanda = _comandas[numeroMesa];
+
+    // Não cria nem reabre uma comanda encerrada por acidente.
+    if (comanda == null || !_podeEditar(comanda)) return;
 
     comanda.adicionarItem(
       produtoId: produto.id.toString(),
@@ -63,12 +71,13 @@ class ComandaMesaState extends ChangeNotifier {
       quantidade: quantidade,
     );
 
-    // Ao começar um novo pedido, a comanda volta a ficar aberta.
+    // Mantém a comanda aberta enquanto o cliente adiciona itens.
     comanda.status = 'aberta';
 
     notifyListeners();
   }
 
+  /// Aumenta ou diminui a quantidade de um produto.
   void alterarQuantidade({
     required String mesa,
     required String produtoId,
@@ -79,9 +88,11 @@ class ComandaMesaState extends ChangeNotifier {
     if (comanda == null || !_podeEditar(comanda)) return;
 
     comanda.alterarQuantidade(produtoId, variacao);
+
     notifyListeners();
   }
 
+  /// Remove um produto da comanda.
   void removerProduto({
     required String mesa,
     required String produtoId,
@@ -91,27 +102,30 @@ class ComandaMesaState extends ChangeNotifier {
     if (comanda == null || !_podeEditar(comanda)) return;
 
     comanda.removerItem(produtoId);
+
     notifyListeners();
   }
 
+  /// Solicita atendimento para a mesa.
   void solicitarAtendimento(String mesa) {
     final numeroMesa = mesa.trim();
 
     if (numeroMesa.isEmpty) return;
 
-    final comanda = abrirComanda(numeroMesa);
+    final comanda = _comandas[numeroMesa];
 
-    if (!_podeEditar(comanda)) return;
+    if (comanda == null || !_podeEditar(comanda)) return;
 
     comanda.solicitarAtendimento();
+
     notifyListeners();
   }
 
-  /// Registra um novo pedido sem encerrar a comanda da mesa.
+  /// Registra um pedido independente no AppState sem encerrar
+  /// a comanda da mesa.
   ///
-  /// Cada envio cria um Pedido independente no AppState.
-  /// Os itens enviados são removidos da lista pendente para
-  /// impedir que sejam cobrados novamente no próximo envio.
+  /// Os itens enviados são removidos da lista pendente para evitar
+  /// que sejam enviados novamente no próximo pedido.
   bool enviarPedidoAoCaixa(String mesa) {
     final numeroMesa = mesa.trim();
 
@@ -136,6 +150,7 @@ class ComandaMesaState extends ChangeNotifier {
         '${agora.hour.toString().padLeft(2, '0')}:'
         '${agora.minute.toString().padLeft(2, '0')}';
 
+    // Copia os itens pendentes para o novo pedido.
     final itensEnviados = comanda.itens
         .map(
           (item) => ItemPedido(
@@ -160,28 +175,31 @@ class ComandaMesaState extends ChangeNotifier {
       mesa: numeroMesa,
     );
 
-    // Registra este envio como um pedido independente.
+    // Cada envio é registrado como um pedido independente.
     state.pedidos.add(pedido);
 
-    // Limpa somente os itens já enviados, não o histórico de pedidos.
+    // Remove somente os itens enviados.
+    // O histórico dos pedidos anteriores permanece disponível.
     comanda.itens.clear();
 
-    // Mantém a mesma comanda aberta para novas compras.
+    // A comanda continua aberta para novos pedidos.
     comanda.status = 'aberta';
 
+    // Atualiza as telas que acompanham os pedidos e a comanda.
     state.notifyListeners();
     notifyListeners();
 
     return true;
   }
 
-  /// Encerra definitivamente a comanda da mesa.
+  /// Encerra definitivamente a comanda atual da mesa.
   void encerrarComanda(String mesa) {
     final comanda = _comandas[mesa.trim()];
 
     if (comanda == null) return;
 
     comanda.status = 'encerrada';
+
     notifyListeners();
   }
 }

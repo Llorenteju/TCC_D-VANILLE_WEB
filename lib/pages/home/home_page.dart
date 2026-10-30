@@ -32,9 +32,7 @@ class HomePage extends StatelessWidget {
         listenable: state,
         builder: (context, _) {
           final destaques = state.produtos
-              .where(
-                (p) => [1, 5, 11, 14].contains(p.id),
-              )
+              .where((p) => [1, 5, 11, 14].contains(p.id))
               .toList();
 
           final ofertas = state.ofertas.take(3).toList();
@@ -42,9 +40,7 @@ class HomePage extends StatelessWidget {
           return Column(
             children: [
               _hero(context),
-
               const SizedBox(height: 56),
-
               ContentWidth(
                 child: Column(
                   children: [
@@ -83,15 +79,11 @@ class HomePage extends StatelessWidget {
                   ],
                 ),
               ),
-
               const SizedBox(height: 64),
-
               Container(
                 width: double.infinity,
                 color: Theme.of(context).cardColor,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 56,
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 56),
                 child: ContentWidth(
                   child: Column(
                     children: [
@@ -116,9 +108,7 @@ class HomePage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 34),
-                      GradeProdutos(
-                        produtos: destaques,
-                      ),
+                      GradeProdutos(produtos: destaques),
                       const SizedBox(height: 30),
                       OutlinedButton(
                         onPressed: () =>
@@ -126,17 +116,13 @@ class HomePage extends StatelessWidget {
                           Routes.cardapio,
                           (r) => false,
                         ),
-                        child: const Text(
-                          'Ver cardápio completo',
-                        ),
+                        child: const Text('Ver cardápio completo'),
                       ),
                     ],
                   ),
                 ),
               ),
-
               const SizedBox(height: 64),
-
               ContentWidth(
                 child: Column(
                   children: [
@@ -161,9 +147,7 @@ class HomePage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 34),
-                    GradeProdutos(
-                      produtos: ofertas,
-                    ),
+                    GradeProdutos(produtos: ofertas),
                     const SizedBox(height: 30),
                     FilledButton(
                       style: FilledButton.styleFrom(
@@ -175,34 +159,18 @@ class HomePage extends StatelessWidget {
                         Routes.ofertas,
                         (r) => false,
                       ),
-                      child: const Text(
-                        'Ver todas as ofertas',
-                      ),
+                      child: const Text('Ver todas as ofertas'),
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(height: 64),
-
-              // ============================================================
-              // APP D'VANILLE
-              // ============================================================
-
               _secaoAplicativo(context),
-
               const SizedBox(height: 64),
-
-              // ============================================================
-              // LOCALIZAÇÃO E HORÁRIO
-              // ============================================================
-
               Container(
                 width: double.infinity,
                 color: Theme.of(context).cardColor,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 56,
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 56),
                 child: ContentWidth(
                   child: Wrap(
                     spacing: 22,
@@ -265,7 +233,6 @@ class HomePage extends StatelessWidget {
                   ),
                 ),
               ),
-
               const SizedBox(height: 64),
             ],
           );
@@ -276,12 +243,7 @@ class HomePage extends StatelessWidget {
 
   Widget _hero(BuildContext context) {
     return ContentWidth(
-      padding: const EdgeInsets.fromLTRB(
-        24,
-        56,
-        24,
-        0,
-      ),
+      padding: const EdgeInsets.fromLTRB(24, 56, 24, 0),
       child: Column(
         children: [
           Text(
@@ -311,9 +273,7 @@ class HomePage extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 600,
-            ),
+            constraints: const BoxConstraints(maxWidth: 600),
             child: const Text(
               'Uma cafeteria pensada para acolher todas as pessoas, com sabor, tecnologia e informação nutricional clara para quem possui restrições alimentares.',
               textAlign: TextAlign.center,
@@ -335,18 +295,7 @@ class HomePage extends StatelessWidget {
                   Routes.cardapio,
                   (r) => false,
                 ),
-                child: const Text(
-                  'Conheça nosso cardápio',
-                ),
-              ),
-              OutlinedButton(
-                onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
-                  Routes.cardapio,
-                  (r) => false,
-                ),
-                child: const Text(
-                  'Faça seu pedido',
-                ),
+                child: const Text('Conheça nosso cardápio'),
               ),
             ],
           ),
@@ -368,10 +317,7 @@ class HomePage extends StatelessWidget {
   Widget _secaoAplicativo(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 24,
-        vertical: 56,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 56),
       decoration: BoxDecoration(
         color: DVanilleColors.blush2,
         borderRadius: BorderRadius.circular(32),
@@ -433,27 +379,21 @@ class HomePage extends StatelessWidget {
                           context: context,
                           builder: (context) {
                             return AlertDialog(
-                              title: const Text(
-                                'App D’Vanille',
-                              ),
+                              title: const Text('App D’Vanille'),
                               content: const Text(
                                 'Em breve você poderá baixar o aplicativo D’Vanille e fazer seus pedidos por delivery.',
                               ),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.of(context).pop(),
-                                  child: const Text(
-                                    'Fechar',
-                                  ),
+                                  child: const Text('Fechar'),
                                 ),
                               ],
                             );
                           },
                         );
                       },
-                      child: const Text(
-                        'Pedir pelo app',
-                      ),
+                      child: const Text('Pedir pelo app'),
                     ),
                   ],
                 ),
@@ -481,11 +421,7 @@ class HomePage extends StatelessWidget {
               ],
             );
 
-            // ============================================================
-            // MOCKUP DO CELULAR
-            // Tela inicial de um smartphone.
-            // ============================================================
-
+            // Mockup do celular.
             final celular = Container(
               width: estreito ? 220 : 250,
               height: estreito ? 420 : 470,
@@ -504,8 +440,6 @@ class HomePage extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30),
-
-                  // FUNDO MAIS ESCURO PARA DAR CONTRASTE AO ÍCONE
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -518,7 +452,6 @@ class HomePage extends StatelessWidget {
                 ),
                 child: Stack(
                   children: [
-                    // Fundo decorativo da tela inicial.
                     Positioned.fill(
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(30),
@@ -527,12 +460,9 @@ class HomePage extends StatelessWidget {
                         ),
                       ),
                     ),
-
                     Column(
                       children: [
                         const SizedBox(height: 10),
-
-                        // NOTCH / CÂMERA
                         Container(
                           width: 78,
                           height: 22,
@@ -551,14 +481,9 @@ class HomePage extends StatelessWidget {
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 12),
-
-                        // BARRA DE STATUS
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 18),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -594,14 +519,9 @@ class HomePage extends StatelessWidget {
                             ],
                           ),
                         ),
-
                         const SizedBox(height: 12),
-
-                        // DATA
                         const Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 18,
-                          ),
+                          padding: EdgeInsets.symmetric(horizontal: 18),
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
@@ -614,14 +534,9 @@ class HomePage extends StatelessWidget {
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 18),
-
-                        // ÍCONES DA TELA INICIAL
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 18),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
@@ -640,13 +555,9 @@ class HomePage extends StatelessWidget {
                             ],
                           ),
                         ),
-
                         const SizedBox(height: 18),
-
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 18),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
@@ -654,14 +565,10 @@ class HomePage extends StatelessWidget {
                                 Icons.camera_alt_outlined,
                                 'Câmera',
                               ),
-
                               _iconeAplicativo(
                                 Icons.chat_bubble_outline,
                                 'Mensagens',
                               ),
-
-                              // APP D'VANILLE
-                              // O SVG aparece inteiro e sem fundo branco.
                               GestureDetector(
                                 onTap: () {},
                                 child: Column(
@@ -691,27 +598,18 @@ class HomePage extends StatelessWidget {
                             ],
                           ),
                         ),
-
                         const SizedBox(height: 15),
-
-                        // TEXTO DE CHAMADA
                         Container(
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 25,
-                          ),
+                          margin: const EdgeInsets.symmetric(horizontal: 25),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
                             vertical: 9,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(
-                              alpha: 0.22,
-                            ),
+                            color: Colors.white.withValues(alpha: 0.22),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: Colors.white.withValues(
-                                alpha: 0.18,
-                              ),
+                              color: Colors.white.withValues(alpha: 0.18),
                             ),
                           ),
                           child: const Text(
@@ -724,58 +622,36 @@ class HomePage extends StatelessWidget {
                             ),
                           ),
                         ),
-
                         const Spacer(),
-
-                        // DOCK INFERIOR
                         Container(
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                          ),
+                          margin: const EdgeInsets.symmetric(horizontal: 12),
                           height: 58,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(
-                              alpha: 0.25,
-                            ),
+                            color: Colors.white.withValues(alpha: 0.25),
                             borderRadius: BorderRadius.circular(19),
                             border: Border.all(
-                              color: Colors.white.withValues(
-                                alpha: 0.18,
-                              ),
+                              color: Colors.white.withValues(alpha: 0.18),
                             ),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              _iconeDock(
-                                Icons.phone_outlined,
-                              ),
-                              _iconeDock(
-                                Icons.camera_alt_outlined,
-                              ),
-                              _iconeDock(
-                                Icons.chat_bubble_outline,
-                              ),
-                              _iconeDock(
-                                Icons.music_note_outlined,
-                              ),
+                              _iconeDock(Icons.phone_outlined),
+                              _iconeDock(Icons.camera_alt_outlined),
+                              _iconeDock(Icons.chat_bubble_outline),
+                              _iconeDock(Icons.music_note_outlined),
                             ],
                           ),
                         ),
-
                         const SizedBox(height: 8),
-
-                        // BARRA INFERIOR DO CELULAR
                         Container(
                           width: 76,
                           height: 4,
-                          margin: const EdgeInsets.only(
-                            bottom: 8,
-                          ),
+                          margin: const EdgeInsets.only(bottom: 8),
                           decoration: BoxDecoration(
                             color: DVanilleColors.cream,
                             borderRadius: BorderRadius.circular(10),
@@ -801,16 +677,11 @@ class HomePage extends StatelessWidget {
             return Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Expanded(
-                  flex: 6,
-                  child: texto,
-                ),
+                Expanded(flex: 6, child: texto),
                 const SizedBox(width: 70),
                 Expanded(
                   flex: 4,
-                  child: Center(
-                    child: celular,
-                  ),
+                  child: Center(child: celular),
                 ),
               ],
             );
@@ -820,19 +691,14 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _iconeAplicativo(
-    IconData icone,
-    String nome,
-  ) {
+  Widget _iconeAplicativo(IconData icone, String nome) {
     return Column(
       children: [
         Container(
           width: 50,
           height: 50,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(
-              alpha: 0.72,
-            ),
+            color: Colors.white.withValues(alpha: 0.72),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Icon(
@@ -886,13 +752,7 @@ class HomePage extends StatelessWidget {
             runSpacing: espacamento,
             alignment: WrapAlignment.center,
             children: categorias
-                .map(
-                  (c) => _pilulaCategoria(
-                    context,
-                    c,
-                    170,
-                  ),
-                )
+                .map((c) => _pilulaCategoria(context, c, 170))
                 .toList(),
           );
         }
@@ -909,10 +769,7 @@ class HomePage extends StatelessWidget {
                   larguraFinal,
                 ),
               ),
-              if (i < categorias.length - 1)
-                const SizedBox(
-                  width: espacamento,
-                ),
+              if (i < categorias.length - 1) const SizedBox(width: espacamento),
             ],
           ],
         );
@@ -937,16 +794,11 @@ class HomePage extends StatelessWidget {
       child: Container(
         width: largura,
         height: 155,
-        padding: const EdgeInsets.symmetric(
-          vertical: 14,
-          horizontal: 10,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: DVanilleColors.line,
-          ),
+          border: Border.all(color: DVanilleColors.line),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -976,14 +828,9 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _linhaIcone(
-    IconData icone,
-    String texto,
-  ) {
+  Widget _linhaIcone(IconData icone, String texto) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: 6,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -998,6 +845,7 @@ class HomePage extends StatelessWidget {
               texto,
               style: const TextStyle(
                 fontSize: 14.5,
+                color: DVanilleColors.ink,
               ),
             ),
           ),
@@ -1040,111 +888,63 @@ class _BeneficioApp extends StatelessWidget {
   }
 }
 
-// ============================================================
-// PAPEL DE PAREDE DO CELULAR
-// ============================================================
-
+// Papel de parede do celular.
 class _CelularWallpaperPainter extends CustomPainter {
   @override
-  void paint(
-    Canvas canvas,
-    Size size,
-  ) {
+  void paint(Canvas canvas, Size size) {
     final paint = Paint()..style = PaintingStyle.fill;
 
-    // Rosa suave para criar contraste sobre o taupe.
-    paint.color = const Color(0xFFEFCDCC).withValues(
-      alpha: 0.28,
-    );
-
+    paint.color = const Color(0xFFEFCDCC).withValues(alpha: 0.28);
     canvas.drawCircle(
-      Offset(
-        size.width * 0.15,
-        size.height * 0.20,
-      ),
+      Offset(size.width * 0.15, size.height * 0.20),
       70,
       paint,
     );
 
-    // Creme suave.
-    paint.color = const Color(0xFFFFEEDD).withValues(
-      alpha: 0.22,
-    );
-
+    paint.color = const Color(0xFFFFEEDD).withValues(alpha: 0.22);
     canvas.drawCircle(
-      Offset(
-        size.width * 0.90,
-        size.height * 0.42,
-      ),
+      Offset(size.width * 0.90, size.height * 0.42),
       90,
       paint,
     );
 
-    // Rosa novamente na parte inferior.
-    paint.color = const Color(0xFFEFCDCC).withValues(
-      alpha: 0.18,
-    );
-
+    paint.color = const Color(0xFFEFCDCC).withValues(alpha: 0.18);
     canvas.drawCircle(
-      Offset(
-        size.width * 0.30,
-        size.height * 0.82,
-      ),
+      Offset(size.width * 0.30, size.height * 0.82),
       100,
       paint,
     );
 
-    // Linhas decorativas claras.
     final linePaint = Paint()
-      ..color = const Color(0xFFFFF4E8).withValues(
-        alpha: 0.14,
-      )
+      ..color = const Color(0xFFFFF4E8).withValues(alpha: 0.14)
       ..strokeWidth = 1.1
       ..style = PaintingStyle.stroke;
 
-    final path = Path();
+    final path = Path()
+      ..moveTo(0, size.height * 0.32)
+      ..quadraticBezierTo(
+        size.width * 0.35,
+        size.height * 0.23,
+        size.width,
+        size.height * 0.34,
+      );
 
-    path.moveTo(
-      0,
-      size.height * 0.32,
-    );
+    canvas.drawPath(path, linePaint);
 
-    path.quadraticBezierTo(
-      size.width * 0.35,
-      size.height * 0.23,
-      size.width,
-      size.height * 0.34,
-    );
+    final path2 = Path()
+      ..moveTo(0, size.height * 0.67)
+      ..quadraticBezierTo(
+        size.width * 0.50,
+        size.height * 0.76,
+        size.width,
+        size.height * 0.60,
+      );
 
-    canvas.drawPath(
-      path,
-      linePaint,
-    );
-
-    final path2 = Path();
-
-    path2.moveTo(
-      0,
-      size.height * 0.67,
-    );
-
-    path2.quadraticBezierTo(
-      size.width * 0.50,
-      size.height * 0.76,
-      size.width,
-      size.height * 0.60,
-    );
-
-    canvas.drawPath(
-      path2,
-      linePaint,
-    );
+    canvas.drawPath(path2, linePaint);
   }
 
   @override
-  bool shouldRepaint(
-    covariant CustomPainter oldDelegate,
-  ) {
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return false;
   }
 }
