@@ -823,7 +823,6 @@ class HomePage extends StatelessWidget {
     Categoria c,
     double largura,
   ) {
-    
     final caminhoImagem = _iconesCategorias[c.id];
 
     return InkWell(
@@ -908,7 +907,6 @@ class _BeneficioApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
