@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../../app/app.dart';
@@ -27,6 +28,19 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
 
   Color get corTextoSecundario =>
       isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.darkTaupe;
+
+  RedirecionamentoLogin? get redirecionamento {
+    final argumento = ModalRoute.of(context)?.settings.arguments;
+
+    if (argumento is RedirecionamentoLogin &&
+        argumento.rota == Routes.comandaMesa) {
+      return argumento;
+    }
+
+    return null;
+  }
+
+  bool get veioDaComanda => redirecionamento != null;
 
   bool _emailValido(String valor) {
     final emailNormalizado = valor.trim();
@@ -63,13 +77,14 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
     });
   }
 
-  @override
-  void dispose() {
-    email.dispose();
-    super.dispose();
+  void _voltarLogin() {
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      Routes.login,
+      (r) => false,
+      arguments: redirecionamento,
+    );
   }
 
-  /// Estilo dos botões da página.
   ButtonStyle get estiloBotao {
     return FilledButton.styleFrom(
       backgroundColor: isDark ? DVanilleColors.darkRose : DVanilleColors.rose,
@@ -92,14 +107,12 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
   @override
   Widget build(BuildContext context) {
     return PageShell(
-      child: Column(
-        children: [
-          const SizedBox(height: 56),
-          ContentWidth(
-            maxWidth: 480,
-            child: enviado ? _sucesso() : _formulario(),
-          ),
-        ],
+      mostrarCabecalho: !veioDaComanda,
+      mostrarRodape: !veioDaComanda,
+      centralizarConteudo: veioDaComanda,
+      child: ContentWidth(
+        maxWidth: 480,
+        child: enviado ? _sucesso() : _formulario(),
       ),
     );
   }
@@ -108,6 +121,7 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
     return InfoBox(
       padding: const EdgeInsets.all(32),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             'Recuperar senha',
@@ -160,8 +174,7 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
             ),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context)
-                .pushNamedAndRemoveUntil(Routes.login, (r) => false),
+            onPressed: _voltarLogin,
             child: const Text('Voltar ao login'),
           ),
         ],
@@ -171,6 +184,7 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
 
   Widget _sucesso() {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         const IconeSucesso(),
         const SizedBox(height: 20),
@@ -192,14 +206,11 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
           ),
         ),
         const SizedBox(height: 30),
-
-        // Botão com largura e altura definidas.
         SizedBox(
           width: 220,
           height: 52,
           child: FilledButton(
-            onPressed: () => Navigator.of(context)
-                .pushNamedAndRemoveUntil(Routes.login, (r) => false),
+            onPressed: _voltarLogin,
             style: estiloBotao,
             child: const FittedBox(
               fit: BoxFit.scaleDown,
@@ -207,7 +218,6 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
             ),
           ),
         ),
-
         const SizedBox(height: 6),
         TextButton(
           onPressed: () {
@@ -221,9 +231,14 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
       ],
     );
   }
+
+  @override
+  void dispose() {
+    email.dispose();
+    super.dispose();
+  }
 }
 
-/// Ícone compartilhado pelas telas de confirmação.
 class IconeSucesso extends StatelessWidget {
   const IconeSucesso({super.key});
 

@@ -28,6 +28,20 @@ class _LoginPageState extends State<LoginPage> {
   Color get corSubtitulo =>
       isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.darkTaupe;
 
+  // Identifica se o login foi aberto a partir da comanda.
+  RedirecionamentoLogin? get redirecionamento {
+    final argumento = ModalRoute.of(context)?.settings.arguments;
+
+    if (argumento is RedirecionamentoLogin &&
+        argumento.rota == Routes.comandaMesa) {
+      return argumento;
+    }
+
+    return null;
+  }
+
+  bool get veioDaComanda => redirecionamento != null;
+
   @override
   void dispose() {
     email.dispose();
@@ -69,9 +83,19 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  void _abrirPaginaAutenticacao(String rota) {
+    Navigator.pushNamed(
+      context,
+      rota,
+      arguments: redirecionamento,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return PageShell(
+      mostrarCabecalho: !veioDaComanda,
+      mostrarRodape: !veioDaComanda,
       child: Column(
         children: [
           const SizedBox(height: 56),
@@ -144,8 +168,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 10),
                   TextButton(
-                    onPressed: () => Navigator.pushNamed(
-                      context,
+                    onPressed: () => _abrirPaginaAutenticacao(
                       Routes.recuperarSenha,
                     ),
                     child: const Text(
@@ -159,8 +182,7 @@ class _LoginPageState extends State<LoginPage> {
                         'Ainda não tem conta?',
                       ),
                       TextButton(
-                        onPressed: () => Navigator.pushNamed(
-                          context,
+                        onPressed: () => _abrirPaginaAutenticacao(
                           Routes.cadastro,
                         ),
                         child: const Text(

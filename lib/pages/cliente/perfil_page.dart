@@ -393,6 +393,9 @@ class _PerfilPageState extends State<PerfilPage> {
     final estreito = MediaQuery.sizeOf(context).width < 720;
     final usuario = state.usuarioLogado;
 
+    // Identifica a conta administrativa.
+    final isAdmin = state.isAdmin || usuario?.tipo == 'admin';
+
     final labelsRestricoes = <String, String>{
       ...restricoesLabels,
     };
@@ -402,12 +405,14 @@ class _PerfilPageState extends State<PerfilPage> {
     }
 
     return PageShell(
+      // Administradores não exibem o cabeçalho nem o rodapé públicos.
+      mostrarCabecalho: !isAdmin,
+      mostrarRodape: !isAdmin,
       child: Column(
         children: [
           const SizedBox(height: 56),
 
           // TÍTULO
-
           ContentWidth(
             child: Column(
               children: [
@@ -439,7 +444,6 @@ class _PerfilPageState extends State<PerfilPage> {
           const SizedBox(height: 30),
 
           // FORMULÁRIO
-
           ContentWidth(
             maxWidth: 760,
             child: InfoBox(
@@ -456,7 +460,6 @@ class _PerfilPageState extends State<PerfilPage> {
                   ],
 
                   // DADOS PESSOAIS
-
                   _tituloSecao('Dados pessoais'),
                   const SizedBox(height: 14),
 
@@ -504,7 +507,6 @@ class _PerfilPageState extends State<PerfilPage> {
                   const SizedBox(height: 24),
 
                   // SEGURANÇA DA CONTA
-
                   _tituloSecao('Segurança da conta'),
                   const SizedBox(height: 8),
 
@@ -565,7 +567,6 @@ class _PerfilPageState extends State<PerfilPage> {
                   const SizedBox(height: 24),
 
                   // RESTRIÇÕES ALIMENTARES
-
                   _tituloSecao('Restrições alimentares'),
                   const SizedBox(height: 8),
 
@@ -620,7 +621,6 @@ class _PerfilPageState extends State<PerfilPage> {
                   const SizedBox(height: 24),
 
                   // PREFERÊNCIAS
-
                   _tituloSecao('Preferências'),
                   const SizedBox(height: 8),
 
@@ -657,7 +657,6 @@ class _PerfilPageState extends State<PerfilPage> {
                   const SizedBox(height: 12),
 
                   // INFORMAÇÕES DA CONTA
-
                   _tituloSecao('Informações da conta'),
                   const SizedBox(height: 12),
 
@@ -676,7 +675,6 @@ class _PerfilPageState extends State<PerfilPage> {
                   const SizedBox(height: 24),
 
                   // AÇÕES
-
                   Wrap(
                     spacing: 12,
                     runSpacing: 12,

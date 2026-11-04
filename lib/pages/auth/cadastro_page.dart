@@ -44,6 +44,20 @@ class _CadastroPageState extends State<CadastroPage> {
   Color get corDestaque =>
       isDark ? DVanilleColors.darkRose : DVanilleColors.rose;
 
+  // Identifica se o cadastro foi aberto a partir da comanda.
+  RedirecionamentoLogin? get redirecionamento {
+    final argumento = ModalRoute.of(context)?.settings.arguments;
+
+    if (argumento is RedirecionamentoLogin &&
+        argumento.rota == Routes.comandaMesa) {
+      return argumento;
+    }
+
+    return null;
+  }
+
+  bool get veioDaComanda => redirecionamento != null;
+
   @override
   void dispose() {
     nome.dispose();
@@ -210,15 +224,20 @@ class _CadastroPageState extends State<CadastroPage> {
       '🎉',
     );
 
+    final destino = redirecionamento;
+
     Navigator.of(context).pushNamedAndRemoveUntil(
-      Routes.home,
+      destino?.rota ?? Routes.home,
       (r) => false,
+      arguments: destino?.argumentos,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return PageShell(
+      mostrarCabecalho: !veioDaComanda,
+      mostrarRodape: !veioDaComanda,
       child: Column(
         children: [
           const SizedBox(height: 56),
@@ -343,6 +362,7 @@ class _CadastroPageState extends State<CadastroPage> {
               onPressed: () => Navigator.pushNamed(
                 context,
                 Routes.login,
+                arguments: redirecionamento,
               ),
               child: const Text('Entrar'),
             ),

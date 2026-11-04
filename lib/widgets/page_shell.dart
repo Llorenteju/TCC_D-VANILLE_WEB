@@ -12,6 +12,7 @@ class PageShell extends StatelessWidget {
   final bool mostrarCabecalho;
   final bool mostrarAcessibilidade;
   final bool mostrarCarrinho;
+  final bool centralizarConteudo;
 
   const PageShell({
     super.key,
@@ -21,6 +22,7 @@ class PageShell extends StatelessWidget {
     this.mostrarCabecalho = true,
     this.mostrarAcessibilidade = true,
     this.mostrarCarrinho = true,
+    this.centralizarConteudo = false,
   });
 
   @override
@@ -36,14 +38,29 @@ class PageShell extends StatelessWidget {
               mostrarCarrinho: mostrarCarrinho,
             ),
           Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  child,
-                  if (mostrarRodape) const DVanilleFooter(),
-                ],
-              ),
-            ),
+            child: centralizarConteudo
+                ? CustomScrollView(
+                    slivers: [
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Center(
+                          child: child,
+                        ),
+                      ),
+                      if (mostrarRodape)
+                        SliverToBoxAdapter(
+                          child: const DVanilleFooter(),
+                        ),
+                    ],
+                  )
+                : SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        child,
+                        if (mostrarRodape) const DVanilleFooter(),
+                      ],
+                    ),
+                  ),
           ),
         ],
       ),
