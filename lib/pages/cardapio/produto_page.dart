@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import '../../app/app.dart';
 import '../../models/produto.dart';
 import '../../services/app_state.dart';
-import '../../services/navigation.dart';
+import '../../services/comanda_mesa_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/page_shell.dart';
+import '../../services/navigation.dart';
 import '../../widgets/ui_kit.dart';
 
 class ProdutoPage extends StatefulWidget {
@@ -18,22 +19,90 @@ class ProdutoPage extends StatefulWidget {
 class _ProdutoPageState extends State<ProdutoPage> {
   int quantidade = 1;
 
+  String? mesa;
+  bool _argumentosLidos = false;
+
+  bool get modoMesa => mesa != null && mesa!.trim().isNotEmpty;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_argumentosLidos) return;
+    _argumentosLidos = true;
+
+    final argumentos = ModalRoute.of(context)?.settings.arguments;
+
+    if (argumentos is Map) {
+      final numeroMesa = argumentos['mesa']?.toString().trim();
+
+      if (numeroMesa != null && numeroMesa.isNotEmpty) {
+        mesa = numeroMesa;
+      } else if (argumentos['modo']?.toString() == 'mesa') {
+        _recuperarMesaDaUrl();
+      }
+    } else {
+      _recuperarMesaDaUrl();
+    }
+  }
+
+  void _recuperarMesaDaUrl() {
+    final fragmento = Uri.base.fragment;
+    final rotaFragmento = Uri.tryParse(fragmento);
+
+    mesa = rotaFragmento?.queryParameters['mesa'] ??
+        Uri.base.queryParameters['mesa'];
+
+    final numeroMesa = mesa?.trim();
+
+    if (numeroMesa != null && numeroMesa.isNotEmpty) {
+      mesa = numeroMesa;
+    } else {
+      mesa = null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final arg = ModalRoute.of(context)?.settings.arguments;
-    final Produto? produto =
-        arg is Produto ? arg : AppState.instance.produtoPorId(arg);
+    final argumentos = ModalRoute.of(context)?.settings.arguments;
+
+    final Object? produtoArgumento = argumentos is Map
+        ? argumentos['produtoId'] ?? argumentos['produto']
+        : argumentos;
+
+    // Os produtos são localizados no AppState.
+    // O ComandaMesaState é usado somente para a comanda da mesa.
+    final Produto? produto = produtoArgumento is Produto
+        ? produtoArgumento
+        : AppState.instance.produtoPorId(produtoArgumento);
+
     final estreito = MediaQuery.sizeOf(context).width < 900;
 
     if (produto == null) {
       return PageShell(
-        activeRoute: Routes.cardapio,
+        activeRoute: modoMesa ? null : Routes.cardapio,
+        mostrarCabecalho: !modoMesa,
+        mostrarRodape: !modoMesa,
         child: EstadoVazio(
           emoji: '🔍',
           titulo: 'Produto não encontrado',
           acao: FilledButton(
-            onPressed: () => Navigator.of(context)
-                .pushNamedAndRemoveUntil(Routes.cardapio, (r) => false),
+            onPressed: () {
+              if (modoMesa) {
+                Navigator.of(context).pushNamed(
+                  Routes.cardapio,
+                  arguments: {
+                    'modo': 'mesa',
+                    'mesa': mesa,
+                  },
+                );
+              } else {
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  Routes.cardapio,
+                  (r) => false,
+                );
+              }
+            },
             child: const Text('Voltar ao cardápio'),
           ),
         ),
@@ -44,21 +113,49 @@ class _ProdutoPageState extends State<ProdutoPage> {
       url: produto.imagem,
       icone: produto.icon,
       altura: estreito ? 260 : 420,
-      radius: const BorderRadius.all(Radius.circular(18)),
+      radius: const BorderRadius.all(
+        Radius.circular(18),
+      ),
     );
 
     final detalhes = _detalhes(context, produto);
 
     return PageShell(
-      activeRoute: Routes.cardapio,
+      activeRoute: modoMesa ? null : Routes.cardapio,
+      mostrarCabecalho: !modoMesa,
+      mostrarRodape: !modoMesa,
       child: Column(
         children: [
+          if (modoMesa) ...[
+            const SizedBox(height: 20),
+            ContentWidth(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).pushNamed(
+                      Routes.comandaMesa,
+                      arguments: {'mesa': mesa},
+                    );
+                  },
+                  icon: const Icon(Icons.receipt_long_outlined),
+                  label: Text(
+                    'Voltar à comanda da mesa $mesa',
+                  ),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 40),
           ContentWidth(
             child: estreito
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [imagem, const SizedBox(height: 28), detalhes],
+                    children: [
+                      imagem,
+                      const SizedBox(height: 28),
+                      detalhes,
+                    ],
                   )
                 : Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,45 +166,81 @@ class _ProdutoPageState extends State<ProdutoPage> {
                     ],
                   ),
           ),
+          if (modoMesa) ...[
+            const SizedBox(height: 24),
+            TextButton.icon(
+              onPressed: () {
+                Navigator.of(context).pushNamed(
+                  Routes.cardapio,
+                  arguments: {
+                    'modo': 'mesa',
+                    'mesa': mesa,
+                  },
+                );
+              },
+              icon: const Icon(Icons.restaurant_menu),
+              label: const Text(
+                'Continuar escolhendo produtos',
+              ),
+            ),
+          ],
+          const SizedBox(height: 24),
         ],
       ),
     );
   }
 
-  Widget _detalhes(BuildContext context, Produto produto) {
+  Widget _detalhes(
+    BuildContext context,
+    Produto produto,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Wrap(
           spacing: 5,
           runSpacing: 5,
-          children:
-              produto.restricoes.map((r) => BadgeRestricao(r)).toList(),
+          children: produto.restricoes.map((r) => BadgeRestricao(r)).toList(),
         ),
         const SizedBox(height: 12),
-        Text(produto.nome,
-            style:
-                AppTheme.display(size: 34, color: DVanilleColors.darkTaupe)),
+        Text(
+          produto.nome,
+          style: AppTheme.display(
+            size: 34,
+            color: DVanilleColors.darkTaupe,
+          ),
+        ),
         const SizedBox(height: 10),
-        Text(produto.descricao,
-            style: const TextStyle(fontSize: 15, height: 1.6)),
+        Text(
+          produto.descricao,
+          style: const TextStyle(
+            fontSize: 15,
+            height: 1.6,
+          ),
+        ),
         const SizedBox(height: 16),
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(money(produto.preco),
-                style: AppTheme.display(
-                    size: 30,
-                    weight: FontWeight.w700,
-                    color: DVanilleColors.rose)),
+            Text(
+              money(produto.preco),
+              style: AppTheme.display(
+                size: 30,
+                weight: FontWeight.w700,
+                color: DVanilleColors.rose,
+              ),
+            ),
             if (produto.precoAntigo != null) ...[
               const SizedBox(width: 10),
               Padding(
                 padding: const EdgeInsets.only(bottom: 5),
-                child: Text(money(produto.precoAntigo!),
-                    style: const TextStyle(
-                        decoration: TextDecoration.lineThrough,
-                        color: DVanilleColors.taupe)),
+                child: Text(
+                  money(produto.precoAntigo!),
+                  style: const TextStyle(
+                    decoration: TextDecoration.lineThrough,
+                    color: DVanilleColors.taupe,
+                  ),
+                ),
               ),
             ],
           ],
@@ -135,22 +268,34 @@ class _ProdutoPageState extends State<ProdutoPage> {
         const SizedBox(height: 8),
         Column(
           children: produto.nutricional.linhas
-              .map((linha) => Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: const BoxDecoration(
-                      border: Border(
-                          bottom: BorderSide(color: DVanilleColors.line)),
+              .map(
+                (linha) => Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 10,
+                  ),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: DVanilleColors.line,
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(child: Text(linha[0])),
-                        Text(linha[1],
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                color: DVanilleColors.darkTaupe)),
-                      ],
-                    ),
-                  ))
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(linha[0]),
+                      ),
+                      Text(
+                        linha[1],
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: DVanilleColors.darkTaupe,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
               .toList(),
         ),
         const SizedBox(height: 22),
@@ -161,32 +306,70 @@ class _ProdutoPageState extends State<ProdutoPage> {
           runSpacing: 7,
           children: produto.alergenicos.map((a) => TagSimples(a)).toList(),
         ),
-        const SizedBox(height: 26),
-        Wrap(
-          spacing: 18,
-          runSpacing: 14,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            SeletorQuantidade(
-              valor: quantidade,
-              onMenos: () => setState(
-                  () => quantidade = quantidade > 1 ? quantidade - 1 : 1),
-              onMais: () => setState(() => quantidade++),
-            ),
-            FilledButton(
-              onPressed: () {
-                AppState.instance
-                    .adicionarProduto(produto, qtd: quantidade);
-                showToast('Produto adicionado ao carrinho!', '🛒');
-              },
-              child: const Text('Adicionar ao carrinho'),
-            ),
-          ],
-        ),
+
+        // Os controles de quantidade e adição aparecem
+        // exclusivamente no modo de comanda por mesa.
+        if (modoMesa) ...[
+          const SizedBox(height: 26),
+          Wrap(
+            spacing: 18,
+            runSpacing: 14,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              SeletorQuantidade(
+                valor: quantidade,
+                onMenos: () => setState(
+                  () => quantidade = quantidade > 1 ? quantidade - 1 : 1,
+                ),
+                onMais: () => setState(
+                  () => quantidade++,
+                ),
+              ),
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: DVanilleColors.blush,
+                  foregroundColor: DVanilleColors.darkTaupe,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                onPressed: () {
+                  ComandaMesaState.instance.adicionarProduto(
+                    mesa: mesa!,
+                    produto: produto,
+                    quantidade: quantidade,
+                  );
+
+                  showToast(
+                    '$quantidade '
+                        '${quantidade == 1 ? 'unidade adicionada' : 'unidades adicionadas'} '
+                        'à comanda da mesa $mesa!',
+                    'comanda_mesa.svg',
+                    mesa!,
+                  );
+                },
+                icon: const Icon(Icons.add_shopping_cart),
+                label: const Text('Adicionar à comanda'),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
 
-  Widget _titulo(String texto) => Text(texto,
-      style: AppTheme.display(size: 20, color: DVanilleColors.darkTaupe));
+  Widget _titulo(String texto) {
+    return Text(
+      texto,
+      style: AppTheme.display(
+        size: 20,
+        color: DVanilleColors.darkTaupe,
+      ),
+    );
+  }
 }

@@ -14,12 +14,21 @@ class ReservaConfirmadaPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final id = ModalRoute.of(context)?.settings.arguments;
     final state = AppState.instance;
+
     final reserva = state.reservaPorId(id is String ? id : null) ??
         (state.reservas.isEmpty ? null : state.reservas.last);
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final corTitulo =
+        isDark ? DVanilleColors.darkRose : DVanilleColors.darkTaupe;
+
     if (reserva == null) {
       return const PageShell(
-        child: EstadoVazio(emoji: '📅', titulo: 'Reserva não encontrada.'),
+        child: EstadoVazio(
+          emoji: '📅',
+          titulo: 'Reserva não encontrada.',
+        ),
       );
     }
 
@@ -33,29 +42,73 @@ class ReservaConfirmadaPage extends StatelessWidget {
               children: [
                 const IconeSucesso(),
                 const SizedBox(height: 18),
-                Text('Reserva solicitada com sucesso!',
-                    textAlign: TextAlign.center,
-                    style: AppTheme.display(
-                        size: 30, color: DVanilleColors.darkTaupe)),
+
+                // TÍTULO
+
+                Text(
+                  'Reserva solicitada com sucesso!',
+                  textAlign: TextAlign.center,
+                  style: AppTheme.display(
+                    size: 30,
+                    color: corTitulo,
+                  ),
+                ),
+
                 const SizedBox(height: 22),
+
+                // INFORMAÇÕES DA RESERVA
+
                 InfoBox(
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     children: [
-                      _linha('Número', reserva.id, negrito: true),
-                      _linha('Nome', reserva.nome),
-                      _linha('Data', reserva.dataBr),
-                      _linha('Horário', reserva.horario),
-                      _linha('Pessoas', '${reserva.pessoas}', ultima: true),
+                      _linha(
+                        context,
+                        'Número',
+                        reserva.id,
+                        negrito: true,
+                      ),
+                      _linha(
+                        context,
+                        'Nome',
+                        reserva.nome,
+                      ),
+                      _linha(
+                        context,
+                        'Data',
+                        reserva.dataBr,
+                      ),
+                      _linha(
+                        context,
+                        'Horário',
+                        reserva.horario,
+                      ),
+                      _linha(
+                        context,
+                        'Pessoas',
+                        '${reserva.pessoas}',
+                        ultima: true,
+                      ),
                     ],
                   ),
                 ),
+
                 const SizedBox(height: 16),
+
+                // STATUS
+
                 StatusPill(reserva.status),
+
                 const SizedBox(height: 26),
+
+                // BOTÃO VOLTAR PARA HOME
+
                 FilledButton(
-                  onPressed: () => Navigator.of(context)
-                      .pushNamedAndRemoveUntil(Routes.home, (r) => false),
+                  onPressed: () =>
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                    Routes.home,
+                    (r) => false,
+                  ),
                   child: const Text('Voltar para Home'),
                 ),
               ],
@@ -66,21 +119,51 @@ class ReservaConfirmadaPage extends StatelessWidget {
     );
   }
 
-  Widget _linha(String titulo, String valor,
-      {bool negrito = false, bool ultima = false}) {
+  Widget _linha(
+    BuildContext context,
+    String titulo,
+    String valor, {
+    bool negrito = false,
+    bool ultima = false,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final corTexto = isDark ? DVanilleColors.darkInk : DVanilleColors.ink;
+
+    final corBorda = isDark ? DVanilleColors.darkBorder : DVanilleColors.line;
+
     final estilo = TextStyle(
-        fontSize: 14,
-        fontWeight: negrito ? FontWeight.w800 : FontWeight.w500);
+      fontSize: 14,
+      fontWeight: negrito ? FontWeight.w800 : FontWeight.w500,
+      color: corTexto,
+    );
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 7),
       decoration: ultima
           ? null
-          : const BoxDecoration(
-              border:
-                  Border(bottom: BorderSide(color: DVanilleColors.line))),
+          : BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: corBorda,
+                ),
+              ),
+            ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [Text(titulo, style: estilo), Text(valor, style: estilo)],
+        children: [
+          Text(
+            titulo,
+            style: estilo,
+          ),
+          Flexible(
+            child: Text(
+              valor,
+              textAlign: TextAlign.end,
+              style: estilo,
+            ),
+          ),
+        ],
       ),
     );
   }

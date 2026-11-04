@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../pages/admin/admin_dashboard_page.dart';
 import '../pages/admin/admin_pedidos_page.dart';
@@ -15,12 +16,17 @@ import '../pages/cardapio/produto_page.dart';
 import '../pages/cliente/acompanhar_pedido_page.dart';
 import '../pages/cliente/carrinho_page.dart';
 import '../pages/cliente/checkout_page.dart';
+import '../pages/cliente/comanda_mesa_page.dart';
 import '../pages/cliente/meus_pedidos_page.dart';
+import '../pages/cliente/meus_vales_presente_page.dart';
+import '../pages/cliente/minhas_reservas_page.dart';
 import '../pages/cliente/pedido_confirmado_page.dart';
 import '../pages/cliente/perfil_page.dart';
 import '../pages/cliente/reserva_confirmada_page.dart';
 import '../pages/cliente/reservas_page.dart';
+import '../pages/cliente/vales_compra_confirmada_page.dart';
 import '../pages/conheca/conheca_page.dart';
+import '../pages/apresentacao/apresentacao_site_page.dart';
 import '../pages/contato/contato_page.dart';
 import '../pages/home/home_page.dart';
 import '../pages/ofertas/ofertas_page.dart';
@@ -32,22 +38,32 @@ import '../theme/app_theme.dart';
 class Routes {
   static const home = '/';
   static const conheca = '/conheca';
+  static const apresentacaoSite = '/apresentacao-site';
   static const cardapio = '/cardapio';
   static const produto = '/produto';
+
   static const login = '/login';
   static const cadastro = '/cadastro';
   static const recuperarSenha = '/recuperar-senha';
+
   static const perfil = '/perfil';
   static const carrinho = '/carrinho';
   static const checkout = '/checkout';
   static const pedidoConfirmado = '/pedido-confirmado';
+  static const valesCompraConfirmada = '/vales-compra-confirmada';
+
   static const meusPedidos = '/meus-pedidos';
+  static const meusValesPresente = '/meus-vales-presente';
+  static const minhasReservas = '/minhas-reservas';
   static const acompanharPedido = '/pedido';
   static const reservas = '/reservas';
   static const reservaConfirmada = '/reserva-confirmada';
+
   static const ofertas = '/ofertas';
   static const shopping = '/shopping';
   static const contato = '/contato';
+  static const comandaMesa = '/comanda-mesa';
+
   static const admin = '/admin';
   static const adminProdutos = '/admin-produtos';
   static const adminProdutoForm = '/admin-produto-form';
@@ -56,20 +72,21 @@ class Routes {
   static const adminValePresentes = '/admin-vale-presentes';
   static const adminUsuarios = '/admin-usuarios';
 
-  /// Rotas que exigem login (mesma lista PRIVATE_ROUTES do HTML).
   static const privadas = <String>[
     perfil,
     carrinho,
     checkout,
     pedidoConfirmado,
+    valesCompraConfirmada,
     meusPedidos,
+    meusValesPresente,
+    minhasReservas,
     acompanharPedido,
     reservas,
     reservaConfirmada,
     shopping,
   ];
 
-  /// Rotas exclusivas do administrador (ADMIN_ROUTES do HTML).
   static const administrativas = <String>[
     admin,
     adminProdutos,
@@ -81,19 +98,46 @@ class Routes {
   ];
 }
 
-/// Argumento usado quando o login precisa devolver o usuário à rota pedida.
 class RedirecionamentoLogin {
   final String rota;
   final Object? argumentos;
+
   const RedirecionamentoLogin(this.rota, this.argumentos);
 }
 
 class DVanilleApp extends StatelessWidget {
   const DVanilleApp({super.key});
 
+  String _rotaInicial() {
+    final uri = Uri.base;
+
+    debugPrint('URL COMPLETA: $uri');
+    debugPrint('FRAGMENTO: ${uri.fragment}');
+
+    final fragmento = uri.fragment;
+
+    if (fragmento.isNotEmpty) {
+      final rotaFragmento = Uri.tryParse(fragmento);
+      final caminhoFragmento = rotaFragmento?.path;
+
+      if (caminhoFragmento != null && caminhoFragmento.startsWith('/')) {
+        return caminhoFragmento;
+      }
+    }
+
+    final caminho = uri.path;
+
+    if (caminho.isEmpty || caminho == '/') {
+      return Routes.home;
+    }
+
+    return caminho;
+  }
+
   static final Map<String, WidgetBuilder> _paginas = {
     Routes.home: (_) => const HomePage(),
     Routes.conheca: (_) => const ConhecaPage(),
+    Routes.apresentacaoSite: (_) => const ApresentacaoSitePage(),
     Routes.cardapio: (_) => const CardapioPage(),
     Routes.produto: (_) => const ProdutoPage(),
     Routes.login: (_) => const LoginPage(),
@@ -103,13 +147,17 @@ class DVanilleApp extends StatelessWidget {
     Routes.carrinho: (_) => const CarrinhoPage(),
     Routes.checkout: (_) => const CheckoutPage(),
     Routes.pedidoConfirmado: (_) => const PedidoConfirmadoPage(),
+    Routes.valesCompraConfirmada: (_) => const ValesCompraConfirmadaPage(),
     Routes.meusPedidos: (_) => const MeusPedidosPage(),
+    Routes.meusValesPresente: (_) => const MeusValesPresentePage(),
+    Routes.minhasReservas: (_) => const MinhasReservasPage(),
     Routes.acompanharPedido: (_) => const AcompanharPedidoPage(),
     Routes.reservas: (_) => const ReservasPage(),
     Routes.reservaConfirmada: (_) => const ReservaConfirmadaPage(),
     Routes.ofertas: (_) => const OfertasPage(),
     Routes.shopping: (_) => const ShoppingPage(),
     Routes.contato: (_) => const ContatoPage(),
+    Routes.comandaMesa: (_) => const ComandaMesaPage(),
     Routes.admin: (_) => const AdminDashboardPage(),
     Routes.adminProdutos: (_) => const AdminProdutosPage(),
     Routes.adminProdutoForm: (_) => const AdminProdutoFormPage(),
@@ -119,32 +167,76 @@ class DVanilleApp extends StatelessWidget {
     Routes.adminUsuarios: (_) => const AdminUsuariosPage(),
   };
 
-  /// Guarda de rota — reproduz a função navigate() do protótipo HTML.
   Route<dynamic>? _gerarRota(RouteSettings settings) {
     final state = AppState.instance;
+
     var nome = settings.name ?? Routes.home;
     var argumentos = settings.arguments;
 
     if (Routes.administrativas.contains(nome) && !state.isAdmin) {
       showToast('Acesso restrito ao administrador.', '⚠️');
+
       nome = state.logado ? Routes.home : Routes.login;
       argumentos = null;
     } else if (Routes.privadas.contains(nome) && !state.logado) {
       showToast('Faça login para continuar.', '🔒');
-      argumentos = RedirecionamentoLogin(nome, settings.arguments);
+
+      argumentos = RedirecionamentoLogin(
+        nome,
+        settings.arguments,
+      );
+
       nome = Routes.login;
     }
 
     final builder = _paginas[nome] ?? _paginas[Routes.home]!;
-    return MaterialPageRoute<dynamic>(
-      builder: builder,
-      settings: RouteSettings(name: nome, arguments: argumentos),
+
+    return PageRouteBuilder<dynamic>(
+      settings: RouteSettings(
+        name: nome,
+        arguments: argumentos,
+      ),
+
+      // Duração da entrada e da saída da página.
+      transitionDuration: const Duration(milliseconds: 350),
+      reverseTransitionDuration: const Duration(milliseconds: 300),
+
+      // Construção da página.
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return builder(context);
+      },
+
+      // Efeito visual da transição.
+      transitionsBuilder: (
+        context,
+        animation,
+        secondaryAnimation,
+        child,
+      ) {
+        final curva = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+
+        return FadeTransition(
+          opacity: curva,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.025, 0),
+              end: Offset.zero,
+            ).animate(curva),
+            child: child,
+          ),
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final state = AppState.instance;
+
     return ListenableBuilder(
       listenable: state,
       builder: (context, _) {
@@ -156,13 +248,24 @@ class DVanilleApp extends StatelessWidget {
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
           themeMode: state.dark ? ThemeMode.dark : ThemeMode.light,
-          initialRoute: Routes.home,
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('pt', 'BR'),
+          ],
+          locale: const Locale('pt', 'BR'),
+          initialRoute: _rotaInicial(),
           onGenerateRoute: _gerarRota,
           builder: (context, child) {
             final mq = MediaQuery.of(context);
+
             return MediaQuery(
               data: mq.copyWith(
-                  textScaler: TextScaler.linear(state.fontScale)),
+                textScaler: TextScaler.linear(state.fontScale),
+              ),
               child: child ?? const SizedBox.shrink(),
             );
           },

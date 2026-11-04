@@ -6,6 +6,10 @@ class Usuario {
   String telefone;
   String endereco;
 
+  /// Data completa de nascimento (dia, mês e ano).
+  /// Pode ser nula para usuários antigos.
+  DateTime? dataNascimento;
+
   /// 'cliente' ou 'admin'
   String tipo;
   List<String> restricoes;
@@ -18,6 +22,7 @@ class Usuario {
     required this.senha,
     this.telefone = '',
     this.endereco = '',
+    this.dataNascimento,
     this.tipo = 'cliente',
     List<String>? restricoes,
     this.notificacoes = true,

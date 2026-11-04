@@ -9,30 +9,58 @@ class PageShell extends StatelessWidget {
   final Widget child;
   final String? activeRoute;
   final bool mostrarRodape;
+  final bool mostrarCabecalho;
+  final bool mostrarAcessibilidade;
+  final bool mostrarCarrinho;
+  final bool centralizarConteudo;
 
   const PageShell({
     super.key,
     required this.child,
     this.activeRoute,
     this.mostrarRodape = true,
+    this.mostrarCabecalho = true,
+    this.mostrarAcessibilidade = true,
+    this.mostrarCarrinho = true,
+    this.centralizarConteudo = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: const BotaoAcessibilidade(),
+      floatingActionButton:
+          mostrarAcessibilidade ? const BotaoAcessibilidade() : null,
       body: Column(
         children: [
-          DVanilleHeader(activeRoute: activeRoute),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  child,
-                  if (mostrarRodape) const DVanilleFooter(),
-                ],
-              ),
+          if (mostrarCabecalho)
+            DVanilleHeader(
+              activeRoute: activeRoute,
+              mostrarCarrinho: mostrarCarrinho,
             ),
+          Expanded(
+            child: centralizarConteudo
+                ? CustomScrollView(
+                    slivers: [
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Center(
+                          child: child,
+                        ),
+                      ),
+                      if (mostrarRodape)
+                        SliverToBoxAdapter(
+                          child: const DVanilleFooter(),
+                        ),
+                    ],
+                  )
+                : SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        child,
+                        if (mostrarRodape) const DVanilleFooter(),
+                      ],
+                    ),
+                  ),
           ),
         ],
       ),
@@ -40,7 +68,7 @@ class PageShell extends StatelessWidget {
   }
 }
 
-/// Widget de acessibilidade — mesmo painel do protótipo (fonte e modo escuro).
+/// Widget de acessibilidade — tamanho da fonte e modo escuro.
 class BotaoAcessibilidade extends StatelessWidget {
   const BotaoAcessibilidade({super.key});
 
@@ -57,15 +85,21 @@ class BotaoAcessibilidade extends StatelessWidget {
 
   void _abrirPainel(BuildContext context) {
     final state = AppState.instance;
+
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Theme.of(context).cardColor,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('ACESSIBILIDADE',
-            style: AppTheme.display(
-                size: 18, color: DVanilleColors.darkTaupe)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Text(
+          'ACESSIBILIDADE',
+          style: AppTheme.display(
+            size: 18,
+            color: DVanilleColors.darkTaupe,
+          ),
+        ),
         content: ListenableBuilder(
           listenable: state,
           builder: (context, _) => Column(
@@ -74,8 +108,10 @@ class BotaoAcessibilidade extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Tamanho da fonte',
-                      style: TextStyle(fontWeight: FontWeight.w700)),
+                  const Text(
+                    'Tamanho da fonte',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
                   Row(
                     children: [
                       OutlinedButton(
@@ -95,8 +131,10 @@ class BotaoAcessibilidade extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Modo escuro',
-                      style: TextStyle(fontWeight: FontWeight.w700)),
+                  const Text(
+                    'Modo escuro',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
                   Switch(
                     value: state.dark,
                     activeThumbColor: DVanilleColors.taupe,

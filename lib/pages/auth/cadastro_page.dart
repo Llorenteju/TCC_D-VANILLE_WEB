@@ -22,65 +22,222 @@ class _CadastroPageState extends State<CadastroPage> {
   final nome = TextEditingController();
   final email = TextEditingController();
   final telefone = TextEditingController();
+  final dataNascimento = TextEditingController();
   final senha = TextEditingController();
   final senha2 = TextEditingController();
 
+  DateTime? dataNascimentoSelecionada;
+
   final Set<String> restricoes = {};
   bool notificacoes = true;
+
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
+  Color get corTexto => isDark ? DVanilleColors.darkInk : DVanilleColors.ink;
+
+  Color get corTextoSecundario =>
+      isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.darkTaupe;
+
+  Color get corBorda =>
+      isDark ? DVanilleColors.darkBorder : DVanilleColors.line;
+
+  Color get corDestaque =>
+      isDark ? DVanilleColors.darkRose : DVanilleColors.rose;
+
+  // Identifica se o cadastro foi aberto a partir da comanda.
+  RedirecionamentoLogin? get redirecionamento {
+    final argumento = ModalRoute.of(context)?.settings.arguments;
+
+    if (argumento is RedirecionamentoLogin &&
+        argumento.rota == Routes.comandaMesa) {
+      return argumento;
+    }
+
+    return null;
+  }
+
+  bool get veioDaComanda => redirecionamento != null;
 
   @override
   void dispose() {
     nome.dispose();
     email.dispose();
     telefone.dispose();
+    dataNascimento.dispose();
     senha.dispose();
     senha2.dispose();
     super.dispose();
   }
 
+  String _doisDigitos(int valor) {
+    return valor.toString().padLeft(2, '0');
+  }
+
+  String _formatarData(DateTime data) {
+    return '${_doisDigitos(data.day)}/'
+        '${_doisDigitos(data.month)}/'
+        '${data.year}';
+  }
+
+  Future<void> _selecionarDataNascimento() async {
+    final hoje = DateTime.now();
+
+    final dataSelecionada = await showDatePicker(
+      context: context,
+      initialDate: dataNascimentoSelecionada ?? hoje,
+      firstDate: DateTime(1900),
+      lastDate: hoje,
+      helpText: 'Selecione sua data de nascimento',
+      cancelText: 'Cancelar',
+      confirmText: 'Confirmar',
+      fieldLabelText: 'Data de nascimento',
+      errorFormatText: 'Informe uma data válida.',
+      errorInvalidText: 'Selecione uma data válida.',
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+                  primary: corDestaque,
+                  onPrimary:
+                      isDark ? DVanilleColors.darkCream : DVanilleColors.white,
+                  surface: isDark
+                      ? DVanilleColors.darkSurface
+                      : DVanilleColors.cream,
+                  onSurface: corTexto,
+                ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (dataSelecionada == null || !mounted) {
+      return;
+    }
+
+    setState(() {
+      dataNascimentoSelecionada = dataSelecionada;
+      dataNascimento.text = _formatarData(dataSelecionada);
+      erro = null;
+    });
+  }
+
   void _continuar() {
     final state = AppState.instance;
+
     if (nome.text.trim().isEmpty ||
         email.text.trim().isEmpty ||
-        telefone.text.trim().isEmpty) {
-      setState(() => erro = 'Preencha todos os campos.');
+        telefone.text.trim().isEmpty ||
+        dataNascimentoSelecionada == null ||
+        senha.text.isEmpty ||
+        senha2.text.isEmpty) {
+      setState(() {
+        erro = 'Preencha todos os campos obrigatórios.';
+      });
       return;
     }
-    if (state.emailJaCadastrado(email.text)) {
-      setState(() => erro = 'Este e-mail já está cadastrado.');
+
+    if (state.emailJaCadastrado(email.text.trim())) {
+      setState(() {
+        erro = 'Este e-mail já está cadastrado.';
+      });
       return;
     }
+
     if (!AppState.senhaValida(senha.text)) {
-      setState(() => erro =
-          'A senha deve ter no mínimo 6 caracteres, 1 letra maiúscula e 1 caractere especial.');
+      setState(() {
+        erro =
+            'A senha deve ter no mínimo 6 caracteres, 1 letra maiúscula e 1 caractere especial.';
+      });
       return;
     }
+
     if (senha.text != senha2.text) {
-      setState(() => erro = 'As senhas não coincidem.');
+      setState(() {
+        erro = 'As senhas não coincidem.';
+      });
       return;
     }
+
     setState(() {
       erro = null;
       etapa = 2;
     });
   }
 
+  void _alternarRestricao(String id) {
+    setState(() {
+      if (id == 'nenhuma') {
+        if (restricoes.contains('nenhuma')) {
+          restricoes.remove('nenhuma');
+        } else {
+          restricoes
+            ..clear()
+            ..add('nenhuma');
+        }
+
+        return;
+      }
+
+      if (restricoes.contains(id)) {
+        restricoes.remove(id);
+      } else {
+        restricoes
+          ..remove('nenhuma')
+          ..add(id);
+      }
+
+      erro = null;
+    });
+  }
+
   void _concluir() {
+    if (restricoes.isEmpty) {
+      setState(() {
+        erro = 'Selecione uma opção ou escolha "Nenhuma".';
+      });
+      return;
+    }
+
+    final nascimento = dataNascimentoSelecionada;
+
+    if (nascimento == null) {
+      setState(() {
+        etapa = 1;
+        erro = 'Informe sua data de nascimento completa.';
+      });
+      return;
+    }
+
     AppState.instance.cadastrar(
       nome: nome.text.trim(),
       email: email.text.trim(),
       telefone: telefone.text.trim(),
       senha: senha.text,
+      dataNascimento: nascimento,
       restricoes: restricoes.where((r) => r != 'nenhuma').toList(),
       notificacoes: notificacoes,
     );
-    showToast('Cadastro realizado com sucesso!', '🎉');
-    Navigator.of(context).pushNamedAndRemoveUntil(Routes.home, (r) => false);
+
+    showToast(
+      'Cadastro realizado com sucesso!',
+      '🎉',
+    );
+
+    final destino = redirecionamento;
+
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      destino?.rota ?? Routes.home,
+      (r) => false,
+      arguments: destino?.argumentos,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return PageShell(
+      mostrarCabecalho: !veioDaComanda,
+      mostrarRodape: !veioDaComanda,
       child: Column(
         children: [
           const SizedBox(height: 56),
@@ -99,54 +256,114 @@ class _CadastroPageState extends State<CadastroPage> {
   Widget _etapa1() {
     return Column(
       children: [
-        const SectionHead(eyebrow: 'Junte-se a nós', titulo: 'Criar conta'),
+        Text(
+          'Criar conta',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontFamily: 'CreamCake',
+            fontSize: 42,
+            fontWeight: FontWeight.w400,
+            color: corDestaque,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          'Junte-se a nós',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            fontStyle: FontStyle.italic,
+            color: corTextoSecundario,
+          ),
+        ),
         const SizedBox(height: 24),
         if (erro != null) CaixaAlerta(erro!),
         TextField(
-            controller: nome,
-            decoration: const InputDecoration(labelText: 'Nome completo')),
+          controller: nome,
+          textCapitalization: TextCapitalization.words,
+          style: TextStyle(color: corTexto),
+          decoration: const InputDecoration(
+            labelText: 'Nome completo *',
+          ),
+        ),
         const SizedBox(height: 14),
         TextField(
-            controller: email,
-            keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(labelText: 'E-mail')),
+          controller: email,
+          keyboardType: TextInputType.emailAddress,
+          style: TextStyle(color: corTexto),
+          decoration: const InputDecoration(
+            labelText: 'E-mail *',
+          ),
+        ),
         const SizedBox(height: 14),
         TextField(
           controller: telefone,
           keyboardType: TextInputType.phone,
+          style: TextStyle(color: corTexto),
           decoration: const InputDecoration(
-              labelText: 'Telefone', hintText: '(11) 90000-0000'),
+            labelText: 'Telefone *',
+            hintText: '(11) 90000-0000',
+          ),
         ),
         const SizedBox(height: 14),
         TextField(
-            controller: senha,
-            obscureText: true,
-            decoration: const InputDecoration(labelText: 'Senha')),
+          controller: dataNascimento,
+          readOnly: true,
+          onTap: _selecionarDataNascimento,
+          style: TextStyle(color: corTexto),
+          decoration: const InputDecoration(
+            labelText: 'Data de nascimento *',
+            hintText: 'dd/mm/aaaa',
+            suffixIcon: Icon(Icons.calendar_month),
+          ),
+        ),
+        const SizedBox(height: 14),
+        TextField(
+          controller: senha,
+          obscureText: true,
+          style: TextStyle(color: corTexto),
+          decoration: const InputDecoration(
+            labelText: 'Senha *',
+          ),
+        ),
         const SizedBox(height: 6),
-        const Align(
+        Align(
           alignment: Alignment.centerLeft,
           child: DicaCampo(
-              'Mínimo 6 caracteres, com 1 letra maiúscula e 1 caractere especial.'),
+            'Mínimo 6 caracteres, com 1 letra maiúscula e 1 caractere especial.',
+          ),
         ),
         const SizedBox(height: 14),
         TextField(
-            controller: senha2,
-            obscureText: true,
-            decoration:
-                const InputDecoration(labelText: 'Confirmar senha')),
+          controller: senha2,
+          obscureText: true,
+          style: TextStyle(color: corTexto),
+          decoration: const InputDecoration(
+            labelText: 'Confirmar senha *',
+          ),
+        ),
         const SizedBox(height: 22),
         SizedBox(
           width: double.infinity,
           child: FilledButton(
-              onPressed: _continuar, child: const Text('Continuar')),
+            onPressed: _continuar,
+            child: const Text('Continuar'),
+          ),
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('Já tem conta?'),
+            Text(
+              'Já tem conta?',
+              style: TextStyle(color: corTexto),
+            ),
             TextButton(
-              onPressed: () =>
-                  Navigator.pushNamed(context, Routes.login),
+              onPressed: () => Navigator.pushNamed(
+                context,
+                Routes.login,
+                arguments: redirecionamento,
+              ),
               child: const Text('Entrar'),
             ),
           ],
@@ -158,51 +375,76 @@ class _CadastroPageState extends State<CadastroPage> {
   Widget _etapa2() {
     return Column(
       children: [
-        const SectionHead(
-          eyebrow: 'Quase lá',
-          titulo: 'Você possui alguma restrição alimentar?',
+        Text(
+          'Você possui alguma restrição alimentar?',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontFamily: 'CreamCake',
+            fontSize: 36,
+            fontWeight: FontWeight.w400,
+            color: corDestaque,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          'Quase lá',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            color: corTextoSecundario,
+          ),
         ),
         const SizedBox(height: 22),
+        if (erro != null) CaixaAlerta(erro!),
         Wrap(
           spacing: 10,
           runSpacing: 10,
           children: opcoesRestricaoCadastro.map((o) {
             final selecionado = restricoes.contains(o[0]);
+
             return SizedBox(
               width: 210,
               child: InkWell(
-                onTap: () => setState(() {
-                  if (selecionado) {
-                    restricoes.remove(o[0]);
-                  } else {
-                    restricoes.add(o[0]);
-                  }
-                }),
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => _alternarRestricao(o[0]),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
+                    color: selecionado
+                        ? (isDark
+                            ? DVanilleColors.darkCream
+                            : DVanilleColors.blush2)
+                        : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                        color: DVanilleColors.line, width: 1.5),
+                      color: selecionado ? corDestaque : corBorda,
+                      width: 1.5,
+                    ),
                   ),
                   child: Row(
                     children: [
                       Checkbox(
                         value: selecionado,
-                        onChanged: (v) => setState(() {
-                          if (v == true) {
-                            restricoes.add(o[0]);
-                          } else {
-                            restricoes.remove(o[0]);
-                          }
-                        }),
+                        activeColor: corDestaque,
+                        checkColor: isDark
+                            ? DVanilleColors.darkCream
+                            : DVanilleColors.white,
+                        onChanged: (_) => _alternarRestricao(o[0]),
                       ),
                       Expanded(
-                          child: Text(o[1],
-                              style: const TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w600))),
+                        child: Text(
+                          o[1],
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            color: corTexto,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -213,19 +455,28 @@ class _CadastroPageState extends State<CadastroPage> {
         const SizedBox(height: 18),
         CheckboxListTile(
           value: notificacoes,
-          onChanged: (v) => setState(() => notificacoes = v ?? false),
+          onChanged: (v) => setState(
+            () => notificacoes = v ?? false,
+          ),
+          activeColor: corDestaque,
+          checkColor: isDark ? DVanilleColors.darkCream : DVanilleColors.white,
           controlAffinity: ListTileControlAffinity.leading,
           contentPadding: EdgeInsets.zero,
-          title: const Text(
-              'Desejo receber notificações de ofertas e novidades',
-              style: TextStyle(fontSize: 14)),
+          title: Text(
+            'Desejo receber notificações de ofertas e novidades',
+            style: TextStyle(
+              fontSize: 14,
+              color: corTexto,
+            ),
+          ),
         ),
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           child: FilledButton(
-              onPressed: _concluir,
-              child: const Text('Concluir cadastro')),
+            onPressed: _concluir,
+            child: const Text('Concluir cadastro'),
+          ),
         ),
       ],
     );

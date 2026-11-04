@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../../app/app.dart';
@@ -47,16 +48,22 @@ class AdminDashboardPage extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(s[0],
-                                    style: AppTheme.display(
-                                        size: 34,
-                                        weight: FontWeight.w700,
-                                        color: DVanilleColors.darkTaupe)),
-                                Text(s[1],
-                                    style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
-                                        color: DVanilleColors.darkTaupe)),
+                                Text(
+                                  s[0],
+                                  style: AppTheme.display(
+                                    size: 34,
+                                    weight: FontWeight.w700,
+                                    color: DVanilleColors.darkTaupe,
+                                  ),
+                                ),
+                                Text(
+                                  s[1],
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: DVanilleColors.darkTaupe,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -74,26 +81,36 @@ class AdminDashboardPage extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Pedidos recentes',
-                              style: AppTheme.display(
-                                  size: 22,
-                                  color: DVanilleColors.darkTaupe)),
+                          Text(
+                            'Pedidos recentes',
+                            style: AppTheme.display(
+                              size: 22,
+                              color: DVanilleColors.darkTaupe,
+                            ),
+                          ),
                           const SizedBox(height: 8),
                           if (recentesPedidos.isEmpty)
                             const DicaCampo('Nenhum pedido ainda.'),
                           ...recentesPedidos.map((p) => Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 5),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 5,
+                                ),
                                 child: Row(
                                   children: [
                                     Expanded(
-                                        child: Text(
-                                            '${p.id} — ${p.clienteEmail}',
-                                            style: const TextStyle(
-                                                fontSize: 13.5))),
-                                    Text(money(p.total),
+                                      child: Text(
+                                        '${p.id} — ${p.clienteEmail}',
                                         style: const TextStyle(
-                                            fontWeight: FontWeight.w700)),
+                                          fontSize: 13.5,
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      money(p.total),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               )),
@@ -107,23 +124,30 @@ class AdminDashboardPage extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Reservas recentes',
-                              style: AppTheme.display(
-                                  size: 22,
-                                  color: DVanilleColors.darkTaupe)),
+                          Text(
+                            'Reservas recentes',
+                            style: AppTheme.display(
+                              size: 22,
+                              color: DVanilleColors.darkTaupe,
+                            ),
+                          ),
                           const SizedBox(height: 8),
                           if (recentesReservas.isEmpty)
                             const DicaCampo('Nenhuma reserva ainda.'),
                           ...recentesReservas.map((r) => Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 5),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 5,
+                                ),
                                 child: Row(
                                   children: [
                                     Expanded(
-                                        child: Text(
-                                            '${r.nome} — ${r.dataBr}',
-                                            style: const TextStyle(
-                                                fontSize: 13.5))),
+                                      child: Text(
+                                        '${r.nome} — ${r.dataBr}',
+                                        style: const TextStyle(
+                                          fontSize: 13.5,
+                                        ),
+                                      ),
+                                    ),
                                     StatusPill(r.status),
                                   ],
                                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../data/mock_data.dart';
 import '../theme/app_theme.dart';
@@ -50,21 +51,29 @@ class SectionHead extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final centralizado = alinhamento == CrossAxisAlignment.center;
+
     return Column(
       crossAxisAlignment: alinhamento,
       children: [
         Text(
           eyebrow,
           textAlign: centralizado ? TextAlign.center : TextAlign.start,
-          style: AppTheme.display(size: 18, weight: FontWeight.w500)
-              .copyWith(
-                  fontStyle: FontStyle.italic, color: DVanilleColors.rose),
+          style: AppTheme.display(
+            size: 18,
+            weight: FontWeight.w500,
+          ).copyWith(
+            fontStyle: FontStyle.italic,
+            color: DVanilleColors.rose,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           titulo,
           textAlign: centralizado ? TextAlign.center : TextAlign.start,
-          style: AppTheme.display(size: 32, color: DVanilleColors.darkTaupe),
+          style: AppTheme.display(
+            size: 32,
+            color: DVanilleColors.darkTaupe,
+          ),
         ),
         if (subtitulo != null) ...[
           const SizedBox(height: 10),
@@ -73,7 +82,10 @@ class SectionHead extends StatelessWidget {
             child: Text(
               subtitulo!,
               textAlign: centralizado ? TextAlign.center : TextAlign.start,
-              style: const TextStyle(fontSize: 15, height: 1.6),
+              style: const TextStyle(
+                fontSize: 15,
+                height: 1.6,
+              ),
             ),
           ),
         ],
@@ -100,7 +112,9 @@ class InfoBox extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: DVanilleColors.line),
+        border: Border.all(
+          color: DVanilleColors.line,
+        ),
       ),
       child: child,
     );
@@ -110,7 +124,11 @@ class InfoBox extends StatelessWidget {
 /// Selo de restrição alimentar, com a cor correspondente do CSS.
 class BadgeRestricao extends StatelessWidget {
   final String chave;
-  const BadgeRestricao(this.chave, {super.key});
+
+  const BadgeRestricao(
+    this.chave, {
+    super.key,
+  });
 
   static const Map<String, Color> _cores = {
     'semGluten': DVanilleColors.badgeGluten,
@@ -123,13 +141,22 @@ class BadgeRestricao extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = restricoesLabels[chave];
-    if (label == null) return const SizedBox.shrink();
+
+    if (label == null) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 9,
+        vertical: 4,
+      ),
       decoration: BoxDecoration(
         color: _cores[chave] ?? DVanilleColors.blush2,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: DVanilleColors.line),
+        border: Border.all(
+          color: DVanilleColors.line,
+        ),
       ),
       child: Text(
         label,
@@ -146,12 +173,19 @@ class BadgeRestricao extends StatelessWidget {
 /// Selo de status de pedido/reserva/vale-presente.
 class StatusPill extends StatelessWidget {
   final String status;
-  const StatusPill(this.status, {super.key});
+
+  const StatusPill(
+    this.status, {
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 6,
+      ),
       decoration: BoxDecoration(
         color: StatusColors.fundo(status),
         borderRadius: BorderRadius.circular(999),
@@ -171,20 +205,33 @@ class StatusPill extends StatelessWidget {
 /// Etiqueta simples usada para ingredientes e alergênicos (.ing-tag).
 class TagSimples extends StatelessWidget {
   final String texto;
-  const TagSimples(this.texto, {super.key});
+
+  const TagSimples(
+    this.texto, {
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 6,
+      ),
       decoration: BoxDecoration(
         color: DVanilleColors.cream2,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: DVanilleColors.line),
+        border: Border.all(
+          color: DVanilleColors.line,
+        ),
       ),
-      child: Text(texto,
-          style: const TextStyle(
-              fontSize: 13, color: DVanilleColors.darkTaupe)),
+      child: Text(
+        texto,
+        style: const TextStyle(
+          fontSize: 13,
+          color: DVanilleColors.darkTaupe,
+        ),
+      ),
     );
   }
 }
@@ -211,7 +258,12 @@ class ImagemProduto extends StatelessWidget {
       width: double.infinity,
       color: DVanilleColors.blush2,
       alignment: Alignment.center,
-      child: Text(icone, style: const TextStyle(fontSize: 38)),
+      child: Text(
+        icone,
+        style: const TextStyle(
+          fontSize: 38,
+        ),
+      ),
     );
 
     final conteudo = url.isEmpty
@@ -226,8 +278,14 @@ class ImagemProduto extends StatelessWidget {
                 progress == null ? child : fallback,
           );
 
-    if (radius == null) return conteudo;
-    return ClipRRect(borderRadius: radius!, child: conteudo);
+    if (radius == null) {
+      return conteudo;
+    }
+
+    return ClipRRect(
+      borderRadius: radius!,
+      child: conteudo,
+    );
   }
 }
 
@@ -250,13 +308,17 @@ class ChipSelecao extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(999),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 11,
+        ),
         decoration: BoxDecoration(
           color: ativo ? DVanilleColors.taupe : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-              color: ativo ? DVanilleColors.taupe : DVanilleColors.line,
-              width: 1.5),
+            color: ativo ? DVanilleColors.taupe : DVanilleColors.line,
+            width: 1.5,
+          ),
         ),
         child: Text(
           label,
@@ -271,7 +333,7 @@ class ChipSelecao extends StatelessWidget {
   }
 }
 
-/// Estado vazio com emoji, título e texto (.empty-state).
+/// Estado vazio com suporte a emojis, SVGs e imagens personalizadas.
 class EstadoVazio extends StatelessWidget {
   final String emoji;
   final String titulo;
@@ -286,23 +348,66 @@ class EstadoVazio extends StatelessWidget {
     this.acao,
   });
 
+  Widget _icone() {
+    // Ícone de pesquisa.
+    if (emoji == '🔍') {
+      return SvgPicture.asset(
+        'assets/images/lupa.svg',
+        width: 42,
+        height: 42,
+        fit: BoxFit.contain,
+      );
+    }
+
+    // Ícone do carrinho vazio.
+    if (emoji == 'carrinho.svg') {
+      return SvgPicture.asset(
+        'assets/images/carrinho.svg',
+        width: 100,
+        height: 100,
+        fit: BoxFit.contain,
+      );
+    }
+
+    // Fallback para os demais emojis.
+    return Text(
+      emoji,
+      style: const TextStyle(
+        fontSize: 42,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 20),
+      padding: const EdgeInsets.symmetric(
+        vertical: 60,
+        horizontal: 20,
+      ),
       child: Column(
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 42)),
+          _icone(),
           const SizedBox(height: 10),
-          Text(titulo,
-              textAlign: TextAlign.center,
-              style: AppTheme.display(
-                  size: 22, color: DVanilleColors.darkTaupe)),
+          Text(
+            titulo,
+            textAlign: TextAlign.center,
+            style: AppTheme.display(
+              size: 22,
+              color: DVanilleColors.darkTaupe,
+            ),
+          ),
           if (texto != null) ...[
             const SizedBox(height: 8),
-            Text(texto!, textAlign: TextAlign.center),
+            Text(
+              texto!,
+              textAlign: TextAlign.center,
+            ),
           ],
-          if (acao != null) ...[const SizedBox(height: 22), acao!],
+          if (acao != null) ...[
+            const SizedBox(height: 22),
+            acao!,
+          ],
         ],
       ),
     );
@@ -327,29 +432,55 @@ class SeletorQuantidade extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: DVanilleColors.line, width: 1.5),
+        border: Border.all(
+          color: DVanilleColors.line,
+          width: 1.5,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _botao(context, '–', onMenos, true),
+          _botao(
+            context,
+            '–',
+            onMenos,
+            true,
+          ),
           SizedBox(
             width: 44,
-            child: Text('$valor',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontWeight: FontWeight.w800)),
+            child: Text(
+              '$valor',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
-          _botao(context, '+', onMais, false),
+          _botao(
+            context,
+            '+',
+            onMais,
+            false,
+          ),
         ],
       ),
     );
   }
 
   Widget _botao(
-      BuildContext context, String texto, VoidCallback onTap, bool esquerda) {
+    BuildContext context,
+    String texto,
+    VoidCallback onTap,
+    bool esquerda,
+  ) {
     final radius = esquerda
-        ? const BorderRadius.horizontal(left: Radius.circular(999))
-        : const BorderRadius.horizontal(right: Radius.circular(999));
+        ? const BorderRadius.horizontal(
+            left: Radius.circular(999),
+          )
+        : const BorderRadius.horizontal(
+            right: Radius.circular(999),
+          );
+
     return InkWell(
       onTap: onTap,
       borderRadius: radius,
@@ -357,13 +488,18 @@ class SeletorQuantidade extends StatelessWidget {
         width: 38,
         height: 38,
         alignment: Alignment.center,
-        decoration:
-            BoxDecoration(color: DVanilleColors.cream2, borderRadius: radius),
-        child: Text(texto,
-            style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: DVanilleColors.darkTaupe)),
+        decoration: BoxDecoration(
+          color: DVanilleColors.cream2,
+          borderRadius: radius,
+        ),
+        child: Text(
+          texto,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: DVanilleColors.darkTaupe,
+          ),
+        ),
       ),
     );
   }
@@ -374,14 +510,21 @@ class CaixaAlerta extends StatelessWidget {
   final String mensagem;
   final bool erro;
 
-  const CaixaAlerta(this.mensagem, {super.key, this.erro = true});
+  const CaixaAlerta(
+    this.mensagem, {
+    super.key,
+    this.erro = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 18,
+        vertical: 14,
+      ),
       decoration: BoxDecoration(
         color: erro ? const Color(0xFFFBE4E1) : const Color(0xFFE4EEE0),
         borderRadius: BorderRadius.circular(12),
@@ -401,14 +544,22 @@ class CaixaAlerta extends StatelessWidget {
 class DicaCampo extends StatelessWidget {
   final String texto;
   final TextAlign align;
-  const DicaCampo(this.texto, {super.key, this.align = TextAlign.start});
+
+  const DicaCampo(
+    this.texto, {
+    super.key,
+    this.align = TextAlign.start,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Text(
       texto,
       textAlign: align,
-      style: const TextStyle(fontSize: 12.5, color: DVanilleColors.darkTaupe),
+      style: const TextStyle(
+        fontSize: 12.5,
+        color: DVanilleColors.darkTaupe,
+      ),
     );
   }
 }

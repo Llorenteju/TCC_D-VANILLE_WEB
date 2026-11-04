@@ -53,11 +53,12 @@ class Categoria {
 
 /// Mesmas categorias e ordem do HTML.
 const List<Categoria> categorias = [
-  Categoria('bolos', 'Bolos', '🎂'),
+  Categoria('bolo', 'Bolo', '🎂'),
+  Categoria('salgados', 'Salgados', '🥐'),
   Categoria('doces', 'Doces', '🧁'),
   Categoria('sobremesas-geladas', 'Sobremesas Geladas', '🍧'),
-  Categoria('bebidas', 'Bebidas', '☕'),
-  Categoria('salgados', 'Salgados', '🥐'),
+  Categoria('bebidas-quentes', 'Bebidas Quentes', '☕'),
+  Categoria('bebidas-geladas', 'Bebidas Geladas', '🥤'),
 ];
 
 String labelCategoria(String id) {
@@ -69,11 +70,18 @@ String labelCategoria(String id) {
 
 /// Chaves de restrição e rótulos — iguais ao objeto RESTRICOES_LABEL do HTML.
 const Map<String, String> restricoesLabels = {
-  'semGluten': 'Sem Glúten',
-  'semLactose': 'Sem Lactose',
+  'semAPLV': 'Sem APLV',
+  'semSoja': 'Sem Soja',
+  'semOleaginosas': 'Sem Oleaginosas',
+  'semAcucarAdicionado': 'Sem Açúcar Adicionado',
+  'semSalAdicionado': 'Sem Sal Adicionado',
+  'lowFODMAP': 'Low FODMAP',
+  'lowCarb': 'Low Carb',
+  'semAditivosArtificiais': 'Sem Aditivos Artificiais',
   'vegano': 'Vegano',
   'vegetariano': 'Vegetariano',
-  'menosAcucar': 'Sem Açúcar',
+  'semLactose': 'Sem Lactose',
+  'semGluten': 'Sem Glúten',
 };
 
 /// Cupons aceitos no carrinho (valor = percentual de desconto).
@@ -97,12 +105,17 @@ const List<String> horariosReserva = [
 const List<List<String>> opcoesRestricaoCadastro = [
   ['nenhuma', 'Nenhuma'],
   ['diabetes', 'Diabetes'],
-  ['semLactose', 'Intolerância à lactose'],
-  ['celiaca', 'Doença celíaca'],
-  ['alergia', 'Alergia alimentar'],
-  ['semGluten', 'Sem glúten'],
+  ['sop', 'SOP (Síndrome dos Ovários Policísticos)'],
+  ['hipertensao', 'Hipertensão'],
+  ['sii', 'Síndrome do Intestino Irritável (SII)'],
+  ['semLactose', 'Intolerância à Lactose'],
+  ['celiaca', 'Doença Celíaca'],
+  ['sensibilidadeGluten', 'Sensibilidade ao Glúten'],
+  ['aplv', 'Alergia à Proteína do Leite (APLV)'],
+  ['alergiaOleaginosas', 'Alergia a Oleaginosas'],
   ['vegetariano', 'Vegetariano'],
   ['vegano', 'Vegano'],
+  ['lowCarb', 'Low Carb'],
   ['outra', 'Outra'],
 ];
 
@@ -180,7 +193,8 @@ List<Produto> seedProdutos() => [
         preco: 14.50,
         imagem: Img.latte,
         icon: '☕',
-        descricao: 'Café suave com leite cremoso e xarope artesanal de baunilha.',
+        descricao:
+            'Café suave com leite cremoso e xarope artesanal de baunilha.',
         ingredientes: ['Café arábica', 'Leite integral', 'Xarope de baunilha'],
         nutricional: Nutricional(
             calorias: 160,
@@ -251,7 +265,8 @@ List<Produto> seedProdutos() => [
         preco: 12.50,
         imagem: Img.cinnamon,
         icon: '🥐',
-        descricao: 'Rolinho de canela amanteigado, coberto com cream cheese glacê.',
+        descricao:
+            'Rolinho de canela amanteigado, coberto com cream cheese glacê.',
         ingredientes: [
           'Farinha de trigo',
           'Manteiga',
@@ -355,7 +370,8 @@ List<Produto> seedProdutos() => [
         preco: 10.90,
         imagem: Img.croissant,
         icon: '🥐',
-        descricao: 'Croissant folhado clássico, amanteigado e crocante por fora.',
+        descricao:
+            'Croissant folhado clássico, amanteigado e crocante por fora.',
         ingredientes: [
           'Farinha de trigo',
           'Manteiga',
