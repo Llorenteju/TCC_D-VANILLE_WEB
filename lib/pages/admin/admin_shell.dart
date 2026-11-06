@@ -26,53 +26,14 @@ class AdminShell extends StatelessWidget {
     ['perfil.svg', 'Usuários', Routes.adminUsuarios],
   ];
 
-  // Estilo individual dos títulos administrativos.
+  // Fonte CreamCake para todos os títulos do painel administrativo.
   TextStyle _estiloTitulo() {
-    switch (titulo) {
-      case 'Dashboard':
-        return const TextStyle(
-          fontFamily: 'CreamCake',
-          fontSize: 46,
-          fontWeight: FontWeight.w400,
-          color: DVanilleColors.darkTaupe,
-        );
-
-      case 'Produtos':
-        return AppTheme.display(
-          size: 32,
-          color: DVanilleColors.darkTaupe,
-        );
-
-      case 'Pedidos':
-        return AppTheme.display(
-          size: 32,
-          color: DVanilleColors.darkTaupe,
-        );
-
-      case 'Reservas':
-        return AppTheme.display(
-          size: 32,
-          color: DVanilleColors.darkTaupe,
-        );
-
-      case 'Vale-presentes':
-        return AppTheme.display(
-          size: 32,
-          color: DVanilleColors.darkTaupe,
-        );
-
-      case 'Usuários':
-        return AppTheme.display(
-          size: 32,
-          color: DVanilleColors.darkTaupe,
-        );
-
-      default:
-        return AppTheme.display(
-          size: 32,
-          color: DVanilleColors.darkTaupe,
-        );
-    }
+    return const TextStyle(
+      fontFamily: 'CreamCake',
+      fontSize: 46,
+      fontWeight: FontWeight.w400,
+      color: DVanilleColors.darkTaupe,
+    );
   }
 
   @override
@@ -222,7 +183,7 @@ class AdminShell extends StatelessWidget {
   }
 }
 
-/// Tabela rolável no eixo horizontal, como as .data-table do HTML.
+/// Tabela rolável no eixo horizontal.
 class TabelaAdmin extends StatelessWidget {
   final List<String> colunas;
   final List<DataRow> linhas;
