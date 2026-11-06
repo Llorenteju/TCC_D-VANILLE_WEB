@@ -26,7 +26,7 @@ class AdminShell extends StatelessWidget {
     ['perfil.svg', 'Usuários', Routes.adminUsuarios],
   ];
 
-  // Fonte CreamCake para todos os títulos do painel administrativo.
+  // Fonte CreamCake para todos os títulos do Admin.
   TextStyle _estiloTitulo() {
     return const TextStyle(
       fontFamily: 'CreamCake',
@@ -76,6 +76,7 @@ class AdminShell extends StatelessWidget {
     );
   }
 
+  // ÍCONES SVG ORIGINAIS
   Widget _icone(String arquivo) {
     return SvgPicture.asset(
       'assets/images/$arquivo',
@@ -85,41 +86,77 @@ class AdminShell extends StatelessWidget {
     );
   }
 
-  Widget _menuLateral(BuildContext context) {
-    return Container(
-      width: 230,
-      color: Theme.of(context).cardColor,
-      child: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        children: itens.map((item) {
-          final ativo = item[2] == rotaAtual;
+  // NAVEGAÇÃO
+  void _navegar(
+    BuildContext context,
+    String rota,
+  ) {
+    if (rota == rotaAtual) return;
 
-          return InkWell(
-            onTap: () => Navigator.of(context)
-                .pushNamedAndRemoveUntil(item[2], (r) => false),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 22,
-                vertical: 13,
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      rota,
+      (route) => false,
+    );
+  }
+
+  // ITEM DO MENU LATERAL
+  Widget _itemMenuLateral(
+    BuildContext context,
+    List<String> item,
+  ) {
+    final ativo = item[2] == rotaAtual;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 4,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _navegar(
+            context,
+            item[2],
+          ),
+          borderRadius: BorderRadius.circular(14),
+          hoverColor: const Color(0x55F6DEDC),
+          splashColor: const Color(0x44EFCDCC),
+          child: Ink(
+            decoration: BoxDecoration(
+              color: ativo ? DVanilleColors.blush2 : Colors.transparent,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: ativo ? const Color(0x44C98F8C) : Colors.transparent,
               ),
-              decoration: BoxDecoration(
-                color: ativo ? DVanilleColors.blush2 : Colors.transparent,
-                border: Border(
-                  left: BorderSide(
-                    color: ativo ? DVanilleColors.rose : Colors.transparent,
-                    width: 3,
-                  ),
-                ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 14,
               ),
               child: Row(
                 children: [
+                  // Pequeno destaque na lateral
+                  Container(
+                    width: 3,
+                    height: 25,
+                    decoration: BoxDecoration(
+                      color: ativo ? DVanilleColors.rose : Colors.transparent,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+
+                  const SizedBox(width: 10),
+
                   _icone(item[0]),
+
                   const SizedBox(width: 12),
+
                   Expanded(
                     child: Text(
                       item[1],
                       style: TextStyle(
-                        fontWeight: FontWeight.w700,
+                        fontWeight: ativo ? FontWeight.w700 : FontWeight.w600,
                         fontSize: 14,
                         color: ativo
                             ? DVanilleColors.rose
@@ -130,46 +167,82 @@ class AdminShell extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // MENU LATERAL
+  Widget _menuLateral(
+    BuildContext context,
+  ) {
+    return Container(
+      width: 240,
+      color: Theme.of(context).cardColor,
+      child: ListView(
+        padding: const EdgeInsets.symmetric(
+          vertical: 22,
+        ),
+        children: itens.map((item) {
+          return _itemMenuLateral(
+            context,
+            item,
           );
         }).toList(),
       ),
     );
   }
 
-  Widget _menuHorizontal(BuildContext context) {
+  // MENU HORIZONTAL PARA TELAS MENORES
+  Widget _menuHorizontal(
+    BuildContext context,
+  ) {
     return Container(
+      width: double.infinity,
       color: Theme.of(context).cardColor,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 8,
+          horizontal: 12,
+          vertical: 12,
         ),
         child: Row(
           children: itens.map((item) {
             final ativo = item[2] == rotaAtual;
 
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 4,
+              ),
               child: TextButton(
-                onPressed: () => Navigator.of(context)
-                    .pushNamedAndRemoveUntil(item[2], (r) => false),
+                onPressed: () => _navegar(
+                  context,
+                  item[2],
+                ),
                 style: TextButton.styleFrom(
                   backgroundColor:
                       ativo ? DVanilleColors.blush2 : Colors.transparent,
                   foregroundColor:
                       ativo ? DVanilleColors.rose : DVanilleColors.darkTaupe,
-                  shape: const StadiumBorder(),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 13,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _icone(item[0]),
-                    const SizedBox(width: 7),
+                    const SizedBox(width: 9),
                     Text(
                       item[1],
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
+                        fontSize: 13,
                       ),
                     ),
                   ],
@@ -183,7 +256,7 @@ class AdminShell extends StatelessWidget {
   }
 }
 
-/// Tabela rolável no eixo horizontal.
+// TABELA ADMINISTRATIVA
 class TabelaAdmin extends StatelessWidget {
   final List<String> colunas;
   final List<DataRow> linhas;
@@ -200,7 +273,9 @@ class TabelaAdmin extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: DVanilleColors.line),
+        border: Border.all(
+          color: DVanilleColors.line,
+        ),
       ),
       clipBehavior: Clip.antiAlias,
       child: SingleChildScrollView(
@@ -212,8 +287,16 @@ class TabelaAdmin extends StatelessWidget {
             letterSpacing: .5,
             color: DVanilleColors.darkTaupe,
           ),
-          dataTextStyle: const TextStyle(fontSize: 13.5),
-          columns: colunas.map((c) => DataColumn(label: Text(c))).toList(),
+          dataTextStyle: const TextStyle(
+            fontSize: 13.5,
+          ),
+          columns: colunas
+              .map(
+                (c) => DataColumn(
+                  label: Text(c),
+                ),
+              )
+              .toList(),
           rows: linhas,
         ),
       ),
