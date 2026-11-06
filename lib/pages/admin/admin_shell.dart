@@ -20,13 +20,13 @@ class AdminShell extends StatelessWidget {
   static const List<List<String>> itens = [
     ['dashboard.svg', 'Dashboard', Routes.admin],
     ['produtos.svg', 'Produtos', Routes.adminProdutos],
+    ['ofertas.svg', 'Ofertas', Routes.adminOfertas],
     ['pedidos.svg', 'Pedidos', Routes.adminPedidos],
     ['agenda.svg', 'Reservas', Routes.adminReservas],
     ['presente.svg', 'Vale-presentes', Routes.adminValePresentes],
     ['perfil.svg', 'Usuários', Routes.adminUsuarios],
   ];
 
-  // Fonte CreamCake para todos os títulos do Admin.
   TextStyle _estiloTitulo() {
     return const TextStyle(
       fontFamily: 'CreamCake',
@@ -45,10 +45,7 @@ class AdminShell extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            titulo,
-            style: _estiloTitulo(),
-          ),
+          Text(titulo, style: _estiloTitulo()),
           const SizedBox(height: 22),
           child,
         ],
@@ -76,7 +73,7 @@ class AdminShell extends StatelessWidget {
     );
   }
 
-  // ÍCONES SVG ORIGINAIS
+  // Usa os ícones SVG cadastrados, incluindo ofertas.svg.
   Widget _icone(String arquivo) {
     return SvgPicture.asset(
       'assets/images/$arquivo',
@@ -86,38 +83,23 @@ class AdminShell extends StatelessWidget {
     );
   }
 
-  // NAVEGAÇÃO
-  void _navegar(
-    BuildContext context,
-    String rota,
-  ) {
+  void _navegar(BuildContext context, String rota) {
     if (rota == rotaAtual) return;
-
     Navigator.of(context).pushNamedAndRemoveUntil(
       rota,
       (route) => false,
     );
   }
 
-  // ITEM DO MENU LATERAL
-  Widget _itemMenuLateral(
-    BuildContext context,
-    List<String> item,
-  ) {
+  Widget _itemMenuLateral(BuildContext context, List<String> item) {
     final ativo = item[2] == rotaAtual;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => _navegar(
-            context,
-            item[2],
-          ),
+          onTap: () => _navegar(context, item[2]),
           borderRadius: BorderRadius.circular(14),
           hoverColor: const Color(0x55F6DEDC),
           splashColor: const Color(0x44EFCDCC),
@@ -136,7 +118,6 @@ class AdminShell extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  // Pequeno destaque na lateral
                   Container(
                     width: 3,
                     height: 25,
@@ -145,13 +126,9 @@ class AdminShell extends StatelessWidget {
                       borderRadius: BorderRadius.circular(3),
                     ),
                   ),
-
                   const SizedBox(width: 10),
-
                   _icone(item[0]),
-
                   const SizedBox(width: 12),
-
                   Expanded(
                     child: Text(
                       item[1],
@@ -173,53 +150,34 @@ class AdminShell extends StatelessWidget {
     );
   }
 
-  // MENU LATERAL
-  Widget _menuLateral(
-    BuildContext context,
-  ) {
+  Widget _menuLateral(BuildContext context) {
     return Container(
       width: 240,
       color: Theme.of(context).cardColor,
       child: ListView(
-        padding: const EdgeInsets.symmetric(
-          vertical: 22,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 22),
         children: itens.map((item) {
-          return _itemMenuLateral(
-            context,
-            item,
-          );
+          return _itemMenuLateral(context, item);
         }).toList(),
       ),
     );
   }
 
-  // MENU HORIZONTAL PARA TELAS MENORES
-  Widget _menuHorizontal(
-    BuildContext context,
-  ) {
+  Widget _menuHorizontal(BuildContext context) {
     return Container(
       width: double.infinity,
       color: Theme.of(context).cardColor,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 12,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         child: Row(
           children: itens.map((item) {
             final ativo = item[2] == rotaAtual;
 
             return Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 4,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
               child: TextButton(
-                onPressed: () => _navegar(
-                  context,
-                  item[2],
-                ),
+                onPressed: () => _navegar(context, item[2]),
                 style: TextButton.styleFrom(
                   backgroundColor:
                       ativo ? DVanilleColors.blush2 : Colors.transparent,
@@ -256,7 +214,7 @@ class AdminShell extends StatelessWidget {
   }
 }
 
-// TABELA ADMINISTRATIVA
+/// Tabela rolável no eixo horizontal.
 class TabelaAdmin extends StatelessWidget {
   final List<String> colunas;
   final List<DataRow> linhas;
@@ -273,9 +231,7 @@ class TabelaAdmin extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: DVanilleColors.line,
-        ),
+        border: Border.all(color: DVanilleColors.line),
       ),
       clipBehavior: Clip.antiAlias,
       child: SingleChildScrollView(
@@ -287,16 +243,8 @@ class TabelaAdmin extends StatelessWidget {
             letterSpacing: .5,
             color: DVanilleColors.darkTaupe,
           ),
-          dataTextStyle: const TextStyle(
-            fontSize: 13.5,
-          ),
-          columns: colunas
-              .map(
-                (c) => DataColumn(
-                  label: Text(c),
-                ),
-              )
-              .toList(),
+          dataTextStyle: const TextStyle(fontSize: 13.5),
+          columns: colunas.map((c) => DataColumn(label: Text(c))).toList(),
           rows: linhas,
         ),
       ),

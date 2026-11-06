@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../pages/admin/admin_dashboard_page.dart';
+import '../pages/admin/admin_ofertas_page.dart';
 import '../pages/admin/admin_pedidos_page.dart';
 import '../pages/admin/admin_produto_form_page.dart';
 import '../pages/admin/admin_produtos_page.dart';
@@ -66,6 +67,7 @@ class Routes {
 
   static const admin = '/admin';
   static const adminProdutos = '/admin-produtos';
+  static const adminOfertas = '/admin-ofertas';
   static const adminProdutoForm = '/admin-produto-form';
   static const adminPedidos = '/admin-pedidos';
   static const adminReservas = '/admin-reservas';
@@ -90,6 +92,7 @@ class Routes {
   static const administrativas = <String>[
     admin,
     adminProdutos,
+    adminOfertas,
     adminProdutoForm,
     adminPedidos,
     adminReservas,
@@ -160,6 +163,7 @@ class DVanilleApp extends StatelessWidget {
     Routes.comandaMesa: (_) => const ComandaMesaPage(),
     Routes.admin: (_) => const AdminDashboardPage(),
     Routes.adminProdutos: (_) => const AdminProdutosPage(),
+    Routes.adminOfertas: (_) => const AdminOfertasPage(),
     Routes.adminProdutoForm: (_) => const AdminProdutoFormPage(),
     Routes.adminPedidos: (_) => const AdminPedidosPage(),
     Routes.adminReservas: (_) => const AdminReservasPage(),

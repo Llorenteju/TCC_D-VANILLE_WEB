@@ -13,20 +13,106 @@ import '../models/reserva.dart';
 import '../models/usuario.dart';
 import '../models/vale_presente.dart';
 
+/// Configuração de uma promoção de um produto já cadastrado.
+/// As datas são inclusivas: uma promoção com término em 10/11
+/// continua válida durante todo esse dia.
+class OfertaConfigurada {
+  final int produtoId;
+  final double precoOriginal;
+  final double percentual;
+  final DateTime? inicio;
+  final DateTime? fim;
+
+  const OfertaConfigurada({
+    required this.produtoId,
+    required this.precoOriginal,
+    required this.percentual,
+    this.inicio,
+    this.fim,
+  });
+
+  double get precoPromocional =>
+      (precoOriginal * (1 - percentual / 100) * 100).round() / 100;
+
+  String get status {
+    final agora = DateTime.now();
+    final hoje = DateTime(agora.year, agora.month, agora.day);
+    final comeca = inicio == null
+        ? null
+        : DateTime(inicio!.year, inicio!.month, inicio!.day);
+    final termina =
+        fim == null ? null : DateTime(fim!.year, fim!.month, fim!.day);
+
+    if (termina != null && hoje.isAfter(termina)) return 'encerrada';
+    if (comeca != null && hoje.isBefore(comeca)) return 'agendada';
+    return 'ativa';
+  }
+
+  bool get estaAtiva => status == 'ativa';
+
+  Map<String, dynamic> toJson() => {
+        'produtoId': produtoId,
+        'precoOriginal': precoOriginal,
+        'percentual': percentual,
+        'inicio': inicio?.toIso8601String(),
+        'fim': fim?.toIso8601String(),
+      };
+
+  factory OfertaConfigurada.fromJson(Map<String, dynamic> json) {
+    return OfertaConfigurada(
+      produtoId: (json['produtoId'] as num).toInt(),
+      precoOriginal: (json['precoOriginal'] as num).toDouble(),
+      percentual: (json['percentual'] as num).toDouble(),
+      inicio: json['inicio'] == null
+          ? null
+          : DateTime.parse(json['inicio'] as String),
+      fim: json['fim'] == null ? null : DateTime.parse(json['fim'] as String),
+    );
+  }
+}
+
 /// Estado único da aplicação.
 class AppState extends ChangeNotifier {
   static final AppState instance = AppState._();
 
-  AppState._();
+  AppState._() {
+    // Aproveita as ofertas de demonstração existentes no seedProdutos().
+    for (final produto in produtos) {
+      final precoBase = produto.oferta && produto.precoAntigo != null
+          ? produto.precoAntigo!
+          : produto.preco;
+      _precosBase[produto.id] = precoBase;
+      if (produto.oferta &&
+          produto.precoAntigo != null &&
+          produto.precoAntigo! > produto.preco) {
+        _ofertasConfiguradas[produto.id] = OfertaConfigurada(
+          produtoId: produto.id,
+          precoOriginal: precoBase,
+          percentual: (1 - produto.preco / precoBase) * 100,
+        );
+      }
+    }
+    _atualizarOfertasPorValidade();
+    _timerOfertas = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (_atualizarOfertasPorValidade()) notifyListeners();
+    });
+  }
 
   // ================= PERSISTÊNCIA DE USUÁRIOS =================
 
   static const String _chaveUsuarios = 'dvanille_usuarios';
+  static const String _chaveOfertas = 'dvanille_ofertas_v1';
+
+  final Map<int, OfertaConfigurada> _ofertasConfiguradas = {};
+  final Map<int, double> _precosBase = {};
+  Timer? _timerOfertas;
 
   /// Recupera os usuários salvos no navegador.
   ///
   /// Na primeira execução, mantém e salva os usuários de demonstração.
   Future<void> carregarDados() async {
+    // As ofertas também precisam ser restauradas antes de abrir o site.
+    await _carregarOfertas();
     try {
       final preferencias = await SharedPreferences.getInstance();
       final dadosSalvos = preferencias.getString(_chaveUsuarios);
@@ -104,6 +190,162 @@ class AppState extends ChangeNotifier {
   /// Agenda o salvamento sem alterar a assinatura dos métodos existentes.
   void _salvarUsuariosAutomaticamente() {
     unawaited(salvarUsuarios());
+  }
+
+  // ================= GERENCIAMENTO DE OFERTAS =================
+
+  /// Todas as ofertas cadastradas, inclusive agendadas/encerradas.
+  List<OfertaConfigurada> get ofertasGerenciadas {
+    final lista = _ofertasConfiguradas.values.toList();
+    lista.sort((a, b) => a.produtoId.compareTo(b.produtoId));
+    return lista;
+  }
+
+  OfertaConfigurada? ofertaPorProduto(int id) => _ofertasConfiguradas[id];
+
+  double precoOriginalProduto(int id) =>
+      _ofertasConfiguradas[id]?.precoOriginal ??
+      _precosBase[id] ??
+      produtoPorId(id)?.preco ??
+      0;
+
+  /// Retorna null em caso de sucesso ou uma mensagem de validação.
+  String? salvarOferta({
+    required int produtoId,
+    required double percentual,
+    DateTime? inicio,
+    DateTime? fim,
+  }) {
+    final produto = produtoPorId(produtoId);
+    if (produto == null) return 'Produto não encontrado.';
+    if (!percentual.isFinite || percentual <= 0 || percentual >= 100) {
+      return 'Informe um desconto maior que 0% e menor que 100%.';
+    }
+    if (inicio != null && fim != null && fim.isBefore(inicio)) {
+      return 'A data final não pode ser anterior à inicial.';
+    }
+    if (fim != null) {
+      final agora = DateTime.now();
+      final hoje = DateTime(agora.year, agora.month, agora.day);
+      final dataFim = DateTime(fim.year, fim.month, fim.day);
+      if (dataFim.isBefore(hoje)) {
+        return 'A data final não pode estar no passado.';
+      }
+    }
+
+    final original = precoOriginalProduto(produtoId);
+    if (original <= 0) return 'O preço original precisa ser positivo.';
+
+    _precosBase[produtoId] = original;
+    _ofertasConfiguradas[produtoId] = OfertaConfigurada(
+      produtoId: produtoId,
+      precoOriginal: original,
+      percentual: percentual,
+      inicio: inicio,
+      fim: fim,
+    );
+    _atualizarOfertasPorValidade();
+    notifyListeners();
+    _salvarOfertasAutomaticamente();
+    return null;
+  }
+
+  /// Retira o produto da promoção e devolve seu preço original.
+  void encerrarOferta(int produtoId) {
+    if (_ofertasConfiguradas.remove(produtoId) == null) return;
+    _atualizarOfertasPorValidade();
+    notifyListeners();
+    _salvarOfertasAutomaticamente();
+  }
+
+  Future<void> _carregarOfertas() async {
+    try {
+      final preferencias = await SharedPreferences.getInstance();
+      final jsonSalvo = preferencias.getString(_chaveOfertas);
+      if (jsonSalvo != null) {
+        // Mesmo uma lista vazia é importante: indica que o Admin
+        // encerrou todas as ofertas de demonstração.
+        final dados = jsonDecode(jsonSalvo) as List<dynamic>;
+        _ofertasConfiguradas.clear();
+        for (final item in dados) {
+          final config = OfertaConfigurada.fromJson(
+            Map<String, dynamic>.from(item as Map),
+          );
+          if (produtoPorId(config.produtoId) != null &&
+              config.precoOriginal > 0 &&
+              config.percentual > 0 &&
+              config.percentual < 100) {
+            _ofertasConfiguradas[config.produtoId] = config;
+            _precosBase[config.produtoId] = config.precoOriginal;
+          }
+        }
+      }
+      if (_atualizarOfertasPorValidade()) notifyListeners();
+    } catch (e) {
+      debugPrint('Erro ao carregar ofertas: $e');
+    }
+  }
+
+  Future<void> _salvarOfertas() async {
+    try {
+      final preferencias = await SharedPreferences.getInstance();
+      await preferencias.setString(
+        _chaveOfertas,
+        jsonEncode(ofertasGerenciadas.map((c) => c.toJson()).toList()),
+      );
+    } catch (e) {
+      debugPrint('Erro ao salvar ofertas: $e');
+    }
+  }
+
+  void _salvarOfertasAutomaticamente() {
+    unawaited(_salvarOfertas());
+  }
+
+  /// Sincroniza a promoção válida com Produto, que é utilizado nas
+  /// páginas públicas, e corrige preços de itens já no carrinho.
+  bool _atualizarOfertasPorValidade() {
+    var mudou = false;
+    for (final produto in produtos) {
+      final config = _ofertasConfiguradas[produto.id];
+      final precoBase = config?.precoOriginal ??
+          _precosBase[produto.id] ??
+          produto.precoAntigo ??
+          produto.preco;
+      final ativa = config?.estaAtiva ?? false;
+      final precoAtual = ativa ? config!.precoPromocional : precoBase;
+      final precoAntigo = ativa ? precoBase : null;
+
+      if (produto.oferta != ativa ||
+          produto.preco != precoAtual ||
+          produto.precoAntigo != precoAntigo) {
+        produto
+          ..oferta = ativa
+          ..preco = precoAtual
+          ..precoAntigo = precoAntigo;
+        mudou = true;
+      }
+    }
+    if (mudou) _atualizarPrecosNoCarrinho();
+    return mudou;
+  }
+
+  void _atualizarPrecosNoCarrinho() {
+    for (var i = 0; i < carrinho.length; i++) {
+      final item = carrinho[i];
+      if (item.tipo != TipoItemCarrinho.produto) continue;
+      final produto = produtoPorId(item.id);
+      if (produto == null || item.preco == produto.preco) continue;
+      carrinho[i] = ItemCarrinho(
+        id: item.id,
+        nome: produto.nome,
+        preco: produto.preco,
+        imagem: produto.imagem,
+        icon: produto.icon,
+        tipo: TipoItemCarrinho.produto,
+        qtd: item.qtd,
+      );
+    }
   }
 
   // ----------------- banco de dados em memória -----------------
@@ -240,6 +482,9 @@ class AppState extends ChangeNotifier {
     Produto? editando,
   }) {
     if (editando != null) {
+      final precoAntes = editando.preco;
+      final config = _ofertasConfiguradas[editando.id];
+
       editando
         ..nome = produto.nome
         ..categoria = produto.categoria
@@ -250,19 +495,44 @@ class AppState extends ChangeNotifier {
         ..nutricional = produto.nutricional
         ..restricoes = produto.restricoes
         ..alergenicos = produto.alergenicos;
-    } else {
-      var maiorId = 0;
 
-      for (final item in produtos) {
-        if (item.id > maiorId) {
-          maiorId = item.id;
+      // Ao editar o preço do produto, recalcula a oferta usando
+      // o novo preço base. Se ele não mudou, preserva a promoção.
+      if (produto.preco != precoAntes) {
+        _precosBase[editando.id] = produto.preco;
+        if (config != null) {
+          _ofertasConfiguradas[editando.id] = OfertaConfigurada(
+            produtoId: editando.id,
+            precoOriginal: produto.preco,
+            percentual: config.percentual,
+            inicio: config.inicio,
+            fim: config.fim,
+          );
+          _salvarOfertasAutomaticamente();
         }
       }
-
+    } else {
+      var maiorId = 0;
+      for (final item in produtos) {
+        if (item.id > maiorId) maiorId = item.id;
+      }
       produto.id = maiorId + 1;
       produtos.add(produto);
+      final base = produto.precoAntigo ?? produto.preco;
+      _precosBase[produto.id] = base;
+      if (produto.oferta &&
+          produto.precoAntigo != null &&
+          base > produto.preco) {
+        _ofertasConfiguradas[produto.id] = OfertaConfigurada(
+          produtoId: produto.id,
+          precoOriginal: base,
+          percentual: (1 - produto.preco / base) * 100,
+        );
+        _salvarOfertasAutomaticamente();
+      }
     }
 
+    _atualizarOfertasPorValidade();
     notifyListeners();
   }
 
@@ -279,6 +549,10 @@ class AppState extends ChangeNotifier {
 
   void excluirProduto(int id) {
     produtos.removeWhere((produto) => produto.id == id);
+    _precosBase.remove(id);
+    if (_ofertasConfiguradas.remove(id) != null) {
+      _salvarOfertasAutomaticamente();
+    }
     notifyListeners();
   }
 
@@ -457,6 +731,8 @@ class AppState extends ChangeNotifier {
     Produto produto, {
     int qtd = 1,
   }) {
+    // Confere a validade da promoção antes de colocar o item no carrinho.
+    _atualizarOfertasPorValidade();
     final id = '${produto.id}';
 
     for (final item in carrinho) {
@@ -576,6 +852,8 @@ class AppState extends ChangeNotifier {
   /// Os vale-presentes permanecem no carrinho e não são
   /// convertidos em itens de pedido.
   Pedido criarPedido(String modo) {
+    // Garante os valores vigentes mesmo na mudança de dia.
+    _atualizarOfertasPorValidade();
     final itens = itensProdutos;
 
     if (itens.isEmpty) {
@@ -814,6 +1092,12 @@ class AppState extends ChangeNotifier {
   void alternarDark() {
     dark = !dark;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _timerOfertas?.cancel();
+    super.dispose();
   }
 
   // ================= utilitários =================
