@@ -102,6 +102,7 @@ class AppState extends ChangeNotifier {
 
   static const String _chaveUsuarios = 'dvanille_usuarios';
   static const String _chaveOfertas = 'dvanille_ofertas_v1';
+  static const String _chaveProdutos = 'dvanille_produtos_v1';
 
   final Map<int, OfertaConfigurada> _ofertasConfiguradas = {};
   final Map<int, double> _precosBase = {};
@@ -111,7 +112,8 @@ class AppState extends ChangeNotifier {
   ///
   /// Na primeira execução, mantém e salva os usuários de demonstração.
   Future<void> carregarDados() async {
-    // As ofertas também precisam ser restauradas antes de abrir o site.
+    // Produtos primeiro, depois ofertas (que recalculam os preços exibidos).
+    await carregarProdutos();
     await _carregarOfertas();
     try {
       final preferencias = await SharedPreferences.getInstance();
@@ -190,6 +192,120 @@ class AppState extends ChangeNotifier {
   /// Agenda o salvamento sem alterar a assinatura dos métodos existentes.
   void _salvarUsuariosAutomaticamente() {
     unawaited(salvarUsuarios());
+  }
+
+  // ================= PERSISTÊNCIA DE PRODUTOS =================
+
+  /// Restaura os produtos alterados no Admin, inclusive produtos novos
+  /// e produtos cujas fotos foram removidas. Executado em carregarDados().
+  Future<void> carregarProdutos() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final salvo = prefs.getString(_chaveProdutos);
+      if (salvo == null) return; // Nenhuma edição persistida até agora.
+
+      final registros = jsonDecode(salvo) as List<dynamic>;
+      final restaurados = <Produto>[];
+
+      for (final item in registros) {
+        final dados = Map<String, dynamic>.from(item as Map);
+        final nutri = dados['nutricional'] is Map
+            ? Map<String, dynamic>.from(dados['nutricional'] as Map)
+            : <String, dynamic>{};
+
+        double numero(Map<String, dynamic> origem, String chave) =>
+            (origem[chave] as num?)?.toDouble() ?? 0.0;
+
+        List<String> lista(String chave) =>
+            (dados[chave] as List<dynamic>? ?? <dynamic>[])
+                .map((e) => e.toString())
+                .toList();
+
+        restaurados.add(
+          Produto(
+            id: (dados['id'] as num).toInt(),
+            nome: dados['nome'] as String? ?? '',
+            categoria: dados['categoria'] as String? ?? '',
+            preco: numero(dados, 'preco'),
+            precoAntigo: (dados['precoAntigo'] as num?)?.toDouble(),
+            descricao: dados['descricao'] as String? ?? '',
+            imagem: dados['imagem'] as String? ?? '',
+            icon: dados['icon'] as String? ?? '🍽️',
+            ingredientes: lista('ingredientes'),
+            restricoes: lista('restricoes'),
+            alergenicos: lista('alergenicos'),
+            nutricional: Nutricional(
+              calorias: numero(nutri, 'calorias'),
+              carboidratos: numero(nutri, 'carboidratos'),
+              proteinas: numero(nutri, 'proteinas'),
+              gorduras: numero(nutri, 'gorduras'),
+              fibras: numero(nutri, 'fibras'),
+              acucares: numero(nutri, 'acucares'),
+            ),
+            oferta: dados['oferta'] as bool? ?? false,
+          ),
+        );
+      }
+
+      produtos
+        ..clear()
+        ..addAll(restaurados);
+
+      // Reconstroi os precos-base; as ofertas serao carregadas depois.
+      _precosBase.clear();
+      for (final p in produtos) {
+        _precosBase[p.id] =
+            p.oferta && p.precoAntigo != null ? p.precoAntigo! : p.preco;
+      }
+      _ofertasConfiguradas.removeWhere(
+        (id, config) => produtoPorId(id) == null,
+      );
+      notifyListeners();
+    } catch (e) {
+      // Se houver falha, mantem os produtos ja carregados da demonstracao.
+      debugPrint('Erro ao carregar produtos: $e');
+    }
+  }
+
+  /// Retorna true quando o navegador confirmou a escrita local.
+  /// Imagens em data URI ocupam espaco; por isso o formulario limita o tamanho.
+  Future<bool> salvarProdutos() async {
+    try {
+      final registros = produtos
+          .map((p) => <String, dynamic>{
+                'id': p.id,
+                'nome': p.nome,
+                'categoria': p.categoria,
+                'preco': p.preco,
+                'precoAntigo': p.precoAntigo,
+                'descricao': p.descricao,
+                'imagem': p.imagem,
+                'icon': p.icon,
+                'ingredientes': p.ingredientes,
+                'restricoes': p.restricoes,
+                'alergenicos': p.alergenicos,
+                'oferta': p.oferta,
+                'nutricional': <String, dynamic>{
+                  'calorias': p.nutricional.calorias,
+                  'carboidratos': p.nutricional.carboidratos,
+                  'proteinas': p.nutricional.proteinas,
+                  'gorduras': p.nutricional.gorduras,
+                  'fibras': p.nutricional.fibras,
+                  'acucares': p.nutricional.acucares,
+                },
+              })
+          .toList();
+
+      final prefs = await SharedPreferences.getInstance();
+      return await prefs.setString(_chaveProdutos, jsonEncode(registros));
+    } catch (e) {
+      debugPrint('Erro ao salvar produtos localmente: $e');
+      return false;
+    }
+  }
+
+  void _salvarProdutosAutomaticamente() {
+    unawaited(salvarProdutos());
   }
 
   // ================= GERENCIAMENTO DE OFERTAS =================
@@ -335,7 +451,13 @@ class AppState extends ChangeNotifier {
       final item = carrinho[i];
       if (item.tipo != TipoItemCarrinho.produto) continue;
       final produto = produtoPorId(item.id);
-      if (produto == null || item.preco == produto.preco) continue;
+      if (produto == null ||
+          (item.preco == produto.preco &&
+              item.imagem == produto.imagem &&
+              item.nome == produto.nome &&
+              item.icon == produto.icon)) {
+        continue;
+      }
       carrinho[i] = ItemCarrinho(
         id: item.id,
         nome: produto.nome,
@@ -533,7 +655,10 @@ class AppState extends ChangeNotifier {
     }
 
     _atualizarOfertasPorValidade();
+    // Um produto no carrinho também precisa refletir nome/foto modificados.
+    _atualizarPrecosNoCarrinho();
     notifyListeners();
+    _salvarProdutosAutomaticamente();
   }
 
   bool nomeProdutoDuplicado(
@@ -554,6 +679,7 @@ class AppState extends ChangeNotifier {
       _salvarOfertasAutomaticamente();
     }
     notifyListeners();
+    _salvarProdutosAutomaticamente();
   }
 
   // ================= autenticação =================
