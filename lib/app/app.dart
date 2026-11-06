@@ -5,6 +5,7 @@ import '../pages/admin/admin_dashboard_page.dart';
 import '../pages/admin/admin_ofertas_page.dart';
 import '../pages/admin/admin_pedidos_page.dart';
 import '../pages/admin/admin_produto_form_page.dart';
+import '../pages/admin/admin_produto_detalhes_page.dart';
 import '../pages/admin/admin_produtos_page.dart';
 import '../pages/admin/admin_reservas_page.dart';
 import '../pages/admin/admin_usuarios_page.dart';
@@ -69,6 +70,7 @@ class Routes {
   static const adminProdutos = '/admin-produtos';
   static const adminOfertas = '/admin-ofertas';
   static const adminProdutoForm = '/admin-produto-form';
+  static const adminProdutoDetalhes = '/admin-produto-detalhes';
   static const adminPedidos = '/admin-pedidos';
   static const adminReservas = '/admin-reservas';
   static const adminValePresentes = '/admin-vale-presentes';
@@ -94,6 +96,7 @@ class Routes {
     adminProdutos,
     adminOfertas,
     adminProdutoForm,
+    adminProdutoDetalhes,
     adminPedidos,
     adminReservas,
     adminValePresentes,
@@ -165,6 +168,7 @@ class DVanilleApp extends StatelessWidget {
     Routes.adminProdutos: (_) => const AdminProdutosPage(),
     Routes.adminOfertas: (_) => const AdminOfertasPage(),
     Routes.adminProdutoForm: (_) => const AdminProdutoFormPage(),
+    Routes.adminProdutoDetalhes: (_) => const AdminProdutoDetalhesPage(),
     Routes.adminPedidos: (_) => const AdminPedidosPage(),
     Routes.adminReservas: (_) => const AdminReservasPage(),
     Routes.adminValePresentes: (_) => const AdminValePresentesPage(),

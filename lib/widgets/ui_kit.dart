@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -236,7 +238,8 @@ class TagSimples extends StatelessWidget {
   }
 }
 
-/// Imagem de rede com fallback em emoji — equivale ao imgOrFallback() do HTML.
+/// Imagem de produto para URLs e imagens salvas no navegador (data URI).
+/// Sem foto ou com URL inválida, exibe um placeholder neutro, sem café padrão.
 class ImagemProduto extends StatelessWidget {
   final String url;
   final String icone;
@@ -253,39 +256,73 @@ class ImagemProduto extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final escuro = Theme.of(context).brightness == Brightness.dark;
+    final compacto = altura != null && altura! <= 100;
+
     final fallback = Container(
-      height: altura,
       width: double.infinity,
-      color: DVanilleColors.blush2,
+      height: altura,
+      color: escuro ? DVanilleColors.darkCream2 : DVanilleColors.cream2,
       alignment: Alignment.center,
-      child: Text(
-        icone,
-        style: const TextStyle(
-          fontSize: 38,
-        ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.image_not_supported_outlined,
+            size: compacto ? 23 : 36,
+            color: escuro ? DVanilleColors.blush : DVanilleColors.taupe,
+          ),
+          if (!compacto) ...[
+            const SizedBox(height: 7),
+            Text(
+              'Produto sem foto',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: escuro ? DVanilleColors.blush : DVanilleColors.darkTaupe,
+              ),
+            ),
+          ],
+        ],
       ),
     );
 
-    final conteudo = url.isEmpty
-        ? fallback
-        : Image.network(
-            url,
-            height: altura,
-            width: double.infinity,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => fallback,
-            loadingBuilder: (context, child, progress) =>
-                progress == null ? child : fallback,
-          );
+    final caminho = url.trim();
+    Widget conteudo;
 
-    if (radius == null) {
-      return conteudo;
+    if (caminho.isEmpty || caminho.startsWith('blob:')) {
+      conteudo = fallback;
+    } else if (caminho.startsWith('data:image/') &&
+        caminho.contains(';base64,')) {
+      // Image.network não interpreta data URI de forma consistente no Web.
+      try {
+        final parteBase64 = caminho.substring(caminho.indexOf(',') + 1);
+        conteudo = Image.memory(
+          base64Decode(parteBase64),
+          height: altura,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          gaplessPlayback: true,
+          errorBuilder: (_, __, ___) => fallback,
+        );
+      } catch (_) {
+        conteudo = fallback;
+      }
+    } else {
+      conteudo = Image.network(
+        caminho,
+        height: altura,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => fallback,
+        loadingBuilder: (context, child, progress) =>
+            progress == null ? child : fallback,
+      );
     }
 
-    return ClipRRect(
-      borderRadius: radius!,
-      child: conteudo,
-    );
+    if (radius == null) return conteudo;
+    return ClipRRect(borderRadius: radius!, child: conteudo);
   }
 }
 
