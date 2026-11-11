@@ -19,129 +19,31 @@ void showToast(
     const corTexto = Colors.white;
     final mensagemMinuscula = mensagem.toLowerCase();
 
-    // Define o ícone da notificação.
+    // ================= ÍCONE DA NOTIFICAÇÃO =================
+
+    // Mantém o ícone especial de alteração de senha.
     final iconeNotificacao = mensagemMinuscula.contains('senha alterada')
         ? 'trocarsenha.svg'
         : icone;
 
+    // Converte os emojis e nomes especiais
+    // utilizados anteriormente para seus respectivos SVGs.
+    const Map<String, String> iconesEspeciais = {
+      '🔒': 'cadeado.svg',
+      '🎁': 'presente.svg',
+      '👋': 'tchau.svg',
+      'vales_finalizados': 'presente.svg',
+      'comanda_mesa': 'comanda_mesa.svg',
+    };
+
+    final nomeIcone = iconesEspeciais[iconeNotificacao] ?? iconeNotificacao;
+
     late final Widget iconeWidget;
 
-    if (iconeNotificacao == '🔒' || iconeNotificacao == 'cadeado.svg') {
+    // Reconhece automaticamente qualquer arquivo SVG.
+    if (nomeIcone.toLowerCase().endsWith('.svg')) {
       iconeWidget = SvgPicture.asset(
-        'assets/images/cadeado.svg',
-        width: 22,
-        height: 22,
-        fit: BoxFit.contain,
-        colorFilter: const ColorFilter.mode(
-          corTexto,
-          BlendMode.srcIn,
-        ),
-      );
-    } else if (iconeNotificacao == '🎁' ||
-        iconeNotificacao == 'presente.svg' ||
-        iconeNotificacao == 'vales_finalizados') {
-      iconeWidget = SvgPicture.asset(
-        'assets/images/presente.svg',
-        width: 22,
-        height: 22,
-        fit: BoxFit.contain,
-        colorFilter: const ColorFilter.mode(
-          corTexto,
-          BlendMode.srcIn,
-        ),
-      );
-    } else if (iconeNotificacao == 'palmas.svg') {
-      iconeWidget = SvgPicture.asset(
-        'assets/images/palmas.svg',
-        width: 22,
-        height: 22,
-        fit: BoxFit.contain,
-        colorFilter: const ColorFilter.mode(
-          corTexto,
-          BlendMode.srcIn,
-        ),
-      );
-    } else if (iconeNotificacao == 'tchau.svg' || iconeNotificacao == '👋') {
-      iconeWidget = SvgPicture.asset(
-        'assets/images/tchau.svg',
-        width: 22,
-        height: 22,
-        fit: BoxFit.contain,
-        colorFilter: const ColorFilter.mode(
-          corTexto,
-          BlendMode.srcIn,
-        ),
-      );
-    } else if (iconeNotificacao == 'trocarsenha.svg') {
-      iconeWidget = SvgPicture.asset(
-        'assets/images/trocarsenha.svg',
-        width: 22,
-        height: 22,
-        fit: BoxFit.contain,
-        colorFilter: const ColorFilter.mode(
-          corTexto,
-          BlendMode.srcIn,
-        ),
-      );
-    } else if (iconeNotificacao == 'lixeira.svg') {
-      iconeWidget = SvgPicture.asset(
-        'assets/images/lixeira.svg',
-        width: 22,
-        height: 22,
-        fit: BoxFit.contain,
-        colorFilter: const ColorFilter.mode(
-          corTexto,
-          BlendMode.srcIn,
-        ),
-      );
-    } else if (iconeNotificacao == 'carrinho.svg') {
-      iconeWidget = SvgPicture.asset(
-        'assets/images/carrinho.svg',
-        width: 22,
-        height: 22,
-        fit: BoxFit.contain,
-        colorFilter: const ColorFilter.mode(
-          corTexto,
-          BlendMode.srcIn,
-        ),
-      );
-    } else if (iconeNotificacao == 'comanda_mesa.svg' ||
-        iconeNotificacao == 'comanda_mesa') {
-      iconeWidget = SvgPicture.asset(
-        'assets/images/comanda_mesa.svg',
-        width: 22,
-        height: 22,
-        fit: BoxFit.contain,
-        colorFilter: const ColorFilter.mode(
-          corTexto,
-          BlendMode.srcIn,
-        ),
-      );
-    } else if (iconeNotificacao == 'cupom.svg') {
-      iconeWidget = SvgPicture.asset(
-        'assets/images/cupom.svg',
-        width: 22,
-        height: 22,
-        fit: BoxFit.contain,
-        colorFilter: const ColorFilter.mode(
-          corTexto,
-          BlendMode.srcIn,
-        ),
-      );
-    } else if (iconeNotificacao == 'agenda.svg') {
-      iconeWidget = SvgPicture.asset(
-        'assets/images/agenda.svg',
-        width: 22,
-        height: 22,
-        fit: BoxFit.contain,
-        colorFilter: const ColorFilter.mode(
-          corTexto,
-          BlendMode.srcIn,
-        ),
-      );
-    } else if (iconeNotificacao == 'confete.svg') {
-      iconeWidget = SvgPicture.asset(
-        'assets/images/confete.svg',
+        'assets/images/$nomeIcone',
         width: 22,
         height: 22,
         fit: BoxFit.contain,
@@ -151,6 +53,7 @@ void showToast(
         ),
       );
     } else {
+      // Mantém o suporte a emojis e símbolos.
       iconeWidget = Text(
         iconeNotificacao,
         style: const TextStyle(
@@ -160,7 +63,8 @@ void showToast(
       );
     }
 
-    // Ações disponíveis nas notificações.
+    // ================= AÇÕES DA NOTIFICAÇÃO =================
+
     final mostrarMeusVales = iconeNotificacao == 'vales_finalizados';
 
     final mostrarIrAoCarrinho = iconeNotificacao == 'carrinho.svg';
@@ -169,6 +73,8 @@ void showToast(
             iconeNotificacao == 'comanda_mesa') &&
         mesa != null &&
         mesa.trim().isNotEmpty;
+
+    // ================= EXIBIR NOTIFICAÇÃO =================
 
     messenger
       ..clearSnackBars()
@@ -190,6 +96,9 @@ void showToast(
               ),
             ],
           ),
+
+          // ================= BOTÕES OPCIONAIS =================
+
           action: mostrarMeusVales
               ? SnackBarAction(
                   label: 'Meus vales-presente',
@@ -225,12 +134,22 @@ void showToast(
                         )
                       : null,
 
-          // Tempo de exibição da notificação.
-          duration: const Duration(milliseconds: 1000),
+          // ================= ESTILO =================
+
+          duration: const Duration(
+            milliseconds: 1000,
+          ),
 
           behavior: SnackBarBehavior.floating,
+
           shape: const StadiumBorder(),
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+
+          margin: const EdgeInsets.fromLTRB(
+            16,
+            0,
+            16,
+            20,
+          ),
         ),
       );
   });

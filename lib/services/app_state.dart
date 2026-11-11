@@ -94,7 +94,10 @@ class AppState extends ChangeNotifier {
     }
     _atualizarOfertasPorValidade();
     _timerOfertas = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (_atualizarOfertasPorValidade()) notifyListeners();
+      final ofertasMudaram = _atualizarOfertasPorValidade();
+      final valesMudaram = _expirarValesVencidos();
+      if (ofertasMudaram || valesMudaram) notifyListeners();
+      if (valesMudaram) _salvarValesAutomaticamente();
     });
   }
 
@@ -103,6 +106,12 @@ class AppState extends ChangeNotifier {
   static const String _chaveUsuarios = 'dvanille_usuarios';
   static const String _chaveOfertas = 'dvanille_ofertas_v1';
   static const String _chaveProdutos = 'dvanille_produtos_v1';
+  static const String _chaveVales = 'dvanille_vales_presente_v1';
+
+  // Metadados dos vales, sem alterar o modelo compartilhado com o site.
+  final Map<String, DateTime> _validadesVales = {};
+  final Map<String, DateTime> _resgatesVales = {};
+  Future<void> _filaSalvamentoVales = Future<void>.value();
 
   final Map<int, OfertaConfigurada> _ofertasConfiguradas = {};
   final Map<int, double> _precosBase = {};
@@ -115,6 +124,7 @@ class AppState extends ChangeNotifier {
     // Produtos primeiro, depois ofertas (que recalculam os preços exibidos).
     await carregarProdutos();
     await _carregarOfertas();
+    await carregarValesPresentes();
     try {
       final preferencias = await SharedPreferences.getInstance();
       final dadosSalvos = preferencias.getString(_chaveUsuarios);
@@ -486,6 +496,17 @@ class AppState extends ChangeNotifier {
 
   bool get isAdmin => usuarioLogado?.isAdmin ?? false;
 
+  // Um administrador pode navegar no site público, mas não pode comprar,
+  // adicionar itens ao carrinho, criar pedidos ou fazer reservas.
+  // Visitantes podem montar o carrinho; o login de cliente segue sendo
+  // exigido pelas telas quando a compra for finalizada.
+  bool get podeComprar => !isAdmin;
+  bool get podeFazerReserva => !isAdmin;
+
+  static const String avisoContaAdministrativa =
+      'Esta é uma conta administrativa. Para comprar ou fazer reservas, '
+      'entre com uma conta de cliente.';
+
   // ----------------- carrinho -----------------
 
   final List<ItemCarrinho> carrinho = [];
@@ -585,7 +606,7 @@ class AppState extends ChangeNotifier {
   List<Produto> get recomendados {
     final usuario = usuarioLogado;
 
-    if (usuario == null || usuario.restricoes.isEmpty) {
+    if (usuario == null || usuario.isAdmin || usuario.restricoes.isEmpty) {
       return [];
     }
 
@@ -765,14 +786,14 @@ class AppState extends ChangeNotifier {
   String? atualizarPerfil({
     required String nome,
     required String email,
-    required String telefone,
-    required String endereco,
+    String? telefone,
+    String? endereco,
     DateTime? dataNascimento,
     bool? notificacoes,
     String? senhaAtual,
     String? novaSenha,
     String? confirmarNovaSenha,
-    required List<String> restricoes,
+    List<String>? restricoes,
   }) {
     final usuario = usuarioLogado;
 
@@ -828,17 +849,23 @@ class AppState extends ChangeNotifier {
 
     usuario
       ..nome = nome.trim()
-      ..email = email.trim()
-      ..telefone = telefone.trim()
-      ..endereco = endereco.trim()
-      ..restricoes = List<String>.from(restricoes);
+      ..email = email.trim();
 
-    if (dataNascimento != null) {
-      usuario.dataNascimento = dataNascimento;
-    }
-
-    if (notificacoes != null) {
-      usuario.notificacoes = notificacoes;
+    // Dados de consumo e restrições alimentares não fazem parte do perfil
+    // administrativo. O formulário do Admin pode usar apenas nome, e-mail e
+    // senha, sem preencher esses campos.
+    if (!usuario.isAdmin) {
+      if (telefone != null) usuario.telefone = telefone.trim();
+      if (endereco != null) usuario.endereco = endereco.trim();
+      if (restricoes != null) {
+        usuario.restricoes = List<String>.from(restricoes);
+      }
+      if (dataNascimento != null) {
+        usuario.dataNascimento = dataNascimento;
+      }
+      if (notificacoes != null) {
+        usuario.notificacoes = notificacoes;
+      }
     }
 
     if (solicitouTrocaSenha) {
@@ -857,6 +884,8 @@ class AppState extends ChangeNotifier {
     Produto produto, {
     int qtd = 1,
   }) {
+    if (!podeComprar) return;
+
     // Confere a validade da promoção antes de colocar o item no carrinho.
     _atualizarOfertasPorValidade();
     final id = '${produto.id}';
@@ -885,6 +914,7 @@ class AppState extends ChangeNotifier {
   }
 
   void adicionarItem(ItemCarrinho item) {
+    if (!podeComprar) return;
     carrinho.add(item);
     notifyListeners();
   }
@@ -893,6 +923,7 @@ class AppState extends ChangeNotifier {
     String id,
     int delta,
   ) {
+    if (!podeComprar) return;
     for (final item in List<ItemCarrinho>.from(carrinho)) {
       if (item.id == id) {
         item.qtd += delta;
@@ -936,6 +967,7 @@ class AppState extends ChangeNotifier {
   /// PRIMEIRACOMPRA exige cliente logado, sem pedidos anteriores
   /// e produtos alimentícios no carrinho.
   bool aplicarCupom(String codigo) {
+    if (!podeComprar) return false;
     final codigoNormalizado = codigo.trim().toUpperCase();
 
     if (!cupons.containsKey(codigoNormalizado)) {
@@ -978,6 +1010,10 @@ class AppState extends ChangeNotifier {
   /// Os vale-presentes permanecem no carrinho e não são
   /// convertidos em itens de pedido.
   Pedido criarPedido(String modo) {
+    if (!podeComprar) {
+      throw StateError(avisoContaAdministrativa);
+    }
+
     // Garante os valores vigentes mesmo na mudança de dia.
     _atualizarOfertasPorValidade();
     final itens = itensProdutos;
@@ -1075,6 +1111,10 @@ class AppState extends ChangeNotifier {
     required String preferencias,
     required String observacoes,
   }) {
+    if (!podeFazerReserva) {
+      throw StateError(avisoContaAdministrativa);
+    }
+
     final reserva = Reserva(
       id: _gerarId('RS'),
       nome: nome,
@@ -1134,21 +1174,227 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  // ================= vale-presentes =================
+  // ================= VALE-PRESENTES PRESENCIAIS =================
 
-  /// Emite um vale-presente ativo.
-  ///
-  /// No fluxo de compra, chame este método somente após a
-  /// confirmação simulada da compra.
+  /// Recupera todos os vales e seus status da mesma origem local dos produtos.
+  /// Uma lista vazia salva significa que todos os registros foram removidos.
+  Future<void> carregarValesPresentes() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final salvo = prefs.getString(_chaveVales);
+      if (salvo == null) {
+        await salvarValesPresentes(); // Preserva os dados de demonstração.
+        return;
+      }
+
+      final registros = jsonDecode(salvo) as List<dynamic>;
+      final carregados = <ValePresente>[];
+      final validades = <String, DateTime>{};
+      final resgates = <String, DateTime>{};
+
+      for (final registro in registros) {
+        final dados = Map<String, dynamic>.from(registro as Map);
+        final vale = ValePresente(
+          id: dados['id']?.toString() ?? '',
+          codigo: dados['codigo']?.toString() ?? '',
+          valor: (dados['valor'] as num?)?.toDouble() ?? 0,
+          destinatario: dados['destinatario']?.toString() ?? '',
+          criadoEm: dados['criadoEm']?.toString() ?? '',
+          compradorEmail: dados['compradorEmail']?.toString() ?? '',
+          mensagem: dados['mensagem']?.toString() ?? '',
+          status: dados['status']?.toString() ?? 'ativo',
+        );
+        carregados.add(vale);
+
+        final validade = DateTime.tryParse(dados['validade']?.toString() ?? '');
+        if (validade != null) validades[vale.id] = validade;
+        final resgate =
+            DateTime.tryParse(dados['resgatadoEm']?.toString() ?? '');
+        if (resgate != null) resgates[vale.id] = resgate;
+      }
+
+      valePresentes
+        ..clear()
+        ..addAll(carregados);
+      _validadesVales
+        ..clear()
+        ..addAll(validades);
+      _resgatesVales
+        ..clear()
+        ..addAll(resgates);
+
+      final expiraram = _expirarValesVencidos();
+      notifyListeners();
+      if (expiraram) _salvarValesAutomaticamente();
+    } catch (e) {
+      debugPrint('Erro ao carregar vales-presente: $e');
+      // Mantém os vales presentes em memória caso o armazenamento falhe.
+    }
+  }
+
+  Future<bool> salvarValesPresentes() async {
+    try {
+      final registros = valePresentes
+          .map((v) => <String, dynamic>{
+                'id': v.id,
+                'codigo': v.codigo,
+                'valor': v.valor,
+                'destinatario': v.destinatario,
+                'criadoEm': v.criadoEm,
+                'compradorEmail': v.compradorEmail,
+                'mensagem': v.mensagem,
+                'status': v.status,
+                'validade': _validadesVales[v.id]?.toIso8601String(),
+                'resgatadoEm': _resgatesVales[v.id]?.toIso8601String(),
+              })
+          .toList();
+      final prefs = await SharedPreferences.getInstance();
+      return await prefs.setString(_chaveVales, jsonEncode(registros));
+    } catch (e) {
+      debugPrint('Erro ao salvar vales-presente: $e');
+      return false;
+    }
+  }
+
+  void _salvarValesAutomaticamente() {
+    // Gravações em sequência evitam que a última compra de um lote seja
+    // sobrescrita por uma gravação antiga iniciada antes dela.
+    _filaSalvamentoVales = _filaSalvamentoVales.then((_) async {
+      final salvo = await salvarValesPresentes();
+      if (!salvo) debugPrint('Falha ao persistir vales-presente no navegador.');
+    });
+  }
+
+  DateTime? validadeValePresente(String id) => _validadesVales[id];
+  DateTime? dataResgateValePresente(String id) => _resgatesVales[id];
+
+  DateTime _somenteData(DateTime data) =>
+      DateTime(data.year, data.month, data.day);
+
+  ValePresente? valePorCodigo(String codigo) {
+    final procurado = codigo.trim().toUpperCase();
+    if (procurado.isEmpty) return null;
+    for (final vale in valePresentes) {
+      if (vale.codigo.trim().toUpperCase() == procurado) return vale;
+    }
+    return null;
+  }
+
+  ValePresente _copiaValeComStatus(ValePresente vale, String status) {
+    return ValePresente(
+      id: vale.id,
+      codigo: vale.codigo,
+      valor: vale.valor,
+      destinatario: vale.destinatario,
+      criadoEm: vale.criadoEm,
+      compradorEmail: vale.compradorEmail,
+      mensagem: vale.mensagem,
+      status: status,
+    );
+  }
+
+  /// Atualiza apenas vales ativos com validade no passado.
+  /// O prazo é inclusivo: um vale válido em 11/11 pode ser usado até
+  /// o fim do dia 11/11, e expira em 12/11.
+  bool _expirarValesVencidos() {
+    final hoje = _somenteData(DateTime.now());
+    var alterou = false;
+    for (var i = 0; i < valePresentes.length; i++) {
+      final vale = valePresentes[i];
+      final validade = _validadesVales[vale.id];
+      if (vale.status == 'ativo' &&
+          validade != null &&
+          _somenteData(validade).isBefore(hoje)) {
+        valePresentes[i] = _copiaValeComStatus(vale, 'expirado');
+        alterou = true;
+      }
+    }
+    return alterou;
+  }
+
+  /// Define uma validade opcional; sem data o vale não expira automaticamente.
+  /// Somente vales ativos podem ter a validade alterada.
+  String? definirValidadeValePresente(String id, DateTime? validade) {
+    if (!isAdmin) return 'Acesso permitido somente a administradores.';
+    final indice = valePresentes.indexWhere((v) => v.id == id);
+    if (indice < 0) return 'Vale-presente não encontrado.';
+    if (valePresentes[indice].status != 'ativo') {
+      return 'Só é possível alterar a validade de um vale ativo.';
+    }
+    if (validade != null &&
+        _somenteData(validade).isBefore(_somenteData(DateTime.now()))) {
+      return 'Escolha uma data de hoje em diante.';
+    }
+    if (validade == null) {
+      _validadesVales.remove(id);
+    } else {
+      _validadesVales[id] = _somenteData(validade);
+    }
+    notifyListeners();
+    _salvarValesAutomaticamente();
+    return null;
+  }
+
+  /// A cafeteria recebe o código presencialmente e o marca como UTILIZADO.
+  /// A utilização é única e não há saldo restante, mesmo em compra menor.
+  /// Retorna null em caso de sucesso; caso contrário, a mensagem do problema.
+  String? resgatarValePresente(String codigo) {
+    if (!isAdmin) return 'Somente o administrador pode validar o resgate.';
+    if (_expirarValesVencidos()) {
+      notifyListeners();
+      _salvarValesAutomaticamente();
+    }
+    final vale = valePorCodigo(codigo);
+    if (vale == null) return 'Código não encontrado.';
+    if (vale.status == 'utilizado') return 'Este vale já foi utilizado.';
+    if (vale.status == 'expirado') return 'Este vale está expirado.';
+    if (vale.status == 'cancelado') return 'Este vale foi cancelado.';
+    if (vale.status != 'ativo') return 'Este vale não pode ser utilizado.';
+
+    final indice = valePresentes.indexWhere((v) => v.id == vale.id);
+    valePresentes[indice] = _copiaValeComStatus(vale, 'utilizado');
+    _resgatesVales[vale.id] = DateTime.now();
+    notifyListeners();
+    _salvarValesAutomaticamente();
+    return null;
+  }
+
+  String? cancelarValePresente(String id) {
+    if (!isAdmin) return 'Acesso permitido somente a administradores.';
+    final indice = valePresentes.indexWhere((v) => v.id == id);
+    if (indice < 0) return 'Vale-presente não encontrado.';
+    final vale = valePresentes[indice];
+    if (vale.status != 'ativo') {
+      return 'Somente vales ativos podem ser cancelados.';
+    }
+    valePresentes[indice] = _copiaValeComStatus(vale, 'cancelado');
+    notifyListeners();
+    _salvarValesAutomaticamente();
+    return null;
+  }
+
+  String _gerarCodigoVale() {
+    String codigo;
+    do {
+      codigo = 'DVAN-${1000 + _rand.nextInt(9000)}-GIFT';
+    } while (valePorCodigo(codigo) != null);
+    return codigo;
+  }
+
+  /// Emite um vale para apresentação exclusivamente na cafeteria física.
   ValePresente emitirValePresente({
     required double valor,
     required String destinatario,
     required String mensagem,
   }) {
+    if (!podeComprar) {
+      throw StateError(avisoContaAdministrativa);
+    }
+
     final vale = ValePresente(
       id: _gerarId('VP'),
       valor: valor,
-      codigo: 'DVAN-${1000 + _rand.nextInt(9000)}-GIFT',
+      codigo: _gerarCodigoVale(),
       status: 'ativo',
       criadoEm: _formatarData(DateTime.now()),
       destinatario: destinatario,
@@ -1158,49 +1404,43 @@ class AppState extends ChangeNotifier {
 
     valePresentes.add(vale);
     notifyListeners();
-
+    _salvarValesAutomaticamente();
     return vale;
   }
 
-  /// Confirma a compra dos vale-presentes atualmente no carrinho.
-  ///
-  /// Deve ser chamado somente depois da confirmação simulada
-  /// da compra. Produtos alimentícios não são removidos.
+  /// Confirma a compra dos vales, sem remover alimentos do carrinho.
   List<ValePresente> confirmarCompraValePresentes() {
+    if (!podeComprar) return [];
+
     final itens = itensValePresentes;
+    if (itens.isEmpty) return [];
 
-    if (itens.isEmpty) {
-      return [];
-    }
-
-    final valesEmitidos = <ValePresente>[];
-
+    final emitidos = <ValePresente>[];
     for (final item in itens) {
       for (var i = 0; i < item.qtd; i++) {
-        final vale = emitirValePresente(
+        emitidos.add(emitirValePresente(
           valor: item.preco,
           destinatario: item.destinatario,
           mensagem: item.mensagem,
-        );
-
-        valesEmitidos.add(vale);
+        ));
       }
     }
 
     final idsVales = itens.map((item) => item.id).toSet();
-
     carrinho.removeWhere((item) => idsVales.contains(item.id));
-
     cupomAplicado = null;
-
     notifyListeners();
-
-    return valesEmitidos;
+    return emitidos;
   }
 
+  /// Mantido para compatibilidade com a página administrativa existente.
+  /// Recomenda-se cancelar em vez de excluir, para preservar o histórico.
   void excluirValePresente(String id) {
     valePresentes.removeWhere((vale) => vale.id == id);
+    _validadesVales.remove(id);
+    _resgatesVales.remove(id);
     notifyListeners();
+    _salvarValesAutomaticamente();
   }
 
   // ================= acessibilidade =================
