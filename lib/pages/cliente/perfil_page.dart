@@ -159,9 +159,14 @@ class _PerfilPageState extends State<PerfilPage> {
       return;
     }
 
-    if (nome.text.trim().isEmpty ||
-        email.text.trim().isEmpty ||
-        telefone.text.trim().isEmpty) {
+    final isAdmin = state.isAdmin;
+
+    if (nome.text.trim().isEmpty || email.text.trim().isEmpty) {
+      _mostrarMensagem('Preencha nome e e-mail.');
+      return;
+    }
+
+    if (!isAdmin && telefone.text.trim().isEmpty) {
       _mostrarMensagem('Preencha nome, e-mail e telefone.');
       return;
     }
@@ -173,7 +178,7 @@ class _PerfilPageState extends State<PerfilPage> {
       return;
     }
 
-    if (dataNascimentoSelecionada == null) {
+    if (!isAdmin && dataNascimentoSelecionada == null) {
       _mostrarMensagem('Selecione sua data de nascimento completa.');
       return;
     }
@@ -232,14 +237,15 @@ class _PerfilPageState extends State<PerfilPage> {
     final erro = state.atualizarPerfil(
       nome: nome.text.trim(),
       email: email.text.trim(),
-      telefone: telefone.text.trim(),
-      endereco: endereco.text.trim(),
-      dataNascimento: dataNascimentoSelecionada,
-      notificacoes: notificacoes,
+      // Dados de consumo só são enviados para contas de clientes.
+      telefone: isAdmin ? null : telefone.text.trim(),
+      endereco: isAdmin ? null : endereco.text.trim(),
+      dataNascimento: isAdmin ? null : dataNascimentoSelecionada,
+      notificacoes: isAdmin ? null : notificacoes,
       senhaAtual: solicitouTrocaSenha ? senhaAtual.text : null,
       novaSenha: solicitouTrocaSenha ? novaSenha.text : null,
       confirmarNovaSenha: solicitouTrocaSenha ? confirmarSenha.text : null,
-      restricoes: restricoes.toList(),
+      restricoes: isAdmin ? null : restricoes.toList(),
     );
 
     if (erro != null) {
@@ -405,9 +411,9 @@ class _PerfilPageState extends State<PerfilPage> {
     }
 
     return PageShell(
-      // Administradores não exibem o cabeçalho nem o rodapé públicos.
-      mostrarCabecalho: !isAdmin,
-      mostrarRodape: !isAdmin,
+      // O perfil usa o mesmo cabeçalho e rodapé públicos para os dois tipos
+      // de conta. O painel administrativo continua usando o AdminShell.
+      activeRoute: Routes.perfil,
       child: Column(
         children: [
           const SizedBox(height: 56),
@@ -428,7 +434,7 @@ class _PerfilPageState extends State<PerfilPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Minha conta',
+                  isAdmin ? 'Conta administrativa' : 'Minha conta',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 24,
@@ -460,7 +466,7 @@ class _PerfilPageState extends State<PerfilPage> {
                   ],
 
                   // DADOS PESSOAIS
-                  _tituloSecao('Dados pessoais'),
+                  _tituloSecao(isAdmin ? 'Dados da conta' : 'Dados pessoais'),
                   const SizedBox(height: 14),
 
                   _linha(estreito, [
@@ -472,37 +478,36 @@ class _PerfilPageState extends State<PerfilPage> {
                     ),
                   ]),
 
-                  const SizedBox(height: 14),
-
-                  _linha(estreito, [
-                    _campo(
-                      telefone,
-                      'Telefone *',
-                      tipo: TextInputType.phone,
-                    ),
+                  if (!isAdmin) ...[
+                    const SizedBox(height: 14),
+                    _linha(estreito, [
+                      _campo(
+                        telefone,
+                        'Telefone *',
+                        tipo: TextInputType.phone,
+                      ),
+                      TextField(
+                        controller: dataNascimento,
+                        readOnly: true,
+                        onTap: _selecionarDataNascimento,
+                        style: TextStyle(color: corTexto),
+                        decoration: const InputDecoration(
+                          labelText: 'Data de nascimento *',
+                          hintText: 'dd/mm/aaaa',
+                          suffixIcon: Icon(Icons.calendar_month),
+                        ),
+                      ),
+                    ]),
+                    const SizedBox(height: 14),
                     TextField(
-                      controller: dataNascimento,
-                      readOnly: true,
-                      onTap: _selecionarDataNascimento,
+                      controller: endereco,
                       style: TextStyle(color: corTexto),
                       decoration: const InputDecoration(
-                        labelText: 'Data de nascimento *',
-                        hintText: 'dd/mm/aaaa',
-                        suffixIcon: Icon(Icons.calendar_month),
+                        labelText: 'Endereço',
+                        hintText: 'Informe seu endereço',
                       ),
                     ),
-                  ]),
-
-                  const SizedBox(height: 14),
-
-                  TextField(
-                    controller: endereco,
-                    style: TextStyle(color: corTexto),
-                    decoration: const InputDecoration(
-                      labelText: 'Endereço',
-                      hintText: 'Informe seu endereço',
-                    ),
-                  ),
+                  ],
 
                   const SizedBox(height: 24),
 
@@ -566,87 +571,89 @@ class _PerfilPageState extends State<PerfilPage> {
 
                   const SizedBox(height: 24),
 
-                  // RESTRIÇÕES ALIMENTARES
-                  _tituloSecao('Restrições alimentares'),
-                  const SizedBox(height: 8),
+                  if (!isAdmin) ...[
+                    // RESTRIÇÕES ALIMENTARES
+                    _tituloSecao('Restrições alimentares'),
+                    const SizedBox(height: 8),
 
-                  _textoAuxiliar(
-                    'Selecione todas as opções que se aplicam a você.',
-                  ),
+                    _textoAuxiliar(
+                      'Selecione todas as opções que se aplicam a você.',
+                    ),
 
-                  const SizedBox(height: 10),
+                    const SizedBox(height: 10),
 
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: labelsRestricoes.entries.map((e) {
-                      final ativo = restricoes.contains(e.key);
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: labelsRestricoes.entries.map((e) {
+                        final ativo = restricoes.contains(e.key);
 
-                      return FilterChip(
-                        label: Text(e.value),
-                        selected: ativo,
-                        selectedColor: corChipSelecionado,
-                        checkmarkColor: corCheck,
-                        labelStyle: TextStyle(
-                          color: ativo ? corTexto : corTextoSecundario,
-                        ),
-                        side: BorderSide(
-                          color: isDark
-                              ? DVanilleColors.darkBorder
-                              : DVanilleColors.line,
-                        ),
-                        onSelected: (valor) {
-                          setState(() {
-                            if (valor) {
-                              if (e.key == 'nenhuma') {
-                                restricoes
-                                  ..clear()
-                                  ..add('nenhuma');
+                        return FilterChip(
+                          label: Text(e.value),
+                          selected: ativo,
+                          selectedColor: corChipSelecionado,
+                          checkmarkColor: corCheck,
+                          labelStyle: TextStyle(
+                            color: ativo ? corTexto : corTextoSecundario,
+                          ),
+                          side: BorderSide(
+                            color: isDark
+                                ? DVanilleColors.darkBorder
+                                : DVanilleColors.line,
+                          ),
+                          onSelected: (valor) {
+                            setState(() {
+                              if (valor) {
+                                if (e.key == 'nenhuma') {
+                                  restricoes
+                                    ..clear()
+                                    ..add('nenhuma');
+                                } else {
+                                  restricoes
+                                    ..remove('nenhuma')
+                                    ..add(e.key);
+                                }
                               } else {
-                                restricoes
-                                  ..remove('nenhuma')
-                                  ..add(e.key);
+                                restricoes.remove(e.key);
                               }
-                            } else {
-                              restricoes.remove(e.key);
-                            }
 
-                            mensagem = null;
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ),
+                              mensagem = null;
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                  // PREFERÊNCIAS
-                  _tituloSecao('Preferências'),
-                  const SizedBox(height: 8),
+                    // PREFERÊNCIAS
+                    _tituloSecao('Preferências'),
+                    const SizedBox(height: 8),
 
-                  CheckboxListTile(
-                    value: notificacoes,
-                    onChanged: (valor) {
-                      setState(() {
-                        notificacoes = valor ?? false;
-                        mensagem = null;
-                      });
-                    },
-                    controlAffinity: ListTileControlAffinity.leading,
-                    contentPadding: EdgeInsets.zero,
-                    activeColor: corCheck,
-                    checkColor:
-                        isDark ? DVanilleColors.darkCream : Colors.white,
-                    title: Text(
-                      'Desejo receber notificações de ofertas e novidades',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: corTexto,
+                    CheckboxListTile(
+                      value: notificacoes,
+                      onChanged: (valor) {
+                        setState(() {
+                          notificacoes = valor ?? false;
+                          mensagem = null;
+                        });
+                      },
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                      activeColor: corCheck,
+                      checkColor:
+                          isDark ? DVanilleColors.darkCream : Colors.white,
+                      title: Text(
+                        'Desejo receber notificações de ofertas e novidades',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: corTexto,
+                        ),
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
+                  ],
 
                   Divider(
                     color: isDark
@@ -662,15 +669,16 @@ class _PerfilPageState extends State<PerfilPage> {
 
                   _informacao(
                     'Tipo de conta',
-                    usuario?.tipo == 'admin' ? 'Administrador' : 'Cliente',
+                    isAdmin ? 'Administrador' : 'Cliente',
                   ),
 
-                  _informacao(
-                    'Data de nascimento',
-                    dataNascimento.text.isEmpty
-                        ? 'Não informada'
-                        : dataNascimento.text,
-                  ),
+                  if (!isAdmin)
+                    _informacao(
+                      'Data de nascimento',
+                      dataNascimento.text.isEmpty
+                          ? 'Não informada'
+                          : dataNascimento.text,
+                    ),
 
                   const SizedBox(height: 24),
 
@@ -683,20 +691,32 @@ class _PerfilPageState extends State<PerfilPage> {
                         onPressed: _salvar,
                         child: const Text('Salvar alterações'),
                       ),
-                      OutlinedButton(
-                        onPressed: () => Navigator.pushNamed(
-                          context,
-                          Routes.meusValesPresente,
+                      if (!isAdmin) ...[
+                        OutlinedButton(
+                          onPressed: () => Navigator.pushNamed(
+                            context,
+                            Routes.meusValesPresente,
+                          ),
+                          child: const Text('Meus vales-presente'),
                         ),
-                        child: const Text('Meus vales-presente'),
-                      ),
-                      OutlinedButton(
-                        onPressed: () => Navigator.pushNamed(
-                          context,
-                          Routes.minhasReservas,
+                        OutlinedButton(
+                          onPressed: () => Navigator.pushNamed(
+                            context,
+                            Routes.minhasReservas,
+                          ),
+                          child: const Text('Minhas reservas'),
                         ),
-                        child: const Text('Minhas reservas'),
-                      ),
+                      ],
+                      if (isAdmin)
+                        OutlinedButton.icon(
+                          onPressed: () =>
+                              Navigator.of(context).pushNamedAndRemoveUntil(
+                            Routes.admin,
+                            (r) => false,
+                          ),
+                          icon: const Icon(Icons.admin_panel_settings_outlined),
+                          label: const Text('Voltar ao painel Admin'),
+                        ),
                       TextButton(
                         onPressed: () {
                           state.logout();

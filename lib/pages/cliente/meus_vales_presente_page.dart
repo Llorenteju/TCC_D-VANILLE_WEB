@@ -15,6 +15,70 @@ import '../../widgets/ui_kit.dart';
 class MeusValesPresentePage extends StatelessWidget {
   const MeusValesPresentePage({super.key});
 
+  String _statusEfetivo(ValePresente vale, AppState state) {
+    final status = vale.status.trim().toLowerCase();
+    if (status == 'usado') return 'utilizado';
+
+    // Mostra a data vencida imediatamente, mesmo antes da rotina
+    // periódica de expiração atualizar o AppState.
+    if (status == 'ativo') {
+      final validade = state.validadeValePresente(vale.id);
+      if (validade != null) {
+        final hoje = DateTime.now();
+        final somenteHoje = DateTime(hoje.year, hoje.month, hoje.day);
+        final somenteValidade =
+            DateTime(validade.year, validade.month, validade.day);
+        if (somenteValidade.isBefore(somenteHoje)) return 'expirado';
+      }
+    }
+    return status;
+  }
+
+  String _nomeStatus(String status) {
+    switch (status) {
+      case 'ativo':
+        return 'Ativo';
+      case 'utilizado':
+        return 'Utilizado';
+      case 'expirado':
+        return 'Expirado';
+      case 'cancelado':
+        return 'Cancelado';
+      default:
+        return 'Indisponível';
+    }
+  }
+
+  Color _corStatus(String status) {
+    switch (status) {
+      case 'ativo':
+        return const Color(0xFF467D56);
+      case 'utilizado':
+        return const Color(0xFF5D759A);
+      case 'expirado':
+        return const Color(0xFFB17835);
+      case 'cancelado':
+        return const Color(0xFFB5473F);
+      default:
+        return DVanilleColors.taupe;
+    }
+  }
+
+  String _formatarData(DateTime data) {
+    String dois(int numero) => numero.toString().padLeft(2, '0');
+    return '${dois(data.day)}/${dois(data.month)}/${data.year}';
+  }
+
+  String _formatarDataHora(DateTime data) {
+    String dois(int numero) => numero.toString().padLeft(2, '0');
+    return '${_formatarData(data)} às ${dois(data.hour)}:${dois(data.minute)}';
+  }
+
+  String _formatarDataCompra(String data) {
+    final valor = DateTime.tryParse(data.trim());
+    return valor == null ? data : _formatarData(valor);
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = AppState.instance;
@@ -24,22 +88,20 @@ class MeusValesPresentePage extends StatelessWidget {
         listenable: state,
         builder: (context, _) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
-
           final corTexto =
               isDark ? DVanilleColors.darkInk : DVanilleColors.darkTaupe;
-
           final corTextoSecundario =
               isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.taupe;
 
           final usuario = state.usuarioLogado;
           final email = usuario?.email.trim().toLowerCase() ?? '';
-
           final vales = email.isEmpty
               ? <ValePresente>[]
               : state.valePresentes.where((vale) {
                   return vale.compradorEmail.trim().toLowerCase() == email;
-                }).toList()
-            ..sort((a, b) => b.criadoEm.compareTo(a.criadoEm));
+                }).toList();
+
+          vales.sort((a, b) => b.criadoEm.compareTo(a.criadoEm));
 
           return Column(
             children: [
@@ -59,7 +121,7 @@ class MeusValesPresentePage extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Seus presentes especiais, reunidos em um só lugar.',
+                      'Consulte o código, a validade e a situação de seus presentes.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 15,
@@ -87,11 +149,22 @@ class MeusValesPresentePage extends StatelessWidget {
                               color: corTexto,
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Os vales são aceitos apenas presencialmente na '
+                            'cafeteria, em uma única compra e sem saldo restante.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              height: 1.45,
+                              color: corTextoSecundario,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
                           for (final vale in vales) ...[
                             _cartaoVale(
                               context,
                               vale,
+                              state,
                               isDark,
                               corTexto,
                               corTextoSecundario,
@@ -136,7 +209,7 @@ class MeusValesPresentePage extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             'Quando você comprar um vale-presente, ele aparecerá aqui '
-            'com seu código e seus detalhes.',
+            'com seu código, status e validade.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: isDark
@@ -159,17 +232,21 @@ class MeusValesPresentePage extends StatelessWidget {
   Widget _cartaoVale(
     BuildContext context,
     ValePresente vale,
+    AppState state,
     bool isDark,
     Color corTexto,
     Color corTextoSecundario,
   ) {
-    final usado = vale.status.toLowerCase() == 'usado';
+    final status = _statusEfetivo(vale, state);
+    final ativo = status == 'ativo';
+    final validade = state.validadeValePresente(vale.id);
+    final resgatadoEm = state.dataResgateValePresente(vale.id);
 
     final corFundoCodigo = isDark
         ? DVanilleColors.darkSurface
         : DVanilleColors.blush.withValues(alpha: 0.35);
-
     final corBorda = isDark ? DVanilleColors.darkBorder : DVanilleColors.line;
+    final corSituacao = _corStatus(status);
 
     return InfoBox(
       padding: const EdgeInsets.all(22),
@@ -210,30 +287,19 @@ class MeusValesPresentePage extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: usado
-                      ? Colors.grey.withValues(alpha: 0.15)
-                      : isDark
-                          ? DVanilleColors.darkSurface
-                          : DVanilleColors.blush,
+                  color: corSituacao.withValues(alpha: isDark ? 0.20 : 0.12),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: usado ? corBorda : DVanilleColors.rose,
-                  ),
+                  border: Border.all(color: corSituacao),
                 ),
                 child: Text(
-                  usado ? 'Utilizado' : 'Ativo',
+                  _nomeStatus(status),
                   style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: usado
-                        ? corTextoSecundario
-                        : isDark
-                            ? DVanilleColors.darkRose
-                            : DVanilleColors.darkTaupe,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    color: isDark ? Colors.white : corSituacao,
                   ),
                 ),
               ),
@@ -273,12 +339,9 @@ class MeusValesPresentePage extends StatelessWidget {
                 IconButton(
                   tooltip: 'Copiar código',
                   onPressed: () async {
-                    await Clipboard.setData(
-                      ClipboardData(text: vale.codigo),
-                    );
-
+                    await Clipboard.setData(ClipboardData(text: vale.codigo));
                     if (context.mounted) {
-                      showToast('Código copiado!', '✓');
+                      showToast('Código copiado!', 'copiar.svg');
                     }
                   },
                   icon: Icon(
@@ -293,10 +356,58 @@ class MeusValesPresentePage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _detalhe('Destinatário', vale.destinatario, corTexto),
-          _detalhe('Data da compra', vale.criadoEm, corTexto),
+          _detalhe(
+              'Data da compra', _formatarDataCompra(vale.criadoEm), corTexto),
+          _detalhe(
+            'Validade',
+            validade == null
+                ? 'Não definida'
+                : 'Até ${_formatarData(validade)}',
+            corTexto,
+          ),
+          if (resgatadoEm != null)
+            _detalhe('Resgatado em', _formatarDataHora(resgatadoEm), corTexto),
           if (vale.mensagem.trim().isNotEmpty)
             _detalhe('Mensagem', vale.mensagem, corTexto),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: isDark ? DVanilleColors.darkSurface : DVanilleColors.cream,
+              border: Border.all(color: corBorda),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  ativo
+                      ? Icons.storefront_outlined
+                      : Icons.info_outline_rounded,
+                  color: ativo ? DVanilleColors.rose : corSituacao,
+                  size: 20,
+                ),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Text(
+                    ativo
+                        ? 'Apresente o código na cafeteria física. '
+                            'Uso único, sem saldo restante. '
+                            'Não é válido para pedidos no site ou aplicativo.'
+                        : 'Este vale está ${_nomeStatus(status).toLowerCase()} '
+                            'e não pode ser resgatado novamente.',
+                    style: TextStyle(
+                      color: corTextoSecundario,
+                      fontSize: 13,
+                      height: 1.45,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
           Align(
             alignment: Alignment.centerRight,
             child: FilledButton.icon(
@@ -311,9 +422,7 @@ class MeusValesPresentePage extends StatelessWidget {
   }
 
   Widget _detalhe(String titulo, String valor, Color corTexto) {
-    if (valor.trim().isEmpty) {
-      return const SizedBox.shrink();
-    }
+    if (valor.trim().isEmpty) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -346,6 +455,12 @@ class MeusValesPresentePage extends StatelessWidget {
     ValePresente vale,
   ) async {
     try {
+      // Consulta o estado atual antes de preparar o PDF.
+      final state = AppState.instance;
+      final status = _statusEfetivo(vale, state);
+      final validade = state.validadeValePresente(vale.id);
+      final resgatadoEm = state.dataResgateValePresente(vale.id);
+
       final documento = pw.Document();
 
       final fonteNormal = pw.Font.helvetica();
@@ -423,7 +538,16 @@ class MeusValesPresentePage extends StatelessWidget {
                         color: corRose,
                       ),
                     ),
-                    pw.SizedBox(height: 24),
+                    pw.SizedBox(height: 10),
+                    pw.Text(
+                      'STATUS: ${_nomeStatus(status).toUpperCase()}',
+                      style: pw.TextStyle(
+                        font: fonteNegrito,
+                        fontSize: 12,
+                        color: corTaupe,
+                      ),
+                    ),
+                    pw.SizedBox(height: 20),
                     pw.Container(
                       width: double.infinity,
                       padding: const pw.EdgeInsets.all(18),
@@ -498,7 +622,7 @@ class MeusValesPresentePage extends StatelessWidget {
                       pw.SizedBox(height: 18),
                     ],
                     pw.Text(
-                      'Data da compra: ${vale.criadoEm}',
+                      'Data da compra: ${_formatarDataCompra(vale.criadoEm)}',
                       textAlign: pw.TextAlign.center,
                       style: pw.TextStyle(
                         font: fonteNormal,
@@ -506,7 +630,54 @@ class MeusValesPresentePage extends StatelessWidget {
                         color: corTaupe,
                       ),
                     ),
-                    pw.SizedBox(height: 20),
+                    pw.SizedBox(height: 6),
+                    pw.Text(
+                      validade == null
+                          ? 'Validade não definida'
+                          : 'Válido até ${_formatarData(validade)}',
+                      textAlign: pw.TextAlign.center,
+                      style: pw.TextStyle(
+                        font: fonteNegrito,
+                        fontSize: 10,
+                        color: corTaupe,
+                      ),
+                    ),
+                    if (resgatadoEm != null) ...[
+                      pw.SizedBox(height: 6),
+                      pw.Text(
+                        'Resgatado em ${_formatarDataHora(resgatadoEm)}',
+                        textAlign: pw.TextAlign.center,
+                        style: pw.TextStyle(
+                          font: fonteNormal,
+                          fontSize: 10,
+                          color: corTaupe,
+                        ),
+                      ),
+                    ],
+                    pw.SizedBox(height: 15),
+                    pw.Text(
+                      status == 'ativo'
+                          ? "Apresente este código na cafeteria física D'Vanille."
+                          : 'Este vale não está disponível para resgate.',
+                      textAlign: pw.TextAlign.center,
+                      style: pw.TextStyle(
+                        font: fonteNegrito,
+                        fontSize: 10,
+                        color: corTexto,
+                      ),
+                    ),
+                    pw.SizedBox(height: 7),
+                    pw.Text(
+                      'Uso exclusivamente presencial e único; '
+                      'sem saldo restante. Não válido no site ou aplicativo.',
+                      textAlign: pw.TextAlign.center,
+                      style: pw.TextStyle(
+                        font: fonteNormal,
+                        fontSize: 9,
+                        color: corTaupe,
+                      ),
+                    ),
+                    pw.SizedBox(height: 16),
                     pw.Text(
                       'Um momento doce merece ser compartilhado.',
                       textAlign: pw.TextAlign.center,

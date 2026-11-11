@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/app.dart';
+import '../../models/produto.dart';
 import '../../services/app_state.dart';
 import '../../theme/app_theme.dart';
 import 'admin_shell.dart';
@@ -24,268 +25,68 @@ class _AdminOfertasPageState extends State<AdminOfertasPage> {
 
   void _mensagem(String mensagem) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensagem)),
-    );
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(mensagem)));
   }
 
   Future<void> _abrirFormulario({OfertaConfigurada? editando}) async {
     final state = AppState.instance;
-    final disponiveis = state.produtos.where((produto) {
-      return editando != null
-          ? produto.id == editando.produtoId
-          : state.ofertaPorProduto(produto.id) == null;
-    }).toList();
+    // Busca diretamente no AppState, incluindo produtos novos criados no Admin.
+    // Os que já têm oferta permanecem VISÍVEIS no seletor, mas não podem
+    // receber outra oferta pelo botão "Nova oferta".
+    final produtosCadastrados = List<Produto>.from(state.produtos)
+      ..sort((a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()));
 
-    if (disponiveis.isEmpty) {
-      _mensagem('Não há produtos disponíveis para uma nova oferta.');
+    if (editando != null &&
+        !produtosCadastrados.any((p) => p.id == editando.produtoId)) {
+      _mensagem('O produto desta oferta não foi encontrado.');
       return;
     }
 
-    var produtoId = editando?.produtoId ?? disponiveis.first.id;
-    DateTime? inicio = editando?.inicio;
-    DateTime? fim = editando?.fim;
-    final percentualController = TextEditingController(
-      text: editando == null
-          ? '15'
-          : editando.percentual.toStringAsFixed(1).replaceAll('.', ','),
-    );
-    final chaveFormulario = GlobalKey<FormState>();
+    if (produtosCadastrados.isEmpty) {
+      _mensagem('Nenhum produto cadastrado. Cadastre um produto primeiro.');
+      return;
+    }
 
-    await showDialog<void>(
+    if (editando == null &&
+        !produtosCadastrados.any(
+          (produto) => state.ofertaPorProduto(produto.id) == null,
+        )) {
+      _mensagem(
+        'Todos os produtos já possuem uma oferta. Edite ou encerre uma oferta existente.',
+      );
+      return;
+    }
+
+    // O diálogo devolve somente os dados. A alteração no AppState
+    // é feita após o fechamento, evitando reconstruir a página
+    // administrativa enquanto o formulário ainda está aberto.
+    final resultado = await showDialog<_DadosOferta>(
       context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (dialogContext, atualizarDialogo) {
-            final precoOriginal = state.precoOriginalProduto(produtoId);
-            final percentual = double.tryParse(
-              percentualController.text.trim().replaceAll(',', '.'),
-            );
-            final precoPromocional = percentual == null ||
-                    percentual <= 0 ||
-                    percentual >= 100
-                ? null
-                : (precoOriginal * (1 - percentual / 100) * 100).round() /
-                    100;
-
-            Future<void> escolherData({required bool inicial}) async {
-              final hoje = DateTime.now();
-              final atual = inicial ? inicio : fim;
-              final escolhida = await showDatePicker(
-                context: dialogContext,
-                initialDate: atual ?? hoje,
-                firstDate: DateTime(2020),
-                lastDate: DateTime(2100),
-                locale: const Locale('pt', 'BR'),
-              );
-              if (escolhida != null && dialogContext.mounted) {
-                atualizarDialogo(() {
-                  if (inicial) {
-                    inicio = escolhida;
-                  } else {
-                    fim = escolhida;
-                  }
-                });
-              }
-            }
-
-            return AlertDialog(
-              title: Text(
-                editando == null ? 'Nova oferta' : 'Editar oferta',
-                style: const TextStyle(
-                  fontFamily: 'CreamCake',
-                  fontSize: 34,
-                  color: DVanilleColors.darkTaupe,
-                ),
-              ),
-              content: SizedBox(
-                width: 480,
-                child: SingleChildScrollView(
-                  child: Form(
-                    key: chaveFormulario,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        DropdownButtonFormField<int>(
-                          initialValue: produtoId,
-                          isExpanded: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Produto',
-                            border: OutlineInputBorder(),
-                          ),
-                          items: disponiveis.map((produto) {
-                            return DropdownMenuItem<int>(
-                              value: produto.id,
-                              child: Text(
-                                produto.nome,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: editando != null
-                              ? null
-                              : (valor) {
-                                  if (valor != null) {
-                                    atualizarDialogo(() => produtoId = valor);
-                                  }
-                                },
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: percentualController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          decoration: const InputDecoration(
-                            labelText: 'Desconto (%)',
-                            hintText: 'Ex.: 15',
-                            border: OutlineInputBorder(),
-                            suffixText: '%',
-                          ),
-                          onChanged: (_) => atualizarDialogo(() {}),
-                          validator: (valor) {
-                            final numero = double.tryParse(
-                              (valor ?? '').trim().replaceAll(',', '.'),
-                            );
-                            if (numero == null ||
-                                !numero.isFinite ||
-                                numero <= 0 ||
-                                numero >= 100) {
-                              return 'Informe um percentual entre 0 e 100.';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: Theme.of(dialogContext)
-                                .colorScheme
-                                .surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Preço original: ${money(precoOriginal)}'),
-                              const SizedBox(height: 5),
-                              Text(
-                                'Preço com desconto: '
-                                '${precoPromocional == null ? '—' : money(precoPromocional)}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  color: DVanilleColors.rose,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Validade da promoção (opcional)',
-                          style: TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: 8),
-                        _campoData(
-                          rotulo: 'Início',
-                          valor: _data(inicio),
-                          aoEscolher: () => escolherData(inicial: true),
-                          aoLimpar: inicio == null
-                              ? null
-                              : () => atualizarDialogo(() => inicio = null),
-                        ),
-                        const SizedBox(height: 8),
-                        _campoData(
-                          rotulo: 'Término',
-                          valor: _data(fim),
-                          aoEscolher: () => escolherData(inicial: false),
-                          aoLimpar: fim == null
-                              ? null
-                              : () => atualizarDialogo(() => fim = null),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Sem datas, a oferta permanece ativa até ser encerrada.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(dialogContext)
-                                .colorScheme
-                                .onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Cancelar'),
-                ),
-                FilledButton(
-                  onPressed: () {
-                    if (!chaveFormulario.currentState!.validate()) return;
-                    final percentual = double.parse(
-                      percentualController.text.trim().replaceAll(',', '.'),
-                    );
-                    final erro = state.salvarOferta(
-                      produtoId: produtoId,
-                      percentual: percentual,
-                      inicio: inicio,
-                      fim: fim,
-                    );
-                    if (erro != null) {
-                      _mensagem(erro);
-                      return;
-                    }
-                    Navigator.pop(dialogContext);
-                    _mensagem('Oferta salva com sucesso!');
-                  },
-                  child: const Text('Salvar oferta'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (dialogContext) => _FormularioOfertaDialog(
+        produtos: produtosCadastrados,
+        editando: editando,
+        precoOriginal: state.precoOriginalProduto,
+        possuiOferta: (produtoId) => state.ofertaPorProduto(produtoId) != null,
+      ),
     );
-    percentualController.dispose();
-  }
 
-  Widget _campoData({
-    required String rotulo,
-    required String valor,
-    required VoidCallback aoEscolher,
-    VoidCallback? aoLimpar,
-  }) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 70,
-          child: Text(
-            rotulo,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-        ),
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: aoEscolher,
-            icon: const Icon(Icons.calendar_month_outlined, size: 18),
-            label: Text(valor),
-          ),
-        ),
-        if (aoLimpar != null)
-          IconButton(
-            tooltip: 'Limpar data',
-            onPressed: aoLimpar,
-            icon: const Icon(Icons.close, size: 18),
-          ),
-      ],
+    if (!mounted || resultado == null) return;
+
+    final erro = state.salvarOferta(
+      produtoId: resultado.produtoId,
+      percentual: resultado.percentual,
+      inicio: resultado.inicio,
+      fim: resultado.fim,
     );
+
+    if (erro != null) {
+      _mensagem(erro);
+      return;
+    }
+
+    _mensagem('Oferta salva com sucesso!');
   }
 
   Future<void> _encerrarOferta(OfertaConfigurada oferta) async {
@@ -312,10 +113,10 @@ class _AdminOfertasPageState extends State<AdminOfertasPage> {
         ],
       ),
     );
-    if (confirmar == true) {
-      AppState.instance.encerrarOferta(oferta.produtoId);
-      _mensagem('Oferta encerrada.');
-    }
+
+    if (!mounted || confirmar != true) return;
+    AppState.instance.encerrarOferta(oferta.produtoId);
+    _mensagem('Oferta encerrada.');
   }
 
   Widget _resumo(String valor, String texto, IconData icone) {
@@ -327,6 +128,7 @@ class _AdminOfertasPageState extends State<AdminOfertasPage> {
         border: Border.all(color: DVanilleColors.line),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icone, color: DVanilleColors.rose, size: 28),
           const SizedBox(width: 12),
@@ -466,6 +268,7 @@ class _AdminOfertasPageState extends State<AdminOfertasPage> {
           const SizedBox(height: 10),
           Wrap(
             spacing: 8,
+            runSpacing: 8,
             children: [
               TextButton.icon(
                 onPressed: () => _abrirFormulario(editando: oferta),
@@ -490,6 +293,7 @@ class _AdminOfertasPageState extends State<AdminOfertasPage> {
   @override
   Widget build(BuildContext context) {
     final state = AppState.instance;
+
     return ListenableBuilder(
       listenable: state,
       builder: (context, _) {
@@ -603,6 +407,357 @@ class _AdminOfertasPageState extends State<AdminOfertasPage> {
           ),
         );
       },
+    );
+  }
+}
+
+// Resultado temporário do formulário. Não altera a oferta até o
+// diálogo terminar, evitando notificações no meio da navegação.
+class _DadosOferta {
+  final int produtoId;
+  final double percentual;
+  final DateTime? inicio;
+  final DateTime? fim;
+
+  const _DadosOferta({
+    required this.produtoId,
+    required this.percentual,
+    required this.inicio,
+    required this.fim,
+  });
+}
+
+class _FormularioOfertaDialog extends StatefulWidget {
+  final List<Produto> produtos;
+  final OfertaConfigurada? editando;
+  final double Function(int) precoOriginal;
+  final bool Function(int) possuiOferta;
+
+  const _FormularioOfertaDialog({
+    required this.produtos,
+    required this.editando,
+    required this.precoOriginal,
+    required this.possuiOferta,
+  });
+
+  @override
+  State<_FormularioOfertaDialog> createState() =>
+      _FormularioOfertaDialogState();
+}
+
+class _FormularioOfertaDialogState extends State<_FormularioOfertaDialog> {
+  final _chaveFormulario = GlobalKey<FormState>();
+  late final TextEditingController _percentualController;
+  late int _produtoId;
+  DateTime? _inicio;
+  DateTime? _fim;
+  String? _erroDatas;
+
+  @override
+  void initState() {
+    super.initState();
+    _produtoId = widget.editando?.produtoId ??
+        widget.produtos
+            .firstWhere(
+              (produto) => !widget.possuiOferta(produto.id),
+              orElse: () => widget.produtos.first,
+            )
+            .id;
+    _inicio = widget.editando?.inicio;
+    _fim = widget.editando?.fim;
+    _percentualController = TextEditingController(
+      text: widget.editando == null
+          ? '15'
+          : widget.editando!.percentual.toStringAsFixed(1).replaceAll('.', ','),
+    );
+  }
+
+  @override
+  void dispose() {
+    _percentualController.dispose();
+    super.dispose();
+  }
+
+  String _data(DateTime? data) {
+    if (data == null) return 'Sem data definida';
+    final dia = data.day.toString().padLeft(2, '0');
+    final mes = data.month.toString().padLeft(2, '0');
+    return '$dia/$mes/${data.year}';
+  }
+
+  Future<void> _escolherData({required bool inicial}) async {
+    final hoje = DateTime.now();
+    final atual = inicial ? _inicio : _fim;
+    final dataInicial = atual != null && atual.year >= 2020 ? atual : hoje;
+
+    final escolhida = await showDatePicker(
+      context: context,
+      initialDate: dataInicial,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+      locale: const Locale('pt', 'BR'),
+    );
+
+    if (!mounted || escolhida == null) return;
+    setState(() {
+      if (inicial) {
+        _inicio = escolhida;
+      } else {
+        _fim = escolhida;
+      }
+      _erroDatas = null;
+    });
+  }
+
+  Widget _campoData({
+    required String rotulo,
+    required DateTime? valor,
+    required bool inicial,
+  }) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 70,
+          child: Text(
+            rotulo,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => _escolherData(inicial: inicial),
+            icon: const Icon(Icons.calendar_month_outlined, size: 18),
+            label: Text(_data(valor)),
+          ),
+        ),
+        if (valor != null)
+          IconButton(
+            tooltip: 'Limpar data',
+            onPressed: () => setState(() {
+              if (inicial) {
+                _inicio = null;
+              } else {
+                _fim = null;
+              }
+              _erroDatas = null;
+            }),
+            icon: const Icon(Icons.close, size: 18),
+          ),
+      ],
+    );
+  }
+
+  void _confirmar() {
+    if (!(_chaveFormulario.currentState?.validate() ?? false)) return;
+
+    // Evita substituir uma promoção existente sem passar pelo botão "Editar".
+    if (widget.editando == null && widget.possuiOferta(_produtoId)) {
+      setState(() {
+        _erroDatas =
+            'Este produto já possui uma oferta. Use o botão Editar na oferta existente.';
+      });
+      return;
+    }
+
+    final percentual = double.parse(
+      _percentualController.text.trim().replaceAll(',', '.'),
+    );
+
+    if (_inicio != null && _fim != null && _fim!.isBefore(_inicio!)) {
+      setState(() {
+        _erroDatas = 'A data final não pode ser anterior à inicial.';
+      });
+      return;
+    }
+
+    if (_fim != null) {
+      final agora = DateTime.now();
+      final hoje = DateTime(agora.year, agora.month, agora.day);
+      final termino = DateTime(_fim!.year, _fim!.month, _fim!.day);
+      if (termino.isBefore(hoje)) {
+        setState(() {
+          _erroDatas = 'A data final não pode estar no passado.';
+        });
+        return;
+      }
+    }
+
+    if (widget.precoOriginal(_produtoId) <= 0) {
+      setState(() {
+        _erroDatas = 'O preço original precisa ser positivo.';
+      });
+      return;
+    }
+
+    Navigator.of(context).pop(
+      _DadosOferta(
+        produtoId: _produtoId,
+        percentual: percentual,
+        inicio: _inicio,
+        fim: _fim,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final precoOriginal = widget.precoOriginal(_produtoId);
+    final percentual = double.tryParse(
+      _percentualController.text.trim().replaceAll(',', '.'),
+    );
+    final precoPromocional =
+        percentual == null || percentual <= 0 || percentual >= 100
+            ? null
+            : (precoOriginal * (1 - percentual / 100) * 100).round() / 100;
+
+    return AlertDialog(
+      title: Text(
+        widget.editando == null ? 'Nova oferta' : 'Editar oferta',
+        style: const TextStyle(
+          fontFamily: 'CreamCake',
+          fontSize: 34,
+          color: DVanilleColors.darkTaupe,
+        ),
+      ),
+      content: SizedBox(
+        width: 480,
+        child: SingleChildScrollView(
+          child: Form(
+            key: _chaveFormulario,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${widget.produtos.length} produtos cadastrados no sistema',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<int>(
+                  initialValue: _produtoId,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Produto',
+                    helperText:
+                        'Lista atualizada dos produtos cadastrados no Admin',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: widget.produtos.map((produto) {
+                    final jaTemOferta = widget.possuiOferta(produto.id);
+                    return DropdownMenuItem<int>(
+                      value: produto.id,
+                      enabled: widget.editando != null || !jaTemOferta,
+                      child: Text(
+                        jaTemOferta && widget.editando == null
+                            ? '${produto.nome} (já possui oferta)'
+                            : produto.nome,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: widget.editando != null
+                      ? null
+                      : (valor) {
+                          if (valor == null) return;
+                          setState(() => _produtoId = valor);
+                        },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _percentualController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Desconto (%)',
+                    hintText: 'Ex.: 15',
+                    border: OutlineInputBorder(),
+                    suffixText: '%',
+                  ),
+                  onChanged: (_) => setState(() {}),
+                  validator: (valor) {
+                    final numero = double.tryParse(
+                      (valor ?? '').trim().replaceAll(',', '.'),
+                    );
+                    if (numero == null ||
+                        !numero.isFinite ||
+                        numero <= 0 ||
+                        numero >= 100) {
+                      return 'Informe um percentual entre 0 e 100.';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Preço original: ${money(precoOriginal)}'),
+                      const SizedBox(height: 5),
+                      Text(
+                        'Preço com desconto: '
+                        '${precoPromocional == null ? '—' : money(precoPromocional)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: DVanilleColors.rose,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Validade da promoção (opcional)',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 8),
+                _campoData(rotulo: 'Início', valor: _inicio, inicial: true),
+                const SizedBox(height: 8),
+                _campoData(rotulo: 'Término', valor: _fim, inicial: false),
+                if (_erroDatas != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    _erroDatas!,
+                    style: const TextStyle(
+                      color: Color(0xFFB5473F),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                Text(
+                  'Sem datas, a oferta permanece ativa até ser encerrada.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: _confirmar,
+          child: const Text('Salvar oferta'),
+        ),
+      ],
     );
   }
 }

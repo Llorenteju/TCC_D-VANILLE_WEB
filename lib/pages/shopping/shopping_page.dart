@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../../app/app.dart';
@@ -22,25 +21,30 @@ class _ShoppingPageState extends State<ShoppingPage> {
   final mensagem = TextEditingController();
 
   String? erro;
+  bool _aceitouCondicoes = false;
 
-  static const valores = [
+  static const valores = <double>[
     30.0,
     50.0,
     100.0,
     150.0,
   ];
 
-  bool get isDark =>
-      Theme.of(context).brightness == Brightness.dark;
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
 
   Color get corTitulo =>
       isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.darkTaupe;
 
-  Color get corTexto =>
-      isDark ? DVanilleColors.darkInk : DVanilleColors.ink;
+  Color get corTexto => isDark ? DVanilleColors.darkInk : DVanilleColors.ink;
 
   Color get corDestaque =>
       isDark ? DVanilleColors.darkRose : DVanilleColors.rose;
+
+  Color get corSecundaria =>
+      isDark ? DVanilleColors.darkTextSecondary : DVanilleColors.taupe;
+
+  Color get corBorda =>
+      isDark ? DVanilleColors.darkBorder : DVanilleColors.line;
 
   @override
   void dispose() {
@@ -65,9 +69,18 @@ class _ShoppingPageState extends State<ShoppingPage> {
     final textoMensagem = mensagem.text.trim();
 
     if (destinatario.isEmpty) {
-      _mostrarMensagem(
-        'Informe o nome de quem receberá o vale-presente.',
-      );
+      setState(() {
+        erro = 'Informe o nome de quem receberá o vale-presente.';
+      });
+      _mostrarMensagem(erro!);
+      return;
+    }
+
+    if (!_aceitouCondicoes) {
+      setState(() {
+        erro = 'Leia e confirme as condições de utilização do vale-presente.';
+      });
+      _mostrarMensagem(erro!);
       return;
     }
 
@@ -75,7 +88,7 @@ class _ShoppingPageState extends State<ShoppingPage> {
 
     state.adicionarItem(
       ItemCarrinho(
-        id: 'gift-${DateTime.now().millisecondsSinceEpoch}',
+        id: 'gift-${DateTime.now().microsecondsSinceEpoch}',
         nome: "Vale-presente D'Vanille (${money(valor)})",
         preco: valor,
         icon: '🎁',
@@ -85,13 +98,120 @@ class _ShoppingPageState extends State<ShoppingPage> {
       ),
     );
 
-    _mostrarMensagem(
-      'Vale-presente adicionado ao carrinho!',
-    );
+    _mostrarMensagem('Vale-presente adicionado ao carrinho!');
 
     Navigator.of(context).pushNamedAndRemoveUntil(
       Routes.carrinho,
       (route) => false,
+    );
+  }
+
+  Widget _itemCondicao(IconData icone, String titulo, String descricao) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color:
+                  isDark ? DVanilleColors.darkSurface : DVanilleColors.blush2,
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(icone, color: corDestaque, size: 21),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  titulo,
+                  style: TextStyle(
+                    color: corTexto,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  descricao,
+                  style: TextStyle(
+                    color: corSecundaria,
+                    height: 1.4,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _condicoesDeUso() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: corBorda),
+        color: isDark ? DVanilleColors.darkSurface : DVanilleColors.cream,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Como utilizar seu vale-presente',
+            style: TextStyle(
+              fontFamily: 'CreamCake',
+              fontSize: 30,
+              color: corTitulo,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _itemCondicao(
+            Icons.storefront_outlined,
+            'Uso somente na cafeteria física',
+            'Apresente o código ao funcionário da D’Vanille no momento da compra. '
+                'Não é válido para pagar pedidos no site ou aplicativo.',
+          ),
+          _itemCondicao(
+            Icons.looks_one_outlined,
+            'Uma única utilização',
+            'O vale é resgatado uma só vez. Após a confirmação pela equipe, '
+                'seu status muda para Utilizado e o código não pode ser reutilizado.',
+          ),
+          _itemCondicao(
+            Icons.payments_outlined,
+            'Sem saldo restante',
+            'Se a compra for menor que o valor do vale, a diferença não fica '
+                'disponível para outra compra. Se for maior, o cliente pode '
+                'pagar a diferença no caixa.',
+          ),
+          _itemCondicao(
+            Icons.event_outlined,
+            'Validade do vale',
+            'Quando uma data de validade estiver cadastrada, ela aparecerá '
+                'em Meus vales-presente e no PDF. Sem data cadastrada, '
+                'o sistema exibirá “Validade não definida”.',
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Após a compra confirmada, o código ficará disponível na página '
+            'Meus vales-presente, com as informações necessárias para apresentá-lo.',
+            style: TextStyle(
+              color: corSecundaria,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -126,10 +246,20 @@ class _ShoppingPageState extends State<ShoppingPage> {
                     color: corTitulo,
                   ),
                 ),
+                const SizedBox(height: 12),
+                Text(
+                  'Um presente especial para ser aproveitado presencialmente '
+                  'na D’Vanille.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: corSecundaria,
+                    fontSize: 14,
+                  ),
+                ),
               ],
             ),
           ),
-          const SizedBox(height: 65),
+          const SizedBox(height: 48),
           ContentWidth(
             maxWidth: 820,
             child: Column(
@@ -140,7 +270,9 @@ class _ShoppingPageState extends State<ShoppingPage> {
                   alignment: WrapAlignment.center,
                   children: valores.map(_cartao).toList(),
                 ),
-                const SizedBox(height: 70),
+                const SizedBox(height: 40),
+                _condicoesDeUso(),
+                const SizedBox(height: 36),
                 InfoBox(
                   padding: const EdgeInsets.all(30),
                   child: Column(
@@ -156,7 +288,10 @@ class _ShoppingPageState extends State<ShoppingPage> {
                         ),
                       ),
                       const SizedBox(height: 18),
-                      if (erro != null) CaixaAlerta(erro!),
+                      if (erro != null) ...[
+                        CaixaAlerta(erro!),
+                        const SizedBox(height: 12),
+                      ],
                       InputDecorator(
                         decoration: const InputDecoration(
                           labelText: 'Valor selecionado',
@@ -187,14 +322,34 @@ class _ShoppingPageState extends State<ShoppingPage> {
                           hintText: 'Escreva uma mensagem especial...',
                         ),
                       ),
-                      const SizedBox(height: 22),
+                      const SizedBox(height: 20),
+                      CheckboxListTile(
+                        value: _aceitouCondicoes,
+                        onChanged: (valor) {
+                          setState(() {
+                            _aceitouCondicoes = valor ?? false;
+                            erro = null;
+                          });
+                        },
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: EdgeInsets.zero,
+                        activeColor: corDestaque,
+                        title: Text(
+                          'Li e estou ciente das condições: uso presencial, '
+                          'uma única utilização e sem saldo restante.',
+                          style: TextStyle(
+                            color: corTexto,
+                            fontSize: 13,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       SizedBox(
                         width: double.infinity,
                         child: FilledButton(
                           onPressed: _adicionar,
-                          child: const Text(
-                            'Adicionar ao carrinho',
-                          ),
+                          child: const Text('Adicionar ao carrinho'),
                         ),
                       ),
                     ],
@@ -247,13 +402,7 @@ class _ShoppingPageState extends State<ShoppingPage> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            stops: const [
-              0.0,
-              0.35,
-              0.55,
-              0.75,
-              1.0,
-            ],
+            stops: const [0.0, 0.35, 0.55, 0.75, 1.0],
             colors: coresGradiente,
           ),
           borderRadius: BorderRadius.circular(18),

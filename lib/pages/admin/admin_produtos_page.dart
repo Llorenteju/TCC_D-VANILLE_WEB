@@ -67,7 +67,7 @@ class _AdminProdutosPageState extends State<AdminProdutosPage> {
     if (!mounted) return;
     if (confirmar == true) {
       AppState.instance.excluirProduto(produto.id);
-      showToast('Produto excluído!', '🗑️');
+      showToast('Produto excluído!', 'lixeira.svg');
     }
   }
 
