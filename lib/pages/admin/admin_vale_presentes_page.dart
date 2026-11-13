@@ -9,7 +9,7 @@ import '../../theme/app_theme.dart';
 import 'admin_shell.dart';
 
 /// Gestão e validação presencial dos vales-presente da D'Vanille.
-/// O resgate é único e consome integralmente o vale, sem saldo residual.
+/// O código é resgatado uma única vez e vence automaticamente em 30 dias úteis.
 class AdminValePresentesPage extends StatefulWidget {
   const AdminValePresentesPage({super.key});
 
@@ -283,7 +283,7 @@ class _AdminValePresentesPageState extends State<AdminValePresentesPage> {
                   _informacao('Mensagem', vale.mensagem),
                 const Divider(),
                 Text(
-                  'Uso exclusivamente presencial, uma única vez e sem saldo restante.',
+                  'Uso presencial, com vencimento automático de 30 dias úteis após a emissão.',
                   style: TextStyle(fontSize: 12, color: _subtexto),
                 ),
               ],
@@ -328,7 +328,7 @@ class _AdminValePresentesPageState extends State<AdminValePresentesPage> {
             const SizedBox(height: 14),
             const Text(
               'Confirme somente depois de receber o código na cafeteria. '
-              'O vale será consumido integralmente, sem troco nem saldo para outra compra.',
+              'Após a confirmação, este código não poderá ser resgatado novamente.',
             ),
           ],
         ),
@@ -372,26 +372,6 @@ class _AdminValePresentesPageState extends State<AdminValePresentesPage> {
       return;
     }
     _confirmarResgate(vale);
-  }
-
-  Future<void> _alterarValidade(ValePresente vale) async {
-    final hoje = DateUtils.dateOnly(DateTime.now());
-    final atual = AppState.instance.validadeValePresente(vale.id);
-    final escolhida = await showDatePicker(
-      context: context,
-      initialDate: atual != null && !atual.isBefore(hoje) ? atual : hoje,
-      firstDate: hoje,
-      lastDate: DateTime(2100),
-      helpText: 'Validade do vale-presente',
-    );
-    if (!mounted || escolhida == null) return;
-    final problema =
-        AppState.instance.definirValidadeValePresente(vale.id, escolhida);
-    if (problema != null) {
-      _avisar(problema);
-    } else {
-      _avisar('Validade atualizada!', sucesso: true);
-    }
   }
 
   Future<void> _cancelarVale(ValePresente vale) async {
@@ -460,14 +440,6 @@ class _AdminValePresentesPageState extends State<AdminValePresentesPage> {
           case 'resgatar':
             _confirmarResgate(vale);
             break;
-          case 'validade':
-            _alterarValidade(vale);
-            break;
-          case 'removerValidade':
-            final problema =
-                AppState.instance.definirValidadeValePresente(vale.id, null);
-            if (problema != null) _avisar(problema);
-            break;
           case 'cancelar':
             _cancelarVale(vale);
             break;
@@ -482,11 +454,6 @@ class _AdminValePresentesPageState extends State<AdminValePresentesPage> {
         if (ativo) ...[
           const PopupMenuItem(
               value: 'resgatar', child: Text('Confirmar resgate')),
-          const PopupMenuItem(
-              value: 'validade', child: Text('Definir validade')),
-          if (AppState.instance.validadeValePresente(vale.id) != null)
-            const PopupMenuItem(
-                value: 'removerValidade', child: Text('Remover validade')),
           const PopupMenuItem(value: 'cancelar', child: Text('Cancelar vale')),
         ],
         const PopupMenuItem(value: 'excluir', child: Text('Excluir registro')),
@@ -599,12 +566,35 @@ class _AdminValePresentesPageState extends State<AdminValePresentesPage> {
   }
 
   Widget _abas(int ativos, int historico) {
-    Widget botao(String id, String titulo, int total) => ChoiceChip(
-          label: Text('$titulo ($total)'),
-          selected: _aba == id,
-          selectedColor: DVanilleColors.blush2,
-          onSelected: (_) => setState(() => _aba = id),
-        );
+    Widget botao(String id, String titulo, int total) {
+      final selecionado = _aba == id;
+      final textoSelecionado =
+          _escuro ? DVanilleColors.darkCream : DVanilleColors.ink;
+
+      return ChoiceChip(
+        label: Text('$titulo ($total)'),
+        selected: selecionado,
+        // No tema escuro, rosa mais intenso com texto marrom bem escuro.
+        // Evita texto claro sobre o fundo rosa do chip selecionado.
+        selectedColor:
+            _escuro ? DVanilleColors.darkRose : DVanilleColors.blush2,
+        backgroundColor:
+            _escuro ? DVanilleColors.darkSurface : DVanilleColors.white,
+        labelStyle: TextStyle(
+          color: selecionado ? textoSelecionado : _texto,
+          fontSize: 14,
+          fontWeight: selecionado ? FontWeight.w800 : FontWeight.w600,
+        ),
+        checkmarkColor: textoSelecionado,
+        side: BorderSide(
+          color: selecionado
+              ? (_escuro ? DVanilleColors.darkRose : DVanilleColors.rose)
+              : _borda,
+        ),
+        onSelected: (_) => setState(() => _aba = id),
+      );
+    }
+
     return Wrap(
       spacing: 10,
       runSpacing: 7,
@@ -752,7 +742,7 @@ class _AdminValePresentesPageState extends State<AdminValePresentesPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                      'Gerencie códigos de uso único, válidos apenas na cafeteria física.',
+                      'Gerencie códigos de uso presencial com validade automática de 30 dias úteis.',
                       style: TextStyle(color: _subtexto, fontSize: 14)),
                   const SizedBox(height: 22),
                   _resumo(todos, largura),
@@ -792,7 +782,7 @@ class _AdminValePresentesPageState extends State<AdminValePresentesPage> {
                     _cardsMobile(filtrados),
                   const SizedBox(height: 20),
                   Text(
-                    'Um vale utilizado não pode ser resgatado novamente. Quando o valor da compra for menor, a diferença não fica como saldo. Sem backend, os dados são locais a este navegador.',
+                    'Um vale utilizado não pode ser resgatado novamente. Se a compra for menor, a diferença de valor deve ser restituída ao consumidor. Sem backend, os dados são locais a este navegador.',
                     style: TextStyle(color: _subtexto, fontSize: 12),
                   ),
                 ],

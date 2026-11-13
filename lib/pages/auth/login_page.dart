@@ -19,6 +19,7 @@ class _LoginPageState extends State<LoginPage> {
   final senha = TextEditingController();
 
   String? erro;
+  bool mostrarSenha = false;
 
   bool get isDark => Theme.of(context).brightness == Brightness.dark;
 
@@ -123,9 +124,7 @@ class _LoginPageState extends State<LoginPage> {
                       size: 26,
                       weight: FontWeight.w600,
                       color: corSubtitulo,
-                    ).copyWith(
-                      fontStyle: FontStyle.italic,
-                    ),
+                    ).copyWith(fontStyle: FontStyle.italic),
                   ),
                   const SizedBox(height: 28),
                   if (erro != null) CaixaAlerta(erro!),
@@ -139,10 +138,24 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: senha,
-                    obscureText: true,
+                    obscureText: !mostrarSenha,
+                    autocorrect: false,
+                    enableSuggestions: false,
                     onSubmitted: (_) => _entrar(),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Senha',
+                      suffixIcon: IconButton(
+                        tooltip:
+                            mostrarSenha ? 'Ocultar senha' : 'Mostrar senha',
+                        onPressed: () => setState(() {
+                          mostrarSenha = !mostrarSenha;
+                        }),
+                        icon: Icon(
+                          mostrarSenha
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 22),
@@ -171,23 +184,17 @@ class _LoginPageState extends State<LoginPage> {
                     onPressed: () => _abrirPaginaAutenticacao(
                       Routes.recuperarSenha,
                     ),
-                    child: const Text(
-                      'Esqueci minha senha',
-                    ),
+                    child: const Text('Esqueci minha senha'),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        'Ainda não tem conta?',
-                      ),
+                      const Text('Ainda não tem conta?'),
                       TextButton(
                         onPressed: () => _abrirPaginaAutenticacao(
                           Routes.cadastro,
                         ),
-                        child: const Text(
-                          'Criar conta',
-                        ),
+                        child: const Text('Criar conta'),
                       ),
                     ],
                   ),

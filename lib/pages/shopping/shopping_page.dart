@@ -65,6 +65,10 @@ class _ShoppingPageState extends State<ShoppingPage> {
   }
 
   void _adicionar() {
+    if (AppState.instance.isAdmin) {
+      _mostrarMensagem(AppState.avisoContaAdministrativa);
+      return;
+    }
     final destinatario = nome.text.trim();
     final textoMensagem = mensagem.text.trim();
 
@@ -188,17 +192,18 @@ class _ShoppingPageState extends State<ShoppingPage> {
           ),
           _itemCondicao(
             Icons.payments_outlined,
-            'Sem saldo restante',
-            'Se a compra for menor que o valor do vale, a diferença não fica '
-                'disponível para outra compra. Se for maior, o cliente pode '
-                'pagar a diferença no caixa.',
+            'Diferença de valor',
+            'Se a compra for menor que o valor do vale, a diferença deve ser '
+                'restituída conforme a legislação de defesa do consumidor. '
+                'Se for maior, o cliente pode pagar a diferença no caixa.',
           ),
           _itemCondicao(
             Icons.event_outlined,
             'Validade do vale',
-            'Quando uma data de validade estiver cadastrada, ela aparecerá '
-                'em Meus vales-presente e no PDF. Sem data cadastrada, '
-                'o sistema exibirá “Validade não definida”.',
+            'Todo vale novo tem validade automática de 30 dias úteis, contados '
+                'a partir do dia seguinte à compra. Não são contados '
+                'sábados, domingos e feriados nacionais aplicáveis. A data exata '
+                'aparece em Meus vales-presente e no PDF.',
           ),
           const SizedBox(height: 2),
           Text(
@@ -336,7 +341,7 @@ class _ShoppingPageState extends State<ShoppingPage> {
                         activeColor: corDestaque,
                         title: Text(
                           'Li e estou ciente das condições: uso presencial, '
-                          'uma única utilização e sem saldo restante.',
+                          'uma única utilização e validade de 30 dias úteis.',
                           style: TextStyle(
                             color: corTexto,
                             fontSize: 13,
@@ -345,10 +350,18 @@ class _ShoppingPageState extends State<ShoppingPage> {
                         ),
                       ),
                       const SizedBox(height: 12),
+                      if (AppState.instance.isAdmin) ...[
+                        Text(
+                          AppState.avisoContaAdministrativa,
+                          style: TextStyle(color: corSecundaria, fontSize: 13),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                       SizedBox(
                         width: double.infinity,
                         child: FilledButton(
-                          onPressed: _adicionar,
+                          onPressed:
+                              AppState.instance.isAdmin ? null : _adicionar,
                           child: const Text('Adicionar ao carrinho'),
                         ),
                       ),

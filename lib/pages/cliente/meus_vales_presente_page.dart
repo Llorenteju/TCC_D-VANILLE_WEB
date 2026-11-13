@@ -152,7 +152,7 @@ class MeusValesPresentePage extends StatelessWidget {
                           const SizedBox(height: 12),
                           Text(
                             'Os vales são aceitos apenas presencialmente na '
-                            'cafeteria, em uma única compra e sem saldo restante.',
+                            'cafeteria, em uma única compra e com restituição de eventual diferença de valor.',
                             style: TextStyle(
                               fontSize: 13,
                               height: 1.45,
@@ -359,7 +359,7 @@ class MeusValesPresentePage extends StatelessWidget {
           _detalhe(
               'Data da compra', _formatarDataCompra(vale.criadoEm), corTexto),
           _detalhe(
-            'Validade',
+            'Validade (30 dias úteis)',
             validade == null
                 ? 'Não definida'
                 : 'Até ${_formatarData(validade)}',
@@ -393,7 +393,7 @@ class MeusValesPresentePage extends StatelessWidget {
                   child: Text(
                     ativo
                         ? 'Apresente o código na cafeteria física. '
-                            'Uso único, sem saldo restante. '
+                            'Uso único, com restituição de eventual diferença de valor. '
                             'Não é válido para pedidos no site ou aplicativo.'
                         : 'Este vale está ${_nomeStatus(status).toLowerCase()} '
                             'e não pode ser resgatado novamente.',
@@ -633,7 +633,7 @@ class MeusValesPresentePage extends StatelessWidget {
                     pw.SizedBox(height: 6),
                     pw.Text(
                       validade == null
-                          ? 'Validade não definida'
+                          ? 'Validade não informada'
                           : 'Válido até ${_formatarData(validade)}',
                       textAlign: pw.TextAlign.center,
                       style: pw.TextStyle(
@@ -668,8 +668,8 @@ class MeusValesPresentePage extends StatelessWidget {
                     ),
                     pw.SizedBox(height: 7),
                     pw.Text(
-                      'Uso exclusivamente presencial e único; '
-                      'sem saldo restante. Não válido no site ou aplicativo.',
+                      'Uso exclusivamente presencial; 30 dias úteis de validade. '
+                      'A diferença de valor deve ser restituída.',
                       textAlign: pw.TextAlign.center,
                       style: pw.TextStyle(
                         font: fonteNormal,

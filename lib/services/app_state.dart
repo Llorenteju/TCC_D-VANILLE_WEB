@@ -12,6 +12,7 @@ import '../models/produto.dart';
 import '../models/reserva.dart';
 import '../models/usuario.dart';
 import '../models/vale_presente.dart';
+import 'validade_vale.dart';
 
 /// Configuração de uma promoção de um produto já cadastrado.
 /// As datas são inclusivas: uma promoção com término em 10/11
@@ -93,6 +94,12 @@ class AppState extends ChangeNotifier {
       }
     }
     _atualizarOfertasPorValidade();
+    // Vales de demonstração ainda sem prazo: inicia a validade na implantação.
+    // Não retroage sobre compras anteriores.
+    final vencimentoLegado = ValidadeVale.calcular(DateTime.now());
+    for (final vale in valePresentes) {
+      _validadesVales[vale.id] = vencimentoLegado;
+    }
     _timerOfertas = Timer.periodic(const Duration(minutes: 1), (_) {
       final ofertasMudaram = _atualizarOfertasPorValidade();
       final valesMudaram = _expirarValesVencidos();
@@ -1191,6 +1198,8 @@ class AppState extends ChangeNotifier {
       final carregados = <ValePresente>[];
       final validades = <String, DateTime>{};
       final resgates = <String, DateTime>{};
+      var validadeMigrada = false;
+      final vencimentoLegado = ValidadeVale.calcular(DateTime.now());
 
       for (final registro in registros) {
         final dados = Map<String, dynamic>.from(registro as Map);
@@ -1206,8 +1215,12 @@ class AppState extends ChangeNotifier {
         );
         carregados.add(vale);
 
-        final validade = DateTime.tryParse(dados['validade']?.toString() ?? '');
-        if (validade != null) validades[vale.id] = validade;
+        final validadeSalva =
+            DateTime.tryParse(dados['validade']?.toString() ?? '');
+        // Preserva vencimentos já salvos; preenche uma única vez os registros
+        // anteriores sem prazo, contando 30 dias úteis da migração.
+        validades[vale.id] = validadeSalva ?? vencimentoLegado;
+        if (validadeSalva == null) validadeMigrada = true;
         final resgate =
             DateTime.tryParse(dados['resgatadoEm']?.toString() ?? '');
         if (resgate != null) resgates[vale.id] = resgate;
@@ -1225,7 +1238,7 @@ class AppState extends ChangeNotifier {
 
       final expiraram = _expirarValesVencidos();
       notifyListeners();
-      if (expiraram) _salvarValesAutomaticamente();
+      if (expiraram || validadeMigrada) _salvarValesAutomaticamente();
     } catch (e) {
       debugPrint('Erro ao carregar vales-presente: $e');
       // Mantém os vales presentes em memória caso o armazenamento falhe.
@@ -1266,6 +1279,10 @@ class AppState extends ChangeNotifier {
   }
 
   DateTime? validadeValePresente(String id) => _validadesVales[id];
+
+  /// Simula a data de vencimento para uma nova compra.
+  DateTime validadeParaNovaCompra(DateTime dataCompra) =>
+      ValidadeVale.calcular(dataCompra);
   DateTime? dataResgateValePresente(String id) => _resgatesVales[id];
 
   DateTime _somenteData(DateTime data) =>
@@ -1312,31 +1329,15 @@ class AppState extends ChangeNotifier {
     return alterou;
   }
 
-  /// Define uma validade opcional; sem data o vale não expira automaticamente.
-  /// Somente vales ativos podem ter a validade alterada.
+  /// Mantido para compatibilidade com possíveis telas antigas do Admin.
+  /// A data não pode ser modificada manualmente.
   String? definirValidadeValePresente(String id, DateTime? validade) {
-    if (!isAdmin) return 'Acesso permitido somente a administradores.';
-    final indice = valePresentes.indexWhere((v) => v.id == id);
-    if (indice < 0) return 'Vale-presente não encontrado.';
-    if (valePresentes[indice].status != 'ativo') {
-      return 'Só é possível alterar a validade de um vale ativo.';
-    }
-    if (validade != null &&
-        _somenteData(validade).isBefore(_somenteData(DateTime.now()))) {
-      return 'Escolha uma data de hoje em diante.';
-    }
-    if (validade == null) {
-      _validadesVales.remove(id);
-    } else {
-      _validadesVales[id] = _somenteData(validade);
-    }
-    notifyListeners();
-    _salvarValesAutomaticamente();
-    return null;
+    return 'A validade é automática: 30 dias úteis após a compra.';
   }
 
   /// A cafeteria recebe o código presencialmente e o marca como UTILIZADO.
-  /// A utilização é única e não há saldo restante, mesmo em compra menor.
+  /// A utilização do código é única; eventual diferença de valor deve
+  /// ser restituída ao cliente conforme as regras de consumo aplicáveis.
   /// Retorna null em caso de sucesso; caso contrário, a mensagem do problema.
   String? resgatarValePresente(String codigo) {
     if (!isAdmin) return 'Somente o administrador pode validar o resgate.';
@@ -1403,6 +1404,8 @@ class AppState extends ChangeNotifier {
     );
 
     valePresentes.add(vale);
+    // Emissões novas: 30º dia útil contado do dia seguinte à compra.
+    _validadesVales[vale.id] = ValidadeVale.calcular(DateTime.now());
     notifyListeners();
     _salvarValesAutomaticamente();
     return vale;

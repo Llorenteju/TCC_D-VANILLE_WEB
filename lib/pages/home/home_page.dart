@@ -89,7 +89,10 @@ class HomePage extends StatelessWidget {
               const SizedBox(height: 64),
               Container(
                 width: double.infinity,
-                color: Theme.of(context).cardColor,
+                // No modo escuro, o fundo da seção se diferencia dos cards.
+                color: isDark
+                    ? DVanilleColors.darkCream2
+                    : Theme.of(context).cardColor,
                 padding: const EdgeInsets.symmetric(vertical: 56),
                 child: ContentWidth(
                   child: Column(
@@ -172,8 +175,12 @@ class HomePage extends StatelessWidget {
                     const SizedBox(height: 30),
                     FilledButton(
                       style: FilledButton.styleFrom(
-                        backgroundColor: DVanilleColors.blush,
-                        foregroundColor: DVanilleColors.darkTaupe,
+                        backgroundColor: isDark
+                            ? DVanilleColors.darkRose
+                            : DVanilleColors.blush,
+                        foregroundColor: isDark
+                            ? DVanilleColors.darkCream
+                            : DVanilleColors.darkTaupe,
                       ),
                       onPressed: () =>
                           Navigator.of(context).pushNamedAndRemoveUntil(
@@ -190,7 +197,10 @@ class HomePage extends StatelessWidget {
               const SizedBox(height: 64),
               Container(
                 width: double.infinity,
-                color: Theme.of(context).cardColor,
+                // No modo escuro, o fundo da seção se diferencia dos cards.
+                color: isDark
+                    ? DVanilleColors.darkCream2
+                    : Theme.of(context).cardColor,
                 padding: const EdgeInsets.symmetric(vertical: 56),
                 child: ContentWidth(
                   child: Wrap(
@@ -215,10 +225,12 @@ class HomePage extends StatelessWidget {
                               ),
                               const SizedBox(height: 10),
                               _linhaIcone(
+                                context,
                                 Icons.place_outlined,
                                 'Rua das Baunilhas, 245 — Jardim das Flores, São Paulo/SP',
                               ),
                               _linhaIcone(
+                                context,
                                 Icons.phone_outlined,
                                 '(11) 4002-8922',
                               ),
@@ -243,10 +255,12 @@ class HomePage extends StatelessWidget {
                               ),
                               const SizedBox(height: 10),
                               _linhaIcone(
+                                context,
                                 Icons.schedule,
                                 'Terça a Sexta — 09h às 20h',
                               ),
                               _linhaIcone(
+                                context,
                                 Icons.schedule,
                                 'Sábado e Domingo — 10h às 21h',
                               ),
@@ -352,8 +366,9 @@ class HomePage extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 56),
       decoration: BoxDecoration(
-        color: isDark ? DVanilleColors.darkSurface : DVanilleColors.blush2,
+        color: isDark ? const Color(0xFF443630) : DVanilleColors.blush2,
         borderRadius: BorderRadius.circular(32),
+        border: isDark ? Border.all(color: DVanilleColors.darkBorder) : null,
       ),
       child: ContentWidth(
         child: LayoutBuilder(
@@ -824,6 +839,7 @@ class HomePage extends StatelessWidget {
     double largura,
   ) {
     final caminhoImagem = _iconesCategorias[c.id];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return InkWell(
       onTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
@@ -839,7 +855,9 @@ class HomePage extends StatelessWidget {
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: DVanilleColors.line),
+          border: Border.all(
+            color: isDark ? DVanilleColors.darkBorder : DVanilleColors.line,
+          ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -850,6 +868,13 @@ class HomePage extends StatelessWidget {
                 width: 62,
                 height: 62,
                 fit: BoxFit.contain,
+                // No modo escuro, os traços delicados dos SVGs ficam legíveis.
+                colorFilter: isDark
+                    ? const ColorFilter.mode(
+                        DVanilleColors.darkTextSecondary,
+                        BlendMode.srcIn,
+                      )
+                    : null,
               ),
             const SizedBox(height: 10),
             Text(
@@ -860,7 +885,8 @@ class HomePage extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
-                color: DVanilleColors.darkTaupe,
+                color:
+                    isDark ? DVanilleColors.darkInk : DVanilleColors.darkTaupe,
               ),
             ),
           ],
@@ -869,7 +895,13 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _linhaIcone(IconData icone, String texto) {
+  Widget _linhaIcone(
+    BuildContext context,
+    IconData icone,
+    String texto,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -878,7 +910,7 @@ class HomePage extends StatelessWidget {
           Icon(
             icone,
             size: 18,
-            color: DVanilleColors.rose,
+            color: isDark ? DVanilleColors.darkRose : DVanilleColors.rose,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -886,7 +918,7 @@ class HomePage extends StatelessWidget {
               texto,
               style: TextStyle(
                 fontSize: 14.5,
-                color: DVanilleColors.ink,
+                color: isDark ? DVanilleColors.darkInk : DVanilleColors.ink,
               ),
             ),
           ),
@@ -907,13 +939,15 @@ class _BeneficioApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
           icone,
           size: 20,
-          color: DVanilleColors.rose,
+          color: isDark ? DVanilleColors.darkRose : DVanilleColors.rose,
         ),
         const SizedBox(width: 7),
         Text(
@@ -921,7 +955,7 @@ class _BeneficioApp extends StatelessWidget {
           style: TextStyle(
             fontSize: 13.5,
             fontWeight: FontWeight.w700,
-            color: DVanilleColors.darkTaupe,
+            color: isDark ? DVanilleColors.darkInk : DVanilleColors.darkTaupe,
           ),
         ),
       ],

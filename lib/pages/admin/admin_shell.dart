@@ -6,6 +6,8 @@ import '../../services/app_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/page_shell.dart';
 
+/// Estrutura compartilhada das páginas do painel administrativo.
+/// O painel não usa cabeçalho nem rodapé do site público.
 class AdminShell extends StatelessWidget {
   final String titulo;
   final String rotaAtual;
@@ -28,12 +30,12 @@ class AdminShell extends StatelessWidget {
     ['perfil.svg', 'Usuários', Routes.adminUsuarios],
   ];
 
-  TextStyle _estiloTitulo() {
-    return const TextStyle(
+  TextStyle _estiloTitulo(BuildContext context, bool estreito) {
+    return TextStyle(
       fontFamily: 'CreamCake',
-      fontSize: 46,
+      fontSize: estreito ? 39 : 46,
       fontWeight: FontWeight.w400,
-      color: DVanilleColors.darkTaupe,
+      color: AdminColors.titulo(context),
     );
   }
 
@@ -42,12 +44,12 @@ class AdminShell extends StatelessWidget {
     final estreito = MediaQuery.sizeOf(context).width < 980;
 
     final conteudo = SingleChildScrollView(
-      padding: const EdgeInsets.all(28),
+      padding: EdgeInsets.all(estreito ? 20 : 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (titulo.trim().isNotEmpty) ...[
-            Text(titulo, style: _estiloTitulo()),
+            Text(titulo, style: _estiloTitulo(context, estreito)),
             const SizedBox(height: 22),
           ],
           child,
@@ -56,6 +58,7 @@ class AdminShell extends StatelessWidget {
     );
 
     return Scaffold(
+      backgroundColor: AdminColors.fundo(context),
       floatingActionButton: const BotaoAcessibilidade(),
       body: SafeArea(
         child: estreito
@@ -76,25 +79,31 @@ class AdminShell extends StatelessWidget {
     );
   }
 
-  Widget _icone(String arquivo) {
+  Widget _icone(BuildContext context, String arquivo, {bool ativo = false}) {
     return SvgPicture.asset(
       'assets/images/$arquivo',
       width: 23,
       height: 23,
       fit: BoxFit.contain,
+      // Os SVGs originais são preservados; o filtro garante contraste
+      // nos dois temas sem adicionar fundo branco aos ícones.
+      colorFilter: ColorFilter.mode(
+        ativo
+            ? AdminColors.destaque(context)
+            : AdminColors.textoSecundario(context),
+        BlendMode.srcIn,
+      ),
     );
   }
 
   void _navegar(BuildContext context, String rota) {
     if (rota == rotaAtual) return;
-
     Navigator.of(context).pushNamedAndRemoveUntil(
       rota,
       (route) => false,
     );
   }
 
-  // Volta ao site público mantendo a conta conectada.
   void _voltarAoSite(BuildContext context) {
     Navigator.of(context).pushNamedAndRemoveUntil(
       Routes.home,
@@ -102,35 +111,34 @@ class AdminShell extends StatelessWidget {
     );
   }
 
-  // Confirma antes de encerrar a sessão.
   Future<void> _confirmarSaida(BuildContext context) async {
     final sair = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
+          backgroundColor: AdminColors.card(dialogContext),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
-          title: const Text('Sair da conta?'),
-          content: const Text(
+          title: Text(
+            'Sair da conta?',
+            style: TextStyle(color: AdminColors.texto(dialogContext)),
+          ),
+          content: Text(
             'Você será desconectado da conta de administrador '
             'e voltará para a página inicial do site público.',
+            style: TextStyle(
+              color: AdminColors.textoSecundario(dialogContext),
+            ),
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(false);
-              },
+              onPressed: () => Navigator.of(dialogContext).pop(false),
               child: const Text('Cancelar'),
             ),
             FilledButton.icon(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(true);
-              },
-              icon: const Icon(
-                Icons.logout_rounded,
-                size: 18,
-              ),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              icon: const Icon(Icons.logout_rounded, size: 18),
               label: const Text('Sair da conta'),
             ),
           ],
@@ -141,32 +149,22 @@ class AdminShell extends StatelessWidget {
     if (sair != true || !context.mounted) return;
 
     AppState.instance.logout();
-
     Navigator.of(context).pushNamedAndRemoveUntil(
       Routes.home,
       (route) => false,
     );
   }
 
-  // ================= BOTÕES DE SAÍDA =================
-
   Widget _botaoVoltarAoSite(BuildContext context) {
     return OutlinedButton.icon(
       onPressed: () => _voltarAoSite(context),
-      icon: const Icon(
-        Icons.arrow_back_rounded,
-        size: 19,
-      ),
+      icon: const Icon(Icons.arrow_back_rounded, size: 19),
       label: const Text('Voltar ao site público'),
       style: OutlinedButton.styleFrom(
-        foregroundColor: DVanilleColors.darkTaupe,
-        side: const BorderSide(
-          color: DVanilleColors.line,
-        ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 13,
-        ),
+        foregroundColor: AdminColors.texto(context),
+        backgroundColor: AdminColors.card(context),
+        side: BorderSide(color: AdminColors.borda(context)),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -177,17 +175,11 @@ class AdminShell extends StatelessWidget {
   Widget _botaoSair(BuildContext context) {
     return TextButton.icon(
       onPressed: () => _confirmarSaida(context),
-      icon: const Icon(
-        Icons.logout_rounded,
-        size: 19,
-      ),
+      icon: const Icon(Icons.logout_rounded, size: 19),
       label: const Text('Sair da conta'),
       style: TextButton.styleFrom(
-        foregroundColor: const Color(0xFFB5473F),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 13,
-        ),
+        foregroundColor: AdminColors.sair(context),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -195,51 +187,49 @@ class AdminShell extends StatelessWidget {
     );
   }
 
-  // ================= MENU LATERAL =================
-
-  Widget _itemMenuLateral(
-    BuildContext context,
-    List<String> item,
-  ) {
+  Widget _itemMenuLateral(BuildContext context, List<String> item) {
     final ativo = item[2] == rotaAtual;
+    final corTexto = ativo
+        ? AdminColors.destaque(context)
+        : AdminColors.texto(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: () => _navegar(context, item[2]),
           borderRadius: BorderRadius.circular(14),
-          hoverColor: const Color(0x55F6DEDC),
-          splashColor: const Color(0x44EFCDCC),
+          hoverColor: AdminColors.destaque(context).withValues(alpha: 0.10),
+          splashColor: AdminColors.destaque(context).withValues(alpha: 0.15),
           child: Ink(
             decoration: BoxDecoration(
-              color: ativo ? DVanilleColors.blush2 : Colors.transparent,
+              color: ativo
+                  ? AdminColors.fundoSelecionado(context)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: ativo ? const Color(0x44C98F8C) : Colors.transparent,
+                color: ativo
+                    ? AdminColors.destaque(context).withValues(alpha: 0.35)
+                    : Colors.transparent,
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 14,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
               child: Row(
                 children: [
                   Container(
                     width: 3,
                     height: 25,
                     decoration: BoxDecoration(
-                      color: ativo ? DVanilleColors.rose : Colors.transparent,
+                      color: ativo
+                          ? AdminColors.destaque(context)
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(3),
                     ),
                   ),
                   const SizedBox(width: 10),
-                  _icone(item[0]),
+                  _icone(context, item[0], ativo: ativo),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -247,9 +237,7 @@ class AdminShell extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: ativo ? FontWeight.w700 : FontWeight.w600,
                         fontSize: 14,
-                        color: ativo
-                            ? DVanilleColors.rose
-                            : DVanilleColors.darkTaupe,
+                        color: corTexto,
                       ),
                     ),
                   ),
@@ -264,31 +252,26 @@ class AdminShell extends StatelessWidget {
 
   Widget _menuLateral(BuildContext context) {
     return Container(
-      width: 240,
-      color: Theme.of(context).cardColor,
+      width: 254,
+      decoration: BoxDecoration(
+        color: AdminColors.menu(context),
+        border: Border(
+          right: BorderSide(color: AdminColors.borda(context)),
+        ),
+      ),
       child: Column(
         children: [
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(
-                vertical: 22,
-              ),
+              padding: const EdgeInsets.symmetric(vertical: 22),
               children: itens.map((item) {
                 return _itemMenuLateral(context, item);
               }).toList(),
             ),
           ),
-          const Divider(
-            height: 1,
-            color: DVanilleColors.line,
-          ),
+          Divider(height: 1, color: AdminColors.borda(context)),
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              12,
-              14,
-              12,
-              20,
-            ),
+            padding: const EdgeInsets.fromLTRB(12, 14, 12, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -303,38 +286,34 @@ class AdminShell extends StatelessWidget {
     );
   }
 
-  // ================= MENU RESPONSIVO =================
-
   Widget _menuHorizontal(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: Theme.of(context).cardColor,
+      decoration: BoxDecoration(
+        color: AdminColors.menu(context),
+        border: Border(
+          bottom: BorderSide(color: AdminColors.borda(context)),
+        ),
+      ),
       child: Column(
         children: [
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             child: Row(
               children: itens.map((item) {
                 final ativo = item[2] == rotaAtual;
-
                 return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: TextButton(
-                    onPressed: () {
-                      _navegar(context, item[2]);
-                    },
+                    onPressed: () => _navegar(context, item[2]),
                     style: TextButton.styleFrom(
-                      backgroundColor:
-                          ativo ? DVanilleColors.blush2 : Colors.transparent,
+                      backgroundColor: ativo
+                          ? AdminColors.fundoSelecionado(context)
+                          : Colors.transparent,
                       foregroundColor: ativo
-                          ? DVanilleColors.rose
-                          : DVanilleColors.darkTaupe,
+                          ? AdminColors.destaque(context)
+                          : AdminColors.texto(context),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 13,
@@ -346,7 +325,7 @@ class AdminShell extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _icone(item[0]),
+                        _icone(context, item[0], ativo: ativo),
                         const SizedBox(width: 9),
                         Text(
                           item[1],
@@ -363,12 +342,7 @@ class AdminShell extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              12,
-              0,
-              12,
-              10,
-            ),
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
             child: Align(
               alignment: Alignment.centerRight,
               child: Wrap(
@@ -382,18 +356,13 @@ class AdminShell extends StatelessWidget {
               ),
             ),
           ),
-          const Divider(
-            height: 1,
-            color: DVanilleColors.line,
-          ),
         ],
       ),
     );
   }
 }
 
-// ================= TABELA ADMIN =================
-
+/// Tabela reutilizável do Admin com contraste adaptado ao tema.
 class TabelaAdmin extends StatelessWidget {
   final List<String> colunas;
   final List<DataRow> linhas;
@@ -408,29 +377,27 @@ class TabelaAdmin extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: AdminColors.card(context),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: DVanilleColors.line,
-        ),
+        border: Border.all(color: AdminColors.borda(context)),
       ),
       clipBehavior: Clip.antiAlias,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: DataTable(
-          headingTextStyle: const TextStyle(
+          headingRowColor: WidgetStatePropertyAll(AdminColors.menu(context)),
+          headingTextStyle: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w800,
-            letterSpacing: .5,
-            color: DVanilleColors.darkTaupe,
+            letterSpacing: 0.5,
+            color: AdminColors.texto(context),
           ),
-          dataTextStyle: const TextStyle(
+          dataTextStyle: TextStyle(
             fontSize: 13.5,
+            color: AdminColors.texto(context),
           ),
           columns: colunas.map((coluna) {
-            return DataColumn(
-              label: Text(coluna),
-            );
+            return DataColumn(label: Text(coluna));
           }).toList(),
           rows: linhas,
         ),

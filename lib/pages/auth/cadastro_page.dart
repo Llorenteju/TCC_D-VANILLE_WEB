@@ -26,8 +26,11 @@ class _CadastroPageState extends State<CadastroPage> {
   final senha = TextEditingController();
   final senha2 = TextEditingController();
 
-  DateTime? dataNascimentoSelecionada;
+  // Cada campo tem seu próprio controle de visualização.
+  bool mostrarSenha = false;
+  bool mostrarConfirmacaoSenha = false;
 
+  DateTime? dataNascimentoSelecionada;
   final Set<String> restricoes = {};
   bool notificacoes = true;
 
@@ -69,9 +72,7 @@ class _CadastroPageState extends State<CadastroPage> {
     super.dispose();
   }
 
-  String _doisDigitos(int valor) {
-    return valor.toString().padLeft(2, '0');
-  }
+  String _doisDigitos(int valor) => valor.toString().padLeft(2, '0');
 
   String _formatarData(DateTime data) {
     return '${_doisDigitos(data.day)}/'
@@ -81,7 +82,6 @@ class _CadastroPageState extends State<CadastroPage> {
 
   Future<void> _selecionarDataNascimento() async {
     final hoje = DateTime.now();
-
     final dataSelecionada = await showDatePicker(
       context: context,
       initialDate: dataNascimentoSelecionada ?? hoje,
@@ -111,9 +111,7 @@ class _CadastroPageState extends State<CadastroPage> {
       },
     );
 
-    if (dataSelecionada == null || !mounted) {
-      return;
-    }
+    if (dataSelecionada == null || !mounted) return;
 
     setState(() {
       dataNascimentoSelecionada = dataSelecionada;
@@ -131,31 +129,25 @@ class _CadastroPageState extends State<CadastroPage> {
         dataNascimentoSelecionada == null ||
         senha.text.isEmpty ||
         senha2.text.isEmpty) {
-      setState(() {
-        erro = 'Preencha todos os campos obrigatórios.';
-      });
+      setState(() => erro = 'Preencha todos os campos obrigatórios.');
       return;
     }
 
     if (state.emailJaCadastrado(email.text.trim())) {
-      setState(() {
-        erro = 'Este e-mail já está cadastrado.';
-      });
+      setState(() => erro = 'Este e-mail já está cadastrado.');
       return;
     }
 
     if (!AppState.senhaValida(senha.text)) {
       setState(() {
-        erro =
-            'A senha deve ter no mínimo 6 caracteres, 1 letra maiúscula e 1 caractere especial.';
+        erro = 'A senha deve ter no mínimo 6 caracteres, '
+            '1 letra maiúscula e 1 caractere especial.';
       });
       return;
     }
 
     if (senha.text != senha2.text) {
-      setState(() {
-        erro = 'As senhas não coincidem.';
-      });
+      setState(() => erro = 'As senhas não coincidem.');
       return;
     }
 
@@ -175,7 +167,6 @@ class _CadastroPageState extends State<CadastroPage> {
             ..clear()
             ..add('nenhuma');
         }
-
         return;
       }
 
@@ -200,7 +191,6 @@ class _CadastroPageState extends State<CadastroPage> {
     }
 
     final nascimento = dataNascimentoSelecionada;
-
     if (nascimento == null) {
       setState(() {
         etapa = 1;
@@ -219,17 +209,29 @@ class _CadastroPageState extends State<CadastroPage> {
       notificacoes: notificacoes,
     );
 
-    showToast(
-      'Cadastro realizado com sucesso!',
-      '🎉',
-    );
+    showToast('Cadastro realizado com sucesso!', '🎉');
 
     final destino = redirecionamento;
-
     Navigator.of(context).pushNamedAndRemoveUntil(
       destino?.rota ?? Routes.home,
       (r) => false,
       arguments: destino?.argumentos,
+    );
+  }
+
+  // Ícone de olho com a mesma paleta do restante do formulário.
+  Widget _botaoVisibilidadeSenha({
+    required bool visivel,
+    required VoidCallback alternar,
+    required String campo,
+  }) {
+    return IconButton(
+      tooltip: visivel ? 'Ocultar $campo' : 'Mostrar $campo',
+      onPressed: alternar,
+      icon: Icon(
+        visivel ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+        color: corTextoSecundario,
+      ),
     );
   }
 
@@ -283,18 +285,14 @@ class _CadastroPageState extends State<CadastroPage> {
           controller: nome,
           textCapitalization: TextCapitalization.words,
           style: TextStyle(color: corTexto),
-          decoration: const InputDecoration(
-            labelText: 'Nome completo *',
-          ),
+          decoration: const InputDecoration(labelText: 'Nome completo *'),
         ),
         const SizedBox(height: 14),
         TextField(
           controller: email,
           keyboardType: TextInputType.emailAddress,
           style: TextStyle(color: corTexto),
-          decoration: const InputDecoration(
-            labelText: 'E-mail *',
-          ),
+          decoration: const InputDecoration(labelText: 'E-mail *'),
         ),
         const SizedBox(height: 14),
         TextField(
@@ -321,10 +319,19 @@ class _CadastroPageState extends State<CadastroPage> {
         const SizedBox(height: 14),
         TextField(
           controller: senha,
-          obscureText: true,
+          obscureText: !mostrarSenha,
+          autocorrect: false,
+          enableSuggestions: false,
           style: TextStyle(color: corTexto),
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Senha *',
+            suffixIcon: _botaoVisibilidadeSenha(
+              visivel: mostrarSenha,
+              campo: 'senha',
+              alternar: () => setState(() {
+                mostrarSenha = !mostrarSenha;
+              }),
+            ),
           ),
         ),
         const SizedBox(height: 6),
@@ -337,10 +344,19 @@ class _CadastroPageState extends State<CadastroPage> {
         const SizedBox(height: 14),
         TextField(
           controller: senha2,
-          obscureText: true,
+          obscureText: !mostrarConfirmacaoSenha,
+          autocorrect: false,
+          enableSuggestions: false,
           style: TextStyle(color: corTexto),
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Confirmar senha *',
+            suffixIcon: _botaoVisibilidadeSenha(
+              visivel: mostrarConfirmacaoSenha,
+              campo: 'confirmação de senha',
+              alternar: () => setState(() {
+                mostrarConfirmacaoSenha = !mostrarConfirmacaoSenha;
+              }),
+            ),
           ),
         ),
         const SizedBox(height: 22),
@@ -354,10 +370,7 @@ class _CadastroPageState extends State<CadastroPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              'Já tem conta?',
-              style: TextStyle(color: corTexto),
-            ),
+            Text('Já tem conta?', style: TextStyle(color: corTexto)),
             TextButton(
               onPressed: () => Navigator.pushNamed(
                 context,
@@ -402,7 +415,6 @@ class _CadastroPageState extends State<CadastroPage> {
           runSpacing: 10,
           children: opcoesRestricaoCadastro.map((o) {
             final selecionado = restricoes.contains(o[0]);
-
             return SizedBox(
               width: 210,
               child: InkWell(
